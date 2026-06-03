@@ -1,6 +1,5 @@
 import { useCallback } from 'react'
 import { transitionBottle, transitionBatch, assignToTrip, createTrip, completeTrip } from '../data/queries'
-import type { BottleState } from '../rules/state-machine'
 
 export function useMoveActions() {
   const pack = useCallback((barcode: string) => transitionBottle(barcode, 'packed'), [])
