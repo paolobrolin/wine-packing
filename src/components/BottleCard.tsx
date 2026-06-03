@@ -1,0 +1,60 @@
+import type { DbBottle } from '../data/models'
+
+interface Props {
+  bottle: DbBottle
+  mode: 'packing' | 'unpacking'
+  onAction: (barcode: string) => void
+}
+
+const STATE_STYLES: Record<string, string> = {
+  pending: 'bottle-card--pending',
+  packed: 'bottle-card--packed',
+  in_transit: 'bottle-card--transit',
+  shelved: 'bottle-card--shelved',
+  synced: 'bottle-card--synced',
+}
+
+export function BottleCard({ bottle, mode, onAction }: Props) {
+  const actionable =
+    (mode === 'packing' && bottle.state === 'pending') ||
+    (mode === 'unpacking' && (bottle.state === 'in_transit' || bottle.state === 'packed'))
+
+  const stateClass = STATE_STYLES[bottle.state] ?? ''
+  const sizeLabel = bottle.size !== '750ml' ? bottle.size : null
+
+  return (
+    <button
+      className={`bottle-card ${stateClass}`}
+      onClick={() => actionable && onAction(bottle.barcode)}
+      disabled={!actionable}
+      data-testid={`bottle-${bottle.barcode}`}
+      aria-label={`${bottle.vintage} ${bottle.wine}`}
+    >
+      <div className="bottle-card__state">
+        {bottle.state === 'pending' && '○'}
+        {bottle.state === 'packed' && '●'}
+        {bottle.state === 'in_transit' && '◉'}
+        {bottle.state === 'shelved' && '✓'}
+        {bottle.state === 'synced' && '✓'}
+      </div>
+      <div className="bottle-card__info">
+        <div className="bottle-card__name">
+          {bottle.vintage} {bottle.wine}
+          {sizeLabel && <span className="bottle-card__size">{sizeLabel}</span>}
+        </div>
+        <div className="bottle-card__meta">
+          {bottle.cost != null && <span>{bottle.cost.toLocaleString()} kr</span>}
+          {bottle.begin_consume && bottle.end_consume && (
+            <span className="bottle-card__window">{bottle.begin_consume}–{bottle.end_consume}</span>
+          )}
+          {bottle.recommended_bin && (
+            <span className="bottle-card__dest">→ {bottle.recommended_bin}</span>
+          )}
+        </div>
+        {bottle.move_reason && (
+          <div className="bottle-card__reason">{bottle.move_reason}</div>
+        )}
+      </div>
+    </button>
+  )
+}
