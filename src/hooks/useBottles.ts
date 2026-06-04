@@ -64,9 +64,11 @@ export function useBottles(filter: BottleFilter) {
 
   const updateBottleLocally = useCallback((barcode: string, updates: Partial<DbBottle>) => {
     suppressRefetch.current = true
+    const scrollY = window.scrollY
     setBottles((prev) =>
       prev.map((b) => (b.barcode === barcode ? { ...b, ...updates } : b))
     )
+    requestAnimationFrame(() => { window.scrollTo(0, scrollY) })
   }, [])
 
   return { bottles, loading, error, refresh: load, updateBottleLocally }
