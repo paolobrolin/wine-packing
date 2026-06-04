@@ -16,12 +16,18 @@ export default function App() {
 
   const { bottles: moveBottles, loading: moveLoading, error: moveError } = useBottles({ type: 'needs-move' })
   const { bottles: homeBottles, loading: homeLoading, error: homeError } = useBottles({ type: 'home' })
-  const { pack, shelve, packBatch, shelveBatch } = useMoveActions()
+  const { pack, unpack, shelve, packBatch, shelveBatch } = useMoveActions()
   const error = moveError || homeError
 
   const handleAction = (barcode: string) => {
-    if (mode === 'packing') pack(barcode)
-    else shelve(barcode)
+    const bottle = moveBottles.find((b) => b.barcode === barcode)
+    if (!bottle) return
+    if (mode === 'packing') {
+      if (bottle.state === 'packed') unpack(barcode)
+      else pack(barcode)
+    } else {
+      shelve(barcode)
+    }
   }
 
   const handleBatchAction = (barcodes: string[]) => {

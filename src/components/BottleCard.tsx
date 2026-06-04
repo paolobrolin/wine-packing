@@ -15,9 +15,12 @@ const STATE_STYLES: Record<string, string> = {
 }
 
 export function BottleCard({ bottle, mode, onAction }: Props) {
-  const actionable =
+  const canAct =
     (mode === 'packing' && bottle.state === 'pending') ||
     (mode === 'unpacking' && (bottle.state === 'in_transit' || bottle.state === 'packed'))
+  const canUndo =
+    (mode === 'packing' && bottle.state === 'packed')
+  const actionable = canAct || canUndo
 
   const stateClass = STATE_STYLES[bottle.state] ?? ''
   const sizeLabel = bottle.size !== '750ml' ? bottle.size : null
