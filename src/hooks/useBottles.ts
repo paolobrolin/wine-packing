@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { getSupabase } from '../data/supabase'
 import type { DbBottle } from '../data/models'
 import { fetchBottlesNeedingMove, fetchBottlesByState, fetchBottlesByTrip, fetchHomeBottles } from '../data/queries'
@@ -15,8 +15,13 @@ export function useBottles(filter: BottleFilter) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
   const [initialized, setInitialized] = useState(false)
+  const suppressRefetch = useRef(false)
 
   const load = useCallback(async () => {
+    if (suppressRefetch.current) {
+      suppressRefetch.current = false
+      return
+    }
     try {
       if (!initialized) setLoading(true)
       let data: DbBottle[]
@@ -57,7 +62,14 @@ export function useBottles(filter: BottleFilter) {
     return () => { sub.unsubscribe() }
   }, [load, filter.type])
 
-  return { bottles, loading, error, refresh: load }
+  const updateBottleLocally = useCallback((barcode: string, updates: Partial<DbBottle>) => {
+    suppressRefetch.current = true
+    setBottles((prev) =>
+      prev.map((b) => (b.barcode === barcode ? { ...b, ...updates } : b))
+    )
+  }, [])
+
+  return { bottles, loading, error, refresh: load, updateBottleLocally }
 }
 
 export function groupByShelf(bottles: DbBottle[]): Map<string, DbBottle[]> {

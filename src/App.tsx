@@ -14,7 +14,7 @@ export default function App() {
   const [view, setView] = useState<View>('overview')
   const [selectedSource, setSelectedSource] = useState<string | null>(null)
 
-  const { bottles: moveBottles, loading: moveLoading, error: moveError } = useBottles({ type: 'needs-move' })
+  const { bottles: moveBottles, loading: moveLoading, error: moveError, updateBottleLocally } = useBottles({ type: 'needs-move' })
   const { bottles: homeBottles, loading: homeLoading, error: homeError } = useBottles({ type: 'home' })
   const { pack, unpack, shelve, packBatch, shelveBatch } = useMoveActions()
   const error = moveError || homeError
@@ -23,14 +23,25 @@ export default function App() {
     const bottle = moveBottles.find((b) => b.barcode === barcode)
     if (!bottle) return
     if (mode === 'packing') {
-      if (bottle.state === 'packed') unpack(barcode)
-      else pack(barcode)
+      if (bottle.state === 'packed') {
+        updateBottleLocally(barcode, { state: 'pending', packed_at: null })
+        unpack(barcode)
+      } else {
+        updateBottleLocally(barcode, { state: 'packed', packed_at: new Date().toISOString() })
+        pack(barcode)
+      }
     } else {
+      updateBottleLocally(barcode, { state: 'shelved', shelved_at: new Date().toISOString() })
       shelve(barcode)
     }
   }
 
   const handleBatchAction = (barcodes: string[]) => {
+    const newState = mode === 'packing' ? 'packed' : 'shelved'
+    const tsField = mode === 'packing' ? 'packed_at' : 'shelved_at'
+    for (const bc of barcodes) {
+      updateBottleLocally(bc, { state: newState, [tsField]: new Date().toISOString() } as Partial<typeof moveBottles[0]>)
+    }
     if (mode === 'packing') packBatch(barcodes)
     else shelveBatch(barcodes)
   }
