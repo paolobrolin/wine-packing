@@ -58,11 +58,11 @@ describe('BottleCard', () => {
     expect(onAction).toHaveBeenCalledWith('0207097736')
   })
 
-  it('does not call onAction in packing mode when already packed', async () => {
+  it('calls onAction in packing mode when packed (undo)', async () => {
     const onAction = vi.fn()
     render(<BottleCard bottle={makeDbBottle({ state: 'packed' })} mode="packing" onAction={onAction} />)
     await userEvent.click(screen.getByTestId('bottle-0207097736'))
-    expect(onAction).not.toHaveBeenCalled()
+    expect(onAction).toHaveBeenCalledWith('0207097736')
   })
 
   it('calls onAction in unpacking mode when in_transit', async () => {
