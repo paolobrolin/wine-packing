@@ -36,6 +36,7 @@ export function useBottles(filter: BottleFilter) {
       setBottles(data)
       setError(null)
     } catch (e) {
+      console.error('useBottles error:', e)
       setError(e instanceof Error ? e : new Error(String(e)))
     } finally {
       setLoading(false)
@@ -45,13 +46,14 @@ export function useBottles(filter: BottleFilter) {
   useEffect(() => { load() }, [load])
 
   useEffect(() => {
+    const channelName = `bottles-${filter.type}-${'state' in filter ? filter.state : 'all'}`
     const sub = getSupabase()
-      .channel('bottles-changes')
+      .channel(channelName)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'bottles' }, () => { load() })
       .subscribe()
 
     return () => { sub.unsubscribe() }
-  }, [load])
+  }, [load, filter.type])
 
   return { bottles, loading, error, refresh: load }
 }

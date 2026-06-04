@@ -14,9 +14,10 @@ export default function App() {
   const [view, setView] = useState<View>('overview')
   const [selectedSource, setSelectedSource] = useState<string | null>(null)
 
-  const { bottles: moveBottles, loading: moveLoading } = useBottles({ type: 'needs-move' })
-  const { bottles: homeBottles, loading: homeLoading } = useBottles({ type: 'home' })
+  const { bottles: moveBottles, loading: moveLoading, error: moveError } = useBottles({ type: 'needs-move' })
+  const { bottles: homeBottles, loading: homeLoading, error: homeError } = useBottles({ type: 'home' })
   const { pack, shelve, packBatch, shelveBatch } = useMoveActions()
+  const error = moveError || homeError
 
   const handleAction = (barcode: string) => {
     if (mode === 'packing') pack(barcode)
@@ -54,7 +55,8 @@ export default function App() {
         </nav>
       </header>
 
-      {loading && <div className="app__loading">Loading...</div>}
+      {error && <div className="app__error" role="alert">Error: {error.message}</div>}
+      {loading && !error && <div className="app__loading">Loading...</div>}
 
       {!loading && view === 'overview' && (
         <>
