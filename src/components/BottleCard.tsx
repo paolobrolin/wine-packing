@@ -14,6 +14,10 @@ const STATE_STYLES: Record<string, string> = {
   synced: 'bottle-card--synced',
 }
 
+function ctUrl(iwine: number): string {
+  return `https://www.cellartracker.com/wine.asp?iWine=${iwine}`
+}
+
 export function BottleCard({ bottle, mode, onAction }: Props) {
   const canAct =
     (mode === 'packing' && bottle.state === 'pending') ||
@@ -27,6 +31,10 @@ export function BottleCard({ bottle, mode, onAction }: Props) {
 
   const handleClick = () => {
     if (actionable) onAction(bottle.barcode)
+  }
+
+  const handleCtLink = (e: React.MouseEvent) => {
+    e.stopPropagation()
   }
 
   return (
@@ -44,7 +52,15 @@ export function BottleCard({ bottle, mode, onAction }: Props) {
       </div>
       <div className="bottle-card__info">
         <div className="bottle-card__name">
-          {bottle.vintage} {bottle.wine}
+          <a
+            href={ctUrl(bottle.iwine)}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={handleCtLink}
+            className="bottle-card__ct-link"
+          >
+            {bottle.vintage} {bottle.wine}
+          </a>
           {sizeLabel && <span className="bottle-card__size">{sizeLabel}</span>}
         </div>
         <div className="bottle-card__meta">
