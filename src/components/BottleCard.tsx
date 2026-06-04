@@ -25,11 +25,18 @@ export function BottleCard({ bottle, mode, onAction }: Props) {
   const stateClass = STATE_STYLES[bottle.state] ?? ''
   const sizeLabel = bottle.size !== '750ml' ? bottle.size : null
 
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (actionable) onAction(bottle.barcode)
+  }
+
   return (
-    <button
-      className={`bottle-card ${stateClass}`}
-      onClick={() => actionable && onAction(bottle.barcode)}
-      disabled={!actionable}
+    <div
+      className={`bottle-card ${stateClass} ${actionable ? '' : 'bottle-card--disabled'}`}
+      onClick={handleClick}
+      role="button"
+      tabIndex={actionable ? 0 : -1}
       data-testid={`bottle-${bottle.barcode}`}
       aria-label={`${bottle.vintage} ${bottle.wine}`}
     >
@@ -58,6 +65,6 @@ export function BottleCard({ bottle, mode, onAction }: Props) {
           <div className="bottle-card__reason">{bottle.move_reason}</div>
         )}
       </div>
-    </button>
+    </div>
   )
 }

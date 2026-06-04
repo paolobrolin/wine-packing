@@ -114,7 +114,7 @@ body {
 }
 .bottle-card:last-child { border-bottom: none; }
 .bottle-card:active:not(:disabled) { background: var(--surface-hover); }
-.bottle-card:disabled { cursor: default; opacity: 0.7; }
+.bottle-card--disabled { cursor: default; opacity: 0.7; pointer-events: none; }
 .bottle-card--packed { background: var(--packed); border-left: 3px solid var(--packed-border); }
 .bottle-card--transit { background: var(--transit); border-left: 3px solid var(--transit-border); }
 .bottle-card--shelved { background: var(--shelved); border-left: 3px solid var(--shelved-border); }
