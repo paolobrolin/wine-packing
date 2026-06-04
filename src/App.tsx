@@ -5,6 +5,7 @@ import { Overview } from './components/Overview'
 import { ShelfGroup } from './components/ShelfGroup'
 import { ModeToggle } from './components/ModeToggle'
 import { HomeView } from './components/HomeView'
+import { SearchPanel } from './components/SearchPanel'
 import './App.css'
 
 type View = 'overview' | 'source' | 'home'
@@ -71,6 +72,14 @@ export default function App() {
           </button>
         </nav>
       </header>
+
+      <SearchPanel bottles={[...moveBottles, ...homeBottles]} mode={mode} onPack={(barcode) => {
+        const bottle = moveBottles.find(b => b.barcode === barcode)
+        if (bottle) {
+          updateBottleLocally(barcode, { state: 'packed', packed_at: new Date().toISOString() })
+          pack(barcode)
+        }
+      }} />
 
       {error && <div className="app__error" role="alert">Error: {error.message}</div>}
       {loading && !error && <div className="app__loading">Loading...</div>}

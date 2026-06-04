@@ -136,6 +136,17 @@ export async function completeTrip(tripId: string): Promise<void> {
   if (error) throw error
 }
 
+export async function fetchAllBottles(): Promise<DbBottle[]> {
+  const { data, error } = await getSupabase()
+    .from('bottles')
+    .select('*')
+    .order('producer')
+    .order('vintage')
+
+  if (error) throw error
+  return data ?? []
+}
+
 export async function fetchHomeBottles(): Promise<DbBottle[]> {
   const { data, error } = await getSupabase()
     .from('bottles')
