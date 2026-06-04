@@ -14,10 +14,11 @@ export function useBottles(filter: BottleFilter) {
   const [bottles, setBottles] = useState<DbBottle[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
+  const [initialized, setInitialized] = useState(false)
 
   const load = useCallback(async () => {
     try {
-      setLoading(true)
+      if (!initialized) setLoading(true)
       let data: DbBottle[]
       switch (filter.type) {
         case 'needs-move':
@@ -35,6 +36,7 @@ export function useBottles(filter: BottleFilter) {
       }
       setBottles(data)
       setError(null)
+      setInitialized(true)
     } catch (e) {
       console.error('useBottles error:', e)
       setError(e instanceof Error ? e : new Error(String(e)))
