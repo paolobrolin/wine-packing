@@ -14,7 +14,7 @@ export function useBottles(filter: BottleFilter) {
   const [bottles, setBottles] = useState<DbBottle[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
-  const [initialized, setInitialized] = useState(false)
+  const initialized = useRef(false)
   const suppressRefetch = useRef(false)
 
   const load = useCallback(async () => {
@@ -23,7 +23,7 @@ export function useBottles(filter: BottleFilter) {
       return
     }
     try {
-      if (!initialized) setLoading(true)
+      if (!initialized.current) setLoading(true)
       let data: DbBottle[]
       switch (filter.type) {
         case 'needs-move':
@@ -41,7 +41,7 @@ export function useBottles(filter: BottleFilter) {
       }
       setBottles(data)
       setError(null)
-      setInitialized(true)
+      initialized.current = true
     } catch (e) {
       console.error('useBottles error:', e)
       setError(e instanceof Error ? e : new Error(String(e)))
@@ -64,11 +64,9 @@ export function useBottles(filter: BottleFilter) {
 
   const updateBottleLocally = useCallback((barcode: string, updates: Partial<DbBottle>) => {
     suppressRefetch.current = true
-    const scrollY = window.scrollY
     setBottles((prev) =>
       prev.map((b) => (b.barcode === barcode ? { ...b, ...updates } : b))
     )
-    requestAnimationFrame(() => { window.scrollTo(0, scrollY) })
   }, [])
 
   return { bottles, loading, error, refresh: load, updateBottleLocally }
