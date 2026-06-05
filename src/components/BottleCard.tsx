@@ -1,5 +1,5 @@
 import type { DbBottle } from '../data/models'
-import { displayVintage } from '../data/format'
+import { displayVintage, displayCost } from '../data/format'
 
 interface Props {
   bottle: DbBottle
@@ -65,7 +65,7 @@ export function BottleCard({ bottle, mode, onAction }: Props) {
           {sizeLabel && <span className="bottle-card__size">{sizeLabel}</span>}
         </div>
         <div className="bottle-card__meta">
-          {bottle.cost != null && <span>{bottle.cost.toLocaleString()} kr</span>}
+          {displayCost(bottle.cost, bottle.cost_currency) && <span>{displayCost(bottle.cost, bottle.cost_currency)}</span>}
           {bottle.begin_consume && bottle.end_consume && (
             <span className="bottle-card__window">{bottle.begin_consume}–{bottle.end_consume}</span>
           )}

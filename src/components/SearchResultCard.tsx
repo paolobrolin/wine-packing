@@ -1,7 +1,7 @@
 import { memo } from 'react'
 import type { ScoredBottle } from '../search/types'
 import { needsMove } from '../data/models'
-import { displayVintage } from '../data/format'
+import { displayVintage, displayCost } from '../data/format'
 
 interface Props {
   result: ScoredBottle
@@ -47,7 +47,7 @@ export const SearchResultCard = memo(function SearchResultCard({ result, onPack 
           </a>
           {bottle.size !== '750ml' && <span className="search-card__size">{bottle.size}</span>}
           <div className="search-card__meta">
-            {bottle.cost != null && <span>{bottle.cost.toLocaleString()} kr</span>}
+            {displayCost(bottle.cost, bottle.cost_currency) && <span>{displayCost(bottle.cost, bottle.cost_currency)}</span>}
             {bottle.begin_consume && bottle.end_consume && (
               <span className="search-card__window">{bottle.begin_consume}–{bottle.end_consume}</span>
             )}
