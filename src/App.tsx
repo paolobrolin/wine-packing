@@ -6,9 +6,15 @@ import { ShelfGroup } from './components/ShelfGroup'
 import { ModeToggle } from './components/ModeToggle'
 import { HomeView } from './components/HomeView'
 import { SearchPanel } from './components/SearchPanel'
+import type { DbBottle } from './data/models'
 import './App.css'
 
 type View = 'overview' | 'source' | 'home'
+
+function dedupeBottles(primary: DbBottle[], secondary: DbBottle[]): DbBottle[] {
+  const seen = new Set(primary.map(b => b.barcode))
+  return [...primary, ...secondary.filter(b => !seen.has(b.barcode))]
+}
 
 export default function App() {
   const [mode, setMode] = useState<'packing' | 'unpacking'>('packing')
@@ -73,7 +79,7 @@ export default function App() {
         </nav>
       </header>
 
-      <SearchPanel bottles={[...moveBottles, ...homeBottles]} mode={mode} onPack={(barcode) => {
+      <SearchPanel bottles={dedupeBottles(moveBottles, homeBottles)} mode={mode} onPack={(barcode) => {
         const bottle = moveBottles.find(b => b.barcode === barcode)
         if (bottle) {
           updateBottleLocally(barcode, { state: 'packed', packed_at: new Date().toISOString() })
