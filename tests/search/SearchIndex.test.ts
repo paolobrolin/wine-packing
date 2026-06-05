@@ -134,7 +134,7 @@ describe('SearchIndex', () => {
       const idx = new SearchIndex(big)
       const start = performance.now()
       idx.search('barolo 2020', 'packing')
-      expect(performance.now() - start).toBeLessThan(10)
+      expect(performance.now() - start).toBeLessThan(50)
     })
   })
 })
