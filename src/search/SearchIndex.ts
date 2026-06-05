@@ -8,8 +8,12 @@ interface IndexedBottle {
   fields: Map<string, string[]>
 }
 
+function stripDiacritics(s: string): string {
+  return s.normalize('NFD').replace(/[̀-ͯ]/g, '')
+}
+
 function tokenize(value: string): string[] {
-  return value.toLowerCase().split(/\s+/).filter(Boolean)
+  return stripDiacritics(value.toLowerCase()).split(/\s+/).filter(Boolean)
 }
 
 function classifyTier(bottle: DbBottle, mode: Mode): Tier {
@@ -50,7 +54,7 @@ export class SearchIndex {
     const trimmed = query.trim()
     if (!trimmed || trimmed.length < 2) return { needsAction: [], inProgress: [], noMove: [], total: 0 }
 
-    const terms = trimmed.toLowerCase().split(/\s+/)
+    const terms = stripDiacritics(trimmed.toLowerCase()).split(/\s+/)
     const scored: ScoredBottle[] = []
 
     for (const entry of this.entries) {
