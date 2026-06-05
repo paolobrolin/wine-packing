@@ -92,14 +92,24 @@ describe('SearchPanel', () => {
     expect(onPack).toHaveBeenCalledWith('B01')
   })
 
-  it('clears input after Pack action', async () => {
+  it('keeps search query after Pack (user clears manually)', async () => {
     render(<SearchPanel bottles={bottles} mode="packing" onPack={() => {}} />)
     const input = screen.getByPlaceholderText('Search wines...')
     await userEvent.type(input, 'oddero')
     await userEvent.click(screen.getByText('Pack'))
-    // Auto-clear happens after 300ms setTimeout
     await new Promise(r => setTimeout(r, 400))
-    expect(input).toHaveValue('')
+    expect(input).toHaveValue('oddero')
+  })
+
+  it('can pack multiple results from same search', async () => {
+    const onPack = vi.fn()
+    render(<SearchPanel bottles={bottles} mode="packing" onPack={onPack} />)
+    await userEvent.type(screen.getByPlaceholderText('Search wines...'), 'barolo')
+    const packButtons = screen.getAllByText('Pack')
+    await userEvent.click(packButtons[0])
+    expect(onPack).toHaveBeenCalledTimes(1)
+    // Search still shows results — can pack another
+    expect(screen.getByPlaceholderText('Search wines...')).toHaveValue('barolo')
   })
 
   it('shows "No bottles match" for unmatched query', async () => {

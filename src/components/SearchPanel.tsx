@@ -32,11 +32,6 @@ export function SearchPanel({ bottles, mode, onPack }: Props) {
       setToast(`${v} ${bottle.wine} — packed`)
       setTimeout(() => setToast(null), 2000)
     }
-
-    setTimeout(() => {
-      setQuery('')
-      inputRef.current?.focus()
-    }, 300)
   }, [bottles, onPack])
 
   const noMoveVisible = showAllNoMove ? results.noMove : results.noMove.slice(0, TIER3_CAP)
