@@ -2,7 +2,7 @@ import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
 import { SearchIndex } from '../search/SearchIndex'
 import { SearchResultCard } from './SearchResultCard'
 import type { DbBottle } from '../data/models'
-import type { Mode, TieredResults } from '../search/types'
+import type { Mode } from '../search/types'
 
 interface Props {
   bottles: DbBottle[]
@@ -11,7 +11,6 @@ interface Props {
 }
 
 const TIER3_CAP = 5
-const EMPTY: TieredResults = { needsAction: [], inProgress: [], noMove: [], total: 0 }
 
 export function SearchPanel({ bottles, mode, onPack }: Props) {
   const [query, setQuery] = useState('')
@@ -63,8 +62,8 @@ export function SearchPanel({ bottles, mode, onPack }: Props) {
         )}
       </div>
 
-      {query.trim() && (
-        <div className="search-panel__results" className="search-panel__results-inner">
+      {query.trim().length >= 2 && (
+        <div className="search-panel__results">
           {results.total === 0 && (
             <div className="search-panel__empty">No bottles match "{query}"</div>
           )}
