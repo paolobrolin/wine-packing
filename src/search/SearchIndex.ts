@@ -48,7 +48,7 @@ export class SearchIndex {
 
   search(query: string, mode: Mode): TieredResults {
     const trimmed = query.trim()
-    if (!trimmed) return { needsAction: [], inProgress: [], noMove: [], total: 0 }
+    if (!trimmed || trimmed.length < 2) return { needsAction: [], inProgress: [], noMove: [], total: 0 }
 
     const terms = trimmed.toLowerCase().split(/\s+/)
     const scored: ScoredBottle[] = []
@@ -63,7 +63,12 @@ export class SearchIndex {
       scored.push({ bottle: entry.bottle, score, tier })
     }
 
-    scored.sort((a, b) => b.score - a.score)
+    scored.sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score
+      const aName = `${a.bottle.producer} ${a.bottle.wine}`
+      const bName = `${b.bottle.producer} ${b.bottle.wine}`
+      return aName.localeCompare(bName)
+    })
 
     const needsAction: ScoredBottle[] = []
     const inProgress: ScoredBottle[] = []

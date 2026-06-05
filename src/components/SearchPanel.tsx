@@ -1,4 +1,4 @@
-import { useState, useMemo, useDeferredValue, useRef, useEffect, useCallback } from 'react'
+import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
 import { SearchIndex } from '../search/SearchIndex'
 import { SearchResultCard } from './SearchResultCard'
 import type { DbBottle } from '../data/models'
@@ -20,9 +20,7 @@ export function SearchPanel({ bottles, mode, onPack }: Props) {
   const inputRef = useRef<HTMLInputElement>(null)
 
   const index = useMemo(() => new SearchIndex(bottles), [bottles])
-  const results = useMemo(() => query.trim() ? index.search(query, mode) : EMPTY, [index, query, mode])
-  const deferred = useDeferredValue(results)
-  const isStale = results !== deferred
+  const results = useMemo(() => index.search(query, mode), [index, query, mode])
 
   useEffect(() => { setShowAllNoMove(false) }, [query])
 
@@ -41,8 +39,8 @@ export function SearchPanel({ bottles, mode, onPack }: Props) {
     }, 300)
   }, [bottles, onPack])
 
-  const noMoveVisible = showAllNoMove ? deferred.noMove : deferred.noMove.slice(0, TIER3_CAP)
-  const noMoveHidden = deferred.noMove.length - noMoveVisible.length
+  const noMoveVisible = showAllNoMove ? results.noMove : results.noMove.slice(0, TIER3_CAP)
+  const noMoveHidden = results.noMove.length - noMoveVisible.length
 
   return (
     <div className="search-panel">
@@ -66,32 +64,32 @@ export function SearchPanel({ bottles, mode, onPack }: Props) {
       </div>
 
       {query.trim() && (
-        <div className="search-panel__results" style={{ opacity: isStale ? 0.7 : 1 }}>
-          {deferred.total === 0 && (
+        <div className="search-panel__results" className="search-panel__results-inner">
+          {results.total === 0 && (
             <div className="search-panel__empty">No bottles match "{query}"</div>
           )}
 
-          {deferred.needsAction.length > 0 && (
+          {results.needsAction.length > 0 && (
             <div className="search-panel__tier">
-              <div className="search-panel__tier-header">NEEDS ACTION ({deferred.needsAction.length})</div>
-              {deferred.needsAction.map((r) => (
+              <div className="search-panel__tier-header">NEEDS ACTION ({results.needsAction.length})</div>
+              {results.needsAction.map((r) => (
                 <SearchResultCard key={r.bottle.barcode} result={r} onPack={handlePack} />
               ))}
             </div>
           )}
 
-          {deferred.inProgress.length > 0 && (
+          {results.inProgress.length > 0 && (
             <div className="search-panel__tier search-panel__tier--muted">
-              <div className="search-panel__tier-header">IN PROGRESS ({deferred.inProgress.length})</div>
-              {deferred.inProgress.map((r) => (
+              <div className="search-panel__tier-header">IN PROGRESS ({results.inProgress.length})</div>
+              {results.inProgress.map((r) => (
                 <SearchResultCard key={r.bottle.barcode} result={r} onPack={handlePack} />
               ))}
             </div>
           )}
 
-          {deferred.noMove.length > 0 && (
+          {results.noMove.length > 0 && (
             <div className="search-panel__tier search-panel__tier--dim">
-              <div className="search-panel__tier-header">NO MOVE NEEDED ({deferred.noMove.length})</div>
+              <div className="search-panel__tier-header">NO MOVE NEEDED ({results.noMove.length})</div>
               {noMoveVisible.map((r) => (
                 <SearchResultCard key={r.bottle.barcode} result={r} onPack={handlePack} />
               ))}

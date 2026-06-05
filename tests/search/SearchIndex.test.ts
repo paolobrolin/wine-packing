@@ -37,6 +37,10 @@ describe('SearchIndex', () => {
       expect(index.search('', 'packing')).toEqual({ needsAction: [], inProgress: [], noMove: [], total: 0 })
     })
 
+    it('returns empty for single character', () => {
+      expect(index.search('b', 'packing').total).toBe(0)
+    })
+
     it('returns empty for whitespace-only query', () => {
       expect(index.search('   ', 'packing').total).toBe(0)
     })
