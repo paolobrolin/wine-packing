@@ -85,6 +85,9 @@ export default function App() {
           updateBottleLocally(barcode, { state: 'packed', packed_at: new Date().toISOString() })
           pack(barcode)
         }
+      }} onUnpack={(barcode) => {
+        updateBottleLocally(barcode, { state: 'pending', packed_at: null })
+        unpack(barcode)
       }} />
 
       {error && <div className="app__error" role="alert">Error: {error.message}</div>}

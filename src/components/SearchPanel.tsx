@@ -8,11 +8,12 @@ interface Props {
   bottles: DbBottle[]
   mode: Mode
   onPack: (barcode: string) => void
+  onUnpack?: (barcode: string) => void
 }
 
 const TIER3_CAP = 5
 
-export function SearchPanel({ bottles, mode, onPack }: Props) {
+export function SearchPanel({ bottles, mode, onPack, onUnpack }: Props) {
   const [query, setQuery] = useState('')
   const [toast, setToast] = useState<string | null>(null)
   const [showAllNoMove, setShowAllNoMove] = useState(false)
@@ -68,7 +69,7 @@ export function SearchPanel({ bottles, mode, onPack }: Props) {
             <div className="search-panel__tier">
               <div className="search-panel__tier-header">NEEDS ACTION ({results.needsAction.length})</div>
               {results.needsAction.map((r) => (
-                <SearchResultCard key={r.bottle.barcode} result={r} onPack={handlePack} />
+                <SearchResultCard key={r.bottle.barcode} result={r} onPack={handlePack} onUnpack={onUnpack} />
               ))}
             </div>
           )}
@@ -77,7 +78,7 @@ export function SearchPanel({ bottles, mode, onPack }: Props) {
             <div className="search-panel__tier search-panel__tier--muted">
               <div className="search-panel__tier-header">IN PROGRESS ({results.inProgress.length})</div>
               {results.inProgress.map((r) => (
-                <SearchResultCard key={r.bottle.barcode} result={r} onPack={handlePack} />
+                <SearchResultCard key={r.bottle.barcode} result={r} onPack={handlePack} onUnpack={onUnpack} />
               ))}
             </div>
           )}
@@ -86,7 +87,7 @@ export function SearchPanel({ bottles, mode, onPack }: Props) {
             <div className="search-panel__tier search-panel__tier--dim">
               <div className="search-panel__tier-header">NO MOVE NEEDED ({results.noMove.length})</div>
               {noMoveVisible.map((r) => (
-                <SearchResultCard key={r.bottle.barcode} result={r} onPack={handlePack} />
+                <SearchResultCard key={r.bottle.barcode} result={r} onPack={handlePack} onUnpack={onUnpack} />
               ))}
               {noMoveHidden > 0 && (
                 <button className="search-panel__show-more" onClick={() => setShowAllNoMove(true)}>

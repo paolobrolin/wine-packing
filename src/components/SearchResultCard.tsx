@@ -6,25 +6,28 @@ import { displayVintage, displayCost } from '../data/format'
 interface Props {
   result: ScoredBottle
   onPack: (barcode: string) => void
+  onUnpack?: (barcode: string) => void
 }
 
 function ctUrl(iwine: number): string {
   return `https://www.cellartracker.com/wine.asp?iWine=${iwine}`
 }
 
-export const SearchResultCard = memo(function SearchResultCard({ result, onPack }: Props) {
+export const SearchResultCard = memo(function SearchResultCard({ result, onPack, onUnpack }: Props) {
   const { bottle, tier } = result
   const moves = needsMove(bottle)
-  const actionable = tier === 'needs-action'
+  const canPack = tier === 'needs-action'
+  const canUndo = tier === 'in-progress' && bottle.state === 'packed'
 
   const verdictClass = moves ? 'search-card--move' : 'search-card--home'
   const verdictText = moves
     ? `MOVE → ${bottle.recommended_bin ?? 'TBD'}`
     : 'STAYS HOME'
 
-  const handlePack = (e: React.MouseEvent) => {
+  const handleAction = (e: React.MouseEvent) => {
     e.stopPropagation()
-    if (actionable) onPack(bottle.barcode)
+    if (canPack) onPack(bottle.barcode)
+    else if (canUndo && onUnpack) onUnpack(bottle.barcode)
   }
 
   const handleCtLink = (e: React.MouseEvent) => {
@@ -53,9 +56,14 @@ export const SearchResultCard = memo(function SearchResultCard({ result, onPack 
             )}
           </div>
         </div>
-        {actionable && (
-          <button className="search-card__action" onClick={handlePack}>
+        {canPack && (
+          <button className="search-card__action" onClick={handleAction}>
             Pack
+          </button>
+        )}
+        {canUndo && (
+          <button className="search-card__action search-card__action--undo" onClick={handleAction}>
+            Undo
           </button>
         )}
       </div>
