@@ -1,4 +1,5 @@
 import type { DbBottle } from '../data/models'
+import { displayVintage } from '../data/format'
 
 interface Props {
   bottle: DbBottle
@@ -59,7 +60,7 @@ export function BottleCard({ bottle, mode, onAction }: Props) {
             onClick={handleCtLink}
             className="bottle-card__ct-link"
           >
-            {bottle.vintage} {bottle.wine}
+            {displayVintage(bottle.vintage)} {bottle.wine}
           </a>
           {sizeLabel && <span className="bottle-card__size">{sizeLabel}</span>}
         </div>

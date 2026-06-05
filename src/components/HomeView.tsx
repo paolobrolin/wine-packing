@@ -1,4 +1,5 @@
 import type { DbBottle } from '../data/models'
+import { displayVintage } from '../data/format'
 
 interface Props {
   bottles: DbBottle[]
@@ -31,7 +32,7 @@ export function HomeView({ bottles }: Props) {
           </h3>
           {pastPeak.map((b) => (
             <div key={b.barcode} className="home-view__bottle home-view__bottle--urgent">
-              <div className="home-view__name">{b.vintage} {b.wine}</div>
+              <div className="home-view__name">{displayVintage(b.vintage)} {b.wine}</div>
               <div className="home-view__detail">
                 Past peak ({b.end_consume}) · {currentYear - (b.end_consume ?? currentYear)}y over
               </div>
@@ -50,7 +51,7 @@ export function HomeView({ bottles }: Props) {
             const monthsToMid = Math.round((mid - currentYear) * 12)
             return (
               <div key={b.barcode} className="home-view__bottle home-view__bottle--approaching">
-                <div className="home-view__name">{b.vintage} {b.wine}</div>
+                <div className="home-view__name">{displayVintage(b.vintage)} {b.wine}</div>
                 <div className="home-view__detail">Peak in {monthsToMid} months</div>
               </div>
             )

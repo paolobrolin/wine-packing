@@ -41,8 +41,9 @@ export class SearchIndex {
     this.entries = bottles.map((bottle) => {
       const fields = new Map<string, string[]>()
       for (const f of SEARCH_FIELDS) {
-        const val = bottle[f.key]
+        let val = bottle[f.key]
         if (val != null) {
+          if (f.key === 'vintage' && String(val) === '1001') val = 'NV'
           fields.set(f.key, tokenize(String(val)))
         }
       }

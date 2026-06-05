@@ -1,6 +1,7 @@
 import { memo } from 'react'
 import type { ScoredBottle } from '../search/types'
 import { needsMove } from '../data/models'
+import { displayVintage } from '../data/format'
 
 interface Props {
   result: ScoredBottle
@@ -42,7 +43,7 @@ export const SearchResultCard = memo(function SearchResultCard({ result, onPack 
             onClick={handleCtLink}
             className="search-card__name"
           >
-            {bottle.vintage} {bottle.wine}
+            {displayVintage(bottle.vintage)} {bottle.wine}
           </a>
           {bottle.size !== '750ml' && <span className="search-card__size">{bottle.size}</span>}
           <div className="search-card__meta">

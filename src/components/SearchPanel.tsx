@@ -28,7 +28,8 @@ export function SearchPanel({ bottles, mode, onPack }: Props) {
     onPack(barcode)
 
     if (bottle) {
-      setToast(`${bottle.vintage} ${bottle.wine} — packed`)
+      const v = bottle.vintage === '1001' ? 'NV' : bottle.vintage
+      setToast(`${v} ${bottle.wine} — packed`)
       setTimeout(() => setToast(null), 2000)
     }
 
