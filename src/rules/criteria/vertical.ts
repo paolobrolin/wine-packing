@@ -10,7 +10,7 @@ function midpoint(bottle: Bottle, currentYear: number): number | null {
 
 function shouldBeExternal(bottle: Bottle, currentYear: number): boolean {
   const mp = midpoint(bottle, currentYear)
-  return mp != null && mp >= currentYear + 4
+  return mp != null && mp >= currentYear + 3
 }
 
 export const verticalRule: Rule = {

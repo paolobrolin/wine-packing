@@ -33,7 +33,7 @@ function makeContext(overrides: Partial<RuleContext> = {}): RuleContext {
 }
 
 describe('midpointRule', () => {
-  it('recommends REMOTE when midpoint >= currentYear + 4', () => {
+  it('recommends REMOTE when midpoint >= currentYear + 3', () => {
     const bottle = makeBottle({ beginConsume: 2025, endConsume: 2045 })
     const result = midpointRule.evaluate(bottle, makeContext())
     expect(result).not.toBeNull()
@@ -41,15 +41,15 @@ describe('midpointRule', () => {
     expect(result!.reason).toContain('midpoint')
   })
 
-  it('returns null when midpoint < currentYear + 4', () => {
+  it('returns null when midpoint < currentYear + 3', () => {
     const bottle = makeBottle({ beginConsume: 2024, endConsume: 2028 })
     const result = midpointRule.evaluate(bottle, makeContext())
     expect(result).toBeNull()
   })
 
-  it('returns null when midpoint is exactly currentYear + 4', () => {
-    // midpoint = (2026 + 2034) / 2 = 2030 = 2026 + 4 — ON the threshold
-    const bottle = makeBottle({ beginConsume: 2026, endConsume: 2034 })
+  it('recommends REMOTE when midpoint is exactly currentYear + 3', () => {
+    // midpoint = (2026 + 2032) / 2 = 2029 = 2026 + 3 — ON the threshold
+    const bottle = makeBottle({ beginConsume: 2026, endConsume: 2032 })
     const result = midpointRule.evaluate(bottle, makeContext())
     expect(result).not.toBeNull()
     expect(result!.recommendedLocation).toBe('REMOTE')

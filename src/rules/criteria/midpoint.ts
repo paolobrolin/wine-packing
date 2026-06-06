@@ -19,7 +19,7 @@ export const midpointRule: Rule = {
     const midpoint = calcMidpoint(bottle, context.currentYear)
     if (midpoint == null) return null
 
-    const threshold = context.currentYear + 4
+    const threshold = context.currentYear + 3
     if (midpoint >= threshold) {
       return {
         recommendedLocation: 'REMOTE',
