@@ -54,8 +54,9 @@ export interface DbTrip {
 
 export function needsMove(bottle: DbBottle): boolean {
   if (bottle.recommended_location == null) return false
-  return bottle.current_location !== bottle.recommended_location
-    || bottle.current_bin !== bottle.recommended_bin
+  if (bottle.current_location !== bottle.recommended_location) return true
+  if (bottle.recommended_bin == null) return false
+  return bottle.current_bin !== bottle.recommended_bin
 }
 
 export function isOverdue(bottle: DbBottle, now: Date, thresholdMs = 2 * 60 * 60 * 1000): boolean {

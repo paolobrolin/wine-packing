@@ -1,5 +1,5 @@
 import { getSupabase } from './supabase'
-import type { DbBottle, DbBin, DbTrip } from './models'
+import { needsMove, type DbBottle, type DbBin, type DbTrip } from './models'
 import type { BottleState } from '../rules/state-machine'
 import { canTransition, timestampField } from '../rules/state-machine'
 
@@ -14,9 +14,7 @@ export async function fetchBottlesNeedingMove(): Promise<DbBottle[]> {
     .order('vintage')
 
   if (error) throw error
-  return (data ?? []).filter(
-    (b: DbBottle) => b.current_location !== b.recommended_location || b.current_bin !== b.recommended_bin,
-  )
+  return (data ?? []).filter((b: DbBottle) => needsMove(b))
 }
 
 export async function fetchBottlesByState(state: BottleState): Promise<DbBottle[]> {

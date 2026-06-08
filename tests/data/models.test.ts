@@ -33,6 +33,24 @@ describe('needsMove', () => {
   it('returns false when recommended_location is null', () => {
     expect(needsMove(makeDbBottle({ recommended_location: null }))).toBe(false)
   })
+
+  it('returns false when location matches and recommended_bin is null', () => {
+    expect(needsMove(makeDbBottle({
+      current_location: 'REMOTE',
+      current_bin: '1.7 SPOTS + HIRSCH + RIDGE',
+      recommended_location: 'REMOTE',
+      recommended_bin: null,
+    }))).toBe(false)
+  })
+
+  it('returns true when location matches but recommended_bin explicitly differs', () => {
+    expect(needsMove(makeDbBottle({
+      current_location: 'REMOTE',
+      current_bin: '1.7 SPOTS + HIRSCH + RIDGE',
+      recommended_location: 'REMOTE',
+      recommended_bin: '1.8 NEW WORLD OTHER',
+    }))).toBe(true)
+  })
 })
 
 describe('isOverdue', () => {
