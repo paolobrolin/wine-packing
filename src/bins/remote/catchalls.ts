@@ -37,7 +37,7 @@ export const itCatchallRule: BinRule = {
   name: 'Italy Other',
   priority: 10,
   location: 'REMOTE',
-  binId: '3.8 OVERFLOW',
+  binId: '3.8 IT OTHER',
   overflowBinId: null,
   match: (b) => b.country === 'Italy',
 }
@@ -47,8 +47,8 @@ export const spCatchallRule: BinRule = {
   name: 'Spain Other',
   priority: 10,
   location: 'REMOTE',
-  binId: '3.8 OVERFLOW',
-  overflowBinId: null,
+  binId: '1.9 SPANIEN',
+  overflowBinId: '1.8 NEW WORLD OTHER',
   match: (b) => b.country === 'Spain',
 }
 

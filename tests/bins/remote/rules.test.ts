@@ -198,14 +198,14 @@ describe('REMOTE bin rules — region (p30-40)', () => {
     expect(r!.binId).toBe('3.6 SICILIEN')
   })
 
-  it('Castilla y León → 3.7 SPANIEN', () => {
+  it('Castilla y León → 1.9 SPANIEN', () => {
     const r = resolve(makeBottle({ producer: 'Raúl Pérez', wine: 'Raúl Pérez Ultreia', country: 'Spain', region: 'Castilla y León' }))
-    expect(r!.binId).toBe('3.7 SPANIEN')
+    expect(r!.binId).toBe('1.9 SPANIEN')
   })
 
-  it('La Rioja → 3.7 SPANIEN', () => {
+  it('La Rioja → 1.9 SPANIEN', () => {
     const r = resolve(makeBottle({ producer: 'Bodegas Roda', wine: 'Roda I Reserva', country: 'Spain', region: 'La Rioja' }))
-    expect(r!.binId).toBe('3.7 SPANIEN')
+    expect(r!.binId).toBe('1.9 SPANIEN')
   })
 })
 
@@ -235,14 +235,19 @@ describe('REMOTE bin rules — catchalls (p10)', () => {
     expect(r!.binId).toBe('2.8 DE OTHER')
   })
 
-  it('Italy Veneto → 3.8 OVERFLOW', () => {
+  it('Italy Veneto → 3.8 IT OTHER', () => {
     const r = resolve(makeBottle({ producer: 'Quintarelli', wine: 'Quintarelli VCS', country: 'Italy', region: 'Veneto' }))
-    expect(r!.binId).toBe('3.8 OVERFLOW')
+    expect(r!.binId).toBe('3.8 IT OTHER')
   })
 
-  it('Spain Catalunya → 3.8 OVERFLOW', () => {
+  it('Spain Catalunya → 1.9 SPANIEN', () => {
     const r = resolve(makeBottle({ producer: 'Clos Mogador', wine: 'Clos Mogador Priorat', country: 'Spain', region: 'Catalunya' }))
-    expect(r!.binId).toBe('3.8 OVERFLOW')
+    expect(r!.binId).toBe('1.9 SPANIEN')
+  })
+
+  it('Ferrari Perlé (Italian sparkling) → 2.5 CHAMPAGNE', () => {
+    const r = resolve(makeBottle({ producer: 'Ferrari', wine: 'Ferrari Perlé', country: 'Italy', region: 'Trentino-Alto Adige' }))
+    expect(r!.binId).toBe('2.5 CHAMPAGNE')
   })
 
   it('Unknown country → 2.8 DE OTHER (global fallback)', () => {
