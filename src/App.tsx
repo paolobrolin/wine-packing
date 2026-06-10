@@ -85,6 +85,9 @@ export default function App() {
           updateBottleLocally(barcode, { state: 'packed', packed_at: new Date().toISOString() })
           pack(barcode)
         }
+      }} onShelve={(barcode) => {
+        updateBottleLocally(barcode, { state: 'shelved', shelved_at: new Date().toISOString() })
+        shelve(barcode)
       }} onUnpack={(barcode) => {
         updateBottleLocally(barcode, { state: 'pending', packed_at: null })
         unpack(barcode)

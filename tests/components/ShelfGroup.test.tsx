@@ -64,6 +64,16 @@ describe('ShelfGroup', () => {
     expect(screen.getByText('8/20')).toBeInTheDocument()
   })
 
+  it('shows Shelve All in unpacking mode when all in_transit', () => {
+    const transitBottles = [
+      makeDbBottle({ barcode: '001', state: 'in_transit' }),
+      makeDbBottle({ barcode: '002', state: 'in_transit' }),
+    ]
+    render(<ShelfGroup shelfName="test" bottles={transitBottles} mode="unpacking" onAction={() => {}} onBatchAction={() => {}} />)
+    expect(screen.getByText('Shelve All ▸')).toBeInTheDocument()
+    expect(screen.queryByText('Pack All ▸')).not.toBeInTheDocument()
+  })
+
   it('renders OWC bottles as group card', () => {
     const owcBottles = [
       makeDbBottle({ barcode: '001', owc_group: 'PdB 2020' }),

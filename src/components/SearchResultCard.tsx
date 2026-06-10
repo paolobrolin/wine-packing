@@ -1,11 +1,13 @@
 import { memo } from 'react'
-import type { ScoredBottle } from '../search/types'
+import type { ScoredBottle, Mode } from '../search/types'
 import { needsMove } from '../data/models'
 import { displayVintage, displayCost } from '../data/format'
 
 interface Props {
   result: ScoredBottle
+  mode: Mode
   onPack: (barcode: string) => void
+  onShelve?: (barcode: string) => void
   onUnpack?: (barcode: string) => void
 }
 
@@ -13,10 +15,10 @@ function ctUrl(iwine: number): string {
   return `https://www.cellartracker.com/wine.asp?iWine=${iwine}`
 }
 
-export const SearchResultCard = memo(function SearchResultCard({ result, onPack, onUnpack }: Props) {
+export const SearchResultCard = memo(function SearchResultCard({ result, mode, onPack, onShelve, onUnpack }: Props) {
   const { bottle, tier } = result
   const moves = needsMove(bottle)
-  const canPack = tier === 'needs-action'
+  const canAct = tier === 'needs-action'
   const canUndo = tier === 'in-progress' && bottle.state === 'packed'
 
   const verdictClass = moves ? 'search-card--move' : 'search-card--home'
@@ -26,8 +28,12 @@ export const SearchResultCard = memo(function SearchResultCard({ result, onPack,
 
   const handleAction = (e: React.MouseEvent) => {
     e.stopPropagation()
-    if (canPack) onPack(bottle.barcode)
-    else if (canUndo && onUnpack) onUnpack(bottle.barcode)
+    if (canAct) {
+      if (mode === 'unpacking' && onShelve) onShelve(bottle.barcode)
+      else onPack(bottle.barcode)
+    } else if (canUndo && onUnpack) {
+      onUnpack(bottle.barcode)
+    }
   }
 
   const handleCtLink = (e: React.MouseEvent) => {
@@ -56,9 +62,9 @@ export const SearchResultCard = memo(function SearchResultCard({ result, onPack,
             )}
           </div>
         </div>
-        {canPack && (
+        {canAct && (
           <button className="search-card__action" onClick={handleAction}>
-            Pack
+            {mode === 'unpacking' ? 'Shelve' : 'Pack'}
           </button>
         )}
         {canUndo && (
@@ -72,5 +78,6 @@ export const SearchResultCard = memo(function SearchResultCard({ result, onPack,
 }, (prev, next) =>
   prev.result.bottle.barcode === next.result.bottle.barcode &&
   prev.result.bottle.state === next.result.bottle.state &&
-  prev.result.tier === next.result.tier
+  prev.result.tier === next.result.tier &&
+  prev.mode === next.mode
 )

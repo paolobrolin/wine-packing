@@ -194,6 +194,39 @@ describe('SearchPanel', () => {
     })
   })
 
+  describe('unpack mode', () => {
+    const unpackBottles: DbBottle[] = [
+      mb({ barcode: 'U01', iwine: 10, producer: 'Oddero', wine: 'Oddero Barolo Brunate', vintage: '2021', state: 'in_transit', recommended_bin: '3.3 BAROLO CLASSIC' }),
+      mb({ barcode: 'U02', iwine: 11, producer: 'Massolino', wine: 'Massolino Barolo Parafada', vintage: '2021', state: 'packed', recommended_bin: '3.3 BAROLO CLASSIC' }),
+      mb({ barcode: 'U03', iwine: 12, producer: 'Cavallotto', wine: 'Cavallotto Barolo Riserva Vignolo', vintage: '2018', state: 'shelved', recommended_bin: '3.2 BAROLO MODERN' }),
+    ]
+
+    it('shows "Shelve" button (not "Pack") in unpack mode', async () => {
+      render(<SearchPanel bottles={unpackBottles} mode="unpacking" onPack={() => {}} onShelve={() => {}} />)
+      await userEvent.type(screen.getByPlaceholderText('Search wines...'), 'oddero')
+      expect(screen.getByText('Shelve')).toBeInTheDocument()
+      expect(screen.queryByText('Pack')).not.toBeInTheDocument()
+    })
+
+    it('calls onShelve (not onPack) when Shelve is clicked in unpack mode', async () => {
+      const onShelve = vi.fn()
+      const onPack = vi.fn()
+      render(<SearchPanel bottles={unpackBottles} mode="unpacking" onPack={onPack} onShelve={onShelve} />)
+      await userEvent.type(screen.getByPlaceholderText('Search wines...'), 'oddero')
+      await userEvent.click(screen.getByText('Shelve'))
+      expect(onShelve).toHaveBeenCalledWith('U01')
+      expect(onPack).not.toHaveBeenCalled()
+    })
+
+    it('shows "shelved" toast (not "packed") when shelving in unpack mode', async () => {
+      render(<SearchPanel bottles={unpackBottles} mode="unpacking" onPack={() => {}} onShelve={() => {}} />)
+      await userEvent.type(screen.getByPlaceholderText('Search wines...'), 'oddero')
+      await userEvent.click(screen.getByText('Shelve'))
+      expect(screen.getByText(/shelved/)).toBeInTheDocument()
+      expect(screen.queryByText(/packed/)).not.toBeInTheDocument()
+    })
+  })
+
   describe('no false matches on refined query', () => {
     it('"caval" only shows Cavallotto, not Castello/Castellare', async () => {
       render(<SearchPanel bottles={bottles} mode="packing" onPack={() => {}} />)
