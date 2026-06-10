@@ -51,6 +51,25 @@ describe('buildSyncRows with bin resolution', () => {
     expect(rows[0].recommended_bin).toBeNull()
   })
 
+  it('routes OWC-marked bottle to 1.1 OWC via bottle_note', () => {
+    const ct = makeCtBottle({
+      extra: { Vintage: '2023', Wine: 'Chardonnay White Bones Adrianna', Producer: 'Bodega Catena Zapata', Country: 'Argentina', Region: 'Mendoza' },
+      bottle_note: 'OWC 3x1 bottle',
+    })
+    const { rows } = buildSyncRows([ct], new Map(), 2026)
+    expect(rows[0].recommended_location).toBe('REMOTE')
+    expect(rows[0].recommended_bin).toBe('1.1 OWC')
+  })
+
+  it('non-OWC bottle from same producer goes to catchall', () => {
+    const ct = makeCtBottle({
+      extra: { Vintage: '2023', Wine: 'Catena Alta Malbec', Producer: 'Bodega Catena Zapata', Country: 'Argentina', Region: 'Mendoza' },
+      bottle_note: null,
+    })
+    const { rows } = buildSyncRows([ct], new Map(), 2026)
+    expect(rows[0].recommended_bin).toBe('1.8 NEW WORLD OTHER')
+  })
+
   it('assigns global fallback for unknown country', () => {
     const ct = makeCtBottle({
       extra: { Vintage: '2020', Wine: 'Unknown Wine', Producer: 'Unknown', Country: 'Lebanon', Region: 'Bekaa' },

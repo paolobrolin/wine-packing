@@ -168,6 +168,13 @@ function sanitizeDrinkWindow(val: number | null): number | null {
   return val
 }
 
+function detectOwcGroup(ct: CtBottle): string | null {
+  if (ct.bottle_note && ct.bottle_note.toUpperCase().includes('OWC')) {
+    return ct.purchase_note ?? `${ct.extra.Wine}_${ct.extra.Vintage ?? 'NV'}`
+  }
+  return null
+}
+
 function toRuleBottle(ct: CtBottle): Bottle {
   return {
     barcode: ct.barcode,
@@ -183,7 +190,7 @@ function toRuleBottle(ct: CtBottle): Bottle {
     endConsume: sanitizeDrinkWindow(ct.end_consume),
     currentLocation: ct.location,
     currentBin: ct.bin,
-    owcGroup: null,
+    owcGroup: detectOwcGroup(ct),
   }
 }
 

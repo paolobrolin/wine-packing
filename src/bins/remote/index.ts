@@ -1,4 +1,5 @@
 import type { BinRule } from '../types'
+import { owcRule } from './owc'
 import { sqnOwcRule, sqnRegularRule, nokRegularRule } from './sqn'
 import { colginRule } from './colgin'
 import { saxumGroupRule } from './saxum-group'
@@ -17,6 +18,7 @@ import { spMainRule } from './sp-main'
 import { usaCatchallRule, frCatchallRule, deCatchallRule, itCatchallRule, spCatchallRule, globalFallbackRule } from './catchalls'
 
 export const remoteBinRules: BinRule[] = [
+  owcRule,
   sqnOwcRule, sqnRegularRule, nokRegularRule,
   colginRule,
   saxumGroupRule, spotsGroupRule,

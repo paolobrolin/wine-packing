@@ -29,6 +29,23 @@ function resolve(bottle: Bottle) {
   return resolveBin(bottle, 'REMOTE', remoteBinRules, makeContext())
 }
 
+describe('REMOTE bin rules — general OWC (p95)', () => {
+  it('any OWC-marked bottle → 1.1 OWC', () => {
+    const r = resolve(makeBottle({ producer: 'Bodega Catena Zapata', wine: 'Chardonnay White Bones', country: 'Argentina', region: 'Mendoza', owcGroup: 'catena-owc' }))
+    expect(r!.binId).toBe('1.1 OWC')
+  })
+
+  it('non-OWC bottle does not match', () => {
+    const r = resolve(makeBottle({ producer: 'Bodega Catena Zapata', wine: 'Catena Malbec', country: 'Argentina', region: 'Mendoza', owcGroup: null }))
+    expect(r!.binId).toBe('1.8 NEW WORLD OTHER')
+  })
+
+  it('SQN OWC still goes to 1.2 (higher priority)', () => {
+    const r = resolve(makeBottle({ producer: 'Sine Qua Non', wine: 'SQN Distenta', country: 'USA', region: 'California', owcGroup: 'sqn-2020', size: '750ml' }))
+    expect(r!.binId).toBe('1.2 OWC')
+  })
+})
+
 describe('REMOTE bin rules — producer-specific (p100)', () => {
   it('SQN regular 750ml → 1.3 SQN REGULAR', () => {
     const r = resolve(makeBottle({ producer: 'Sine Qua Non', wine: 'Sine Qua Non Syrah Touché', country: 'USA', region: 'California' }))
