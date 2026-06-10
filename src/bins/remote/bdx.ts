@@ -14,7 +14,7 @@ const LEFT_BANK_PRODUCERS = [
   'Montrose', 'Pontet-Canet', 'LLC',
 ]
 
-function isBordeaux(producer: string, country: string, region: string): boolean {
+function isBordeaux(country: string, region: string): boolean {
   if (country !== 'France') return false
   return region === 'Bordeaux' || region.includes('Bordeaux')
 }
@@ -27,7 +27,7 @@ export const bdxRbRule: BinRule = {
   binId: '2.2 BDX RB',
   overflowBinId: '2.6 FR OTHER',
   match: (b) => {
-    if (!isBordeaux(b.producer, b.country, b.region)) return false
+    if (!isBordeaux(b.country, b.region)) return false
     return RIGHT_BANK_PRODUCERS.some((p) => b.producer.includes(p) || b.wine.includes(p))
   },
 }
@@ -40,7 +40,7 @@ export const bdxLbRule: BinRule = {
   binId: '2.1 BDX LB',
   overflowBinId: '2.6 FR OTHER',
   match: (b) => {
-    if (!isBordeaux(b.producer, b.country, b.region)) return false
+    if (!isBordeaux(b.country, b.region)) return false
     return LEFT_BANK_PRODUCERS.some((p) => b.producer.includes(p) || b.wine.includes(p))
   },
 }

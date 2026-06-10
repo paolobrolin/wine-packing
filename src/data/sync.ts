@@ -58,7 +58,7 @@ export function buildSyncRows(
   let homeCount = 0
 
   // Pass 1: evaluate placement (location only)
-  const placements = ctBottles.map((ct, i) => {
+  const placements = ctBottles.map((_ct, i) => {
     const bottle = bottles[i]
     const placement = evaluatePlacement(bottle, defaultRules, context)
     if (placement != null && bottle.currentLocation === placement.recommendedLocation) {
