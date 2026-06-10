@@ -1,7 +1,12 @@
 import type { Bottle, RuleContext } from '../rules/types'
 import type { DbBottle } from './models'
+import type { ResolvedLocation } from '../bins/types'
 import { defaultRules } from '../rules/criteria'
 import { evaluatePlacement } from '../rules/evaluate'
+import { resolveAllBins } from '../bins/resolve'
+import { createCapacityTracker } from '../bins/capacity'
+import { remoteBinRules } from '../bins/remote'
+import { homeBinRules } from '../bins/home'
 
 export interface CtBottle {
   barcode: string
@@ -52,9 +57,45 @@ export function buildSyncRows(
   let needsMoveCount = 0
   let homeCount = 0
 
-  const rows = ctBottles.map((ct) => {
-    const bottle = toRuleBottle(ct)
+  // Pass 1: evaluate placement (location only)
+  const placements = ctBottles.map((ct, i) => {
+    const bottle = bottles[i]
     const placement = evaluatePlacement(bottle, defaultRules, context)
+    if (placement != null && bottle.currentLocation === placement.recommendedLocation) {
+      alreadyAtDestination++
+      return null
+    }
+    if (placement != null) {
+      needsMoveCount++
+      return placement
+    }
+    homeCount++
+    return null
+  })
+
+  // Pass 2: resolve bins for bottles that need to move
+  const binInput = bottles
+    .map((bottle, i) => {
+      const placement = placements[i]
+      if (placement == null) return null
+      return { bottle, location: placement.recommendedLocation as ResolvedLocation }
+    })
+    .filter((x): x is { bottle: Bottle; location: ResolvedLocation } => x != null)
+
+  const binRules = [...remoteBinRules, ...homeBinRules]
+  const binContext = {
+    currentYear,
+    capacity: createCapacityTracker(new Map()),
+    allBottles: bottles,
+    owcGroups,
+    owcAssignments: new Map<string, string>(),
+  }
+  const binResolutions = resolveAllBins(binInput, binRules, binContext)
+
+  // Pass 3: build rows
+  const rows = ctBottles.map((ct, i) => {
+    const bottle = bottles[i]
+    const placement = placements[i]
 
     let recLoc: string | null = null
     let recBin: string | null = null
@@ -62,18 +103,15 @@ export function buildSyncRows(
     let ruleId: string | null = null
 
     if (placement != null) {
-      if (bottle.currentLocation === placement.recommendedLocation) {
-        alreadyAtDestination++
-        // Already at destination — no recommendation needed, mark synced
-      } else {
-        recLoc = placement.recommendedLocation
-        recBin = placement.recommendedBin
-        reason = placement.reason
-        ruleId = extractRuleId(placement.reason)
-        needsMoveCount++
+      recLoc = placement.recommendedLocation
+      recBin = placement.recommendedBin
+      reason = placement.reason
+      ruleId = extractRuleId(placement.reason)
+
+      const binRes = binResolutions.get(bottle.barcode)
+      if (binRes != null) {
+        recBin = binRes.binId
       }
-    } else {
-      homeCount++
     }
 
     const existing = existingByBarcode.get(ct.barcode)

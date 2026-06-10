@@ -1,0 +1,257 @@
+import { describe, it, expect } from 'vitest'
+import { remoteBinRules } from '../../../src/bins/remote'
+import { resolveBin } from '../../../src/bins/resolve'
+import { createCapacityTracker } from '../../../src/bins/capacity'
+import type { BinResolverContext } from '../../../src/bins/types'
+import type { Bottle } from '../../../src/rules/types'
+
+function makeBottle(overrides: Partial<Bottle> = {}): Bottle {
+  return {
+    barcode: '0001', iwine: 1, vintage: '2020', wine: 'Test Wine',
+    producer: 'Test', country: 'France', region: 'Bordeaux', size: '750ml',
+    cost: 500, beginConsume: 2025, endConsume: 2035,
+    currentLocation: null, currentBin: null, owcGroup: null,
+    ...overrides,
+  }
+}
+
+function makeContext(): BinResolverContext {
+  return {
+    currentYear: 2026,
+    capacity: createCapacityTracker(new Map()),
+    allBottles: [],
+    owcGroups: new Map(),
+    owcAssignments: new Map(),
+  }
+}
+
+function resolve(bottle: Bottle) {
+  return resolveBin(bottle, 'REMOTE', remoteBinRules, makeContext())
+}
+
+describe('REMOTE bin rules — producer-specific (p100)', () => {
+  it('SQN regular 750ml → 1.3 SQN REGULAR', () => {
+    const r = resolve(makeBottle({ producer: 'Sine Qua Non', wine: 'Sine Qua Non Syrah Touché', country: 'USA', region: 'California' }))
+    expect(r!.binId).toBe('1.3 SQN REGULAR')
+  })
+
+  it('SQN OWC → 1.2 OWC', () => {
+    const r = resolve(makeBottle({ producer: 'Sine Qua Non', wine: 'SQN Distenta II', country: 'USA', region: 'California', owcGroup: 'SQN-2020' }))
+    expect(r!.binId).toBe('1.2 OWC')
+  })
+
+  it('SQN magnum → 1.2 OWC', () => {
+    const r = resolve(makeBottle({ producer: 'Sine Qua Non', wine: 'SQN Gorgeous Victim', country: 'USA', region: 'California', size: '1.5L' }))
+    expect(r!.binId).toBe('1.2 OWC')
+  })
+
+  it('Next of Kyn regular 750ml → 1.4 SQN EC + NoK', () => {
+    const r = resolve(makeBottle({ producer: 'Next of Kyn', wine: 'Next of Kyn No~16 Cumulus', country: 'USA', region: 'California' }))
+    expect(r!.binId).toBe('1.4 SQN EC + NoK')
+  })
+
+  it('Next of Kyn magnum → 1.2 OWC', () => {
+    const r = resolve(makeBottle({ producer: 'Next of Kyn', wine: 'Next of Kyn Oito', country: 'USA', region: 'California', size: '1.5L' }))
+    expect(r!.binId).toBe('1.2 OWC')
+  })
+
+  it('Colgin → 1.5 COLGIN', () => {
+    const r = resolve(makeBottle({ producer: 'Colgin', wine: 'Colgin IX Estate Red', country: 'USA', region: 'California' }))
+    expect(r!.binId).toBe('1.5 COLGIN')
+  })
+})
+
+describe('REMOTE bin rules — producer groups (p90)', () => {
+  it('Saxum 750ml → 1.6 SAX + KONGS + ANDR', () => {
+    const r = resolve(makeBottle({ producer: 'Saxum', wine: 'Saxum G2', country: 'USA', region: 'California' }))
+    expect(r!.binId).toBe('1.6 SAX + KONGS + ANDR')
+  })
+
+  it('Kongsgaard 750ml → 1.6', () => {
+    const r = resolve(makeBottle({ producer: 'Kongsgaard', wine: 'Kongsgaard Chardonnay', country: 'USA', region: 'California' }))
+    expect(r!.binId).toBe('1.6 SAX + KONGS + ANDR')
+  })
+
+  it('Andremily 750ml non-OWC → 1.6', () => {
+    const r = resolve(makeBottle({ producer: 'Andremily', wine: 'Andremily EABA', country: 'USA', region: 'California' }))
+    expect(r!.binId).toBe('1.6 SAX + KONGS + ANDR')
+  })
+
+  it('Spottswoode → 1.7 SPOTS + HIRSCH + RIDGE', () => {
+    const r = resolve(makeBottle({ producer: 'Spottswoode', wine: 'Spottswoode Cabernet Sauvignon Estate', country: 'USA', region: 'California' }))
+    expect(r!.binId).toBe('1.7 SPOTS + HIRSCH + RIDGE')
+  })
+
+  it('Hirsch → 1.7', () => {
+    const r = resolve(makeBottle({ producer: 'Hirsch Vineyards', wine: 'Hirsch Vineyards Pinot Noir East Ridge', country: 'USA', region: 'California' }))
+    expect(r!.binId).toBe('1.7 SPOTS + HIRSCH + RIDGE')
+  })
+
+  it('Ridge → 1.7', () => {
+    const r = resolve(makeBottle({ producer: 'Ridge', wine: 'Ridge Monte Bello', country: 'USA', region: 'California' }))
+    expect(r!.binId).toBe('1.7 SPOTS + HIRSCH + RIDGE')
+  })
+
+  it('Gaja Piedmont → 3.1 PIEMONTE PRESTIGE', () => {
+    const r = resolve(makeBottle({ producer: 'Gaja', wine: 'Gaja Sperss Barolo', country: 'Italy', region: 'Piedmont' }))
+    expect(r!.binId).toBe('3.1 PIEMONTE PRESTIGE')
+  })
+
+  it('Roagna Piedmont → 3.1 PIEMONTE PRESTIGE', () => {
+    const r = resolve(makeBottle({ producer: 'Roagna', wine: 'Roagna Crichet Pajé Barbaresco', country: 'Italy', region: 'Piedmont' }))
+    expect(r!.binId).toBe('3.1 PIEMONTE PRESTIGE')
+  })
+})
+
+describe('REMOTE bin rules — sub-region (p50-60)', () => {
+  it('Bordeaux LB (Ducru) → 2.1 BDX LB', () => {
+    const r = resolve(makeBottle({ producer: 'Château Ducru-Beaucaillou', wine: 'Ducru-Beaucaillou', country: 'France', region: 'Bordeaux' }))
+    expect(r!.binId).toBe('2.1 BDX LB')
+  })
+
+  it('Bordeaux RB (Cheval Blanc) → 2.2 BDX RB', () => {
+    const r = resolve(makeBottle({ producer: 'Château Cheval Blanc', wine: 'Cheval Blanc', country: 'France', region: 'Bordeaux' }))
+    expect(r!.binId).toBe('2.2 BDX RB')
+  })
+
+  it('Bordeaux RB (Lafleur) → 2.2', () => {
+    const r = resolve(makeBottle({ producer: 'Château Lafleur', wine: 'Château Lafleur', country: 'France', region: 'Bordeaux' }))
+    expect(r!.binId).toBe('2.2 BDX RB')
+  })
+
+  it('Guigal → 2.3 RHONE N', () => {
+    const r = resolve(makeBottle({ producer: 'E. Guigal', wine: 'E. Guigal Ermitage Blanc Ex-Voto', country: 'France', region: 'Rhône' }))
+    expect(r!.binId).toBe('2.3 RHONE N')
+  })
+
+  it('Clos des Papes → 2.4 RHONE S', () => {
+    const r = resolve(makeBottle({ producer: 'Clos des Papes', wine: 'Clos des Papes Châteauneuf-du-Pape', country: 'France', region: 'Rhône' }))
+    expect(r!.binId).toBe('2.4 RHONE S')
+  })
+
+  it('Mosel Riesling → 2.7 DE MOSEL', () => {
+    const r = resolve(makeBottle({ producer: 'Dr. Loosen', wine: 'Wehlener Sonnenuhr', country: 'Germany', region: 'Mosel Saar Ruwer' }))
+    expect(r!.binId).toBe('2.7 DE MOSEL')
+  })
+
+  it('Oddero Barolo → 3.3 BAROLO CLASSIC', () => {
+    const r = resolve(makeBottle({ producer: 'Oddero', wine: 'Oddero Barolo Brunate', country: 'Italy', region: 'Piedmont' }))
+    expect(r!.binId).toBe('3.3 BAROLO CLASSIC')
+  })
+
+  it('E. Pira Barolo → 3.2 BAROLO MODERN', () => {
+    const r = resolve(makeBottle({ producer: 'E. Pira', wine: 'E. Pira Barolo Mosconi', country: 'Italy', region: 'Piedmont' }))
+    expect(r!.binId).toBe('3.2 BAROLO MODERN')
+  })
+
+  it('Unknown Barolo producer → 3.3 BAROLO CLASSIC (fallback)', () => {
+    const r = resolve(makeBottle({ producer: 'Unknown Producer', wine: 'Unknown Barolo DOCG', country: 'Italy', region: 'Piedmont' }))
+    expect(r!.binId).toBe('3.3 BAROLO CLASSIC')
+  })
+
+  it('PdB Barbaresco → 3.4 BARBARESCO', () => {
+    const r = resolve(makeBottle({ producer: 'Produttori del Barbaresco', wine: 'Produttori del Barbaresco Barbaresco Riserva Montestefano', country: 'Italy', region: 'Piedmont' }))
+    expect(r!.binId).toBe('3.4 BARBARESCO')
+  })
+})
+
+describe('REMOTE bin rules — region (p30-40)', () => {
+  it('Champagne → 2.5 CHAMPAGNE', () => {
+    const r = resolve(makeBottle({ producer: 'Louis Roederer', wine: 'Louis Roederer Champagne Brut Nature', country: 'France', region: 'Champagne' }))
+    expect(r!.binId).toBe('2.5 CHAMPAGNE')
+  })
+
+  it('Burgundy → 2.6 FR OTHER', () => {
+    const r = resolve(makeBottle({ producer: 'Domaine Fevre', wine: 'Fevre Chablis GC Les Clos', country: 'France', region: 'Burgundy' }))
+    expect(r!.binId).toBe('2.6 FR OTHER')
+  })
+
+  it('Jura → 2.6 FR OTHER', () => {
+    const r = resolve(makeBottle({ producer: 'Domaine Maire', wine: 'Domaine Maire Arbois Vin Jaune', country: 'France', region: 'Jura' }))
+    expect(r!.binId).toBe('2.6 FR OTHER')
+  })
+
+  it('Tuscany → 3.5 TOSCANA', () => {
+    const r = resolve(makeBottle({ producer: 'Soldera', wine: 'Soldera Brunello', country: 'Italy', region: 'Tuscany' }))
+    expect(r!.binId).toBe('3.5 TOSCANA')
+  })
+
+  it('Sicily → 3.6 SICILIEN', () => {
+    const r = resolve(makeBottle({ producer: 'Frank Cornelissen', wine: 'Cornelissen MunJebel', country: 'Italy', region: 'Sicily' }))
+    expect(r!.binId).toBe('3.6 SICILIEN')
+  })
+
+  it('Castilla y León → 3.7 SPANIEN', () => {
+    const r = resolve(makeBottle({ producer: 'Raúl Pérez', wine: 'Raúl Pérez Ultreia', country: 'Spain', region: 'Castilla y León' }))
+    expect(r!.binId).toBe('3.7 SPANIEN')
+  })
+
+  it('La Rioja → 3.7 SPANIEN', () => {
+    const r = resolve(makeBottle({ producer: 'Bodegas Roda', wine: 'Roda I Reserva', country: 'Spain', region: 'La Rioja' }))
+    expect(r!.binId).toBe('3.7 SPANIEN')
+  })
+})
+
+describe('REMOTE bin rules — catchalls (p10)', () => {
+  it('Unknown USA → 1.8 NEW WORLD OTHER', () => {
+    const r = resolve(makeBottle({ producer: 'Some Winery', wine: 'Some Wine', country: 'USA', region: 'Oregon' }))
+    expect(r!.binId).toBe('1.8 NEW WORLD OTHER')
+  })
+
+  it('New Zealand → 1.8 NEW WORLD OTHER', () => {
+    const r = resolve(makeBottle({ producer: 'Felton Road', wine: 'Felton Road Pinot Noir', country: 'New Zealand', region: 'South Island' }))
+    expect(r!.binId).toBe('1.8 NEW WORLD OTHER')
+  })
+
+  it('Unknown French wine → 2.6 FR OTHER', () => {
+    const r = resolve(makeBottle({ producer: 'Unknown', wine: 'Unknown Languedoc', country: 'France', region: 'Languedoc' }))
+    expect(r!.binId).toBe('2.6 FR OTHER')
+  })
+
+  it('Germany Pfalz → 2.8 DE OTHER', () => {
+    const r = resolve(makeBottle({ producer: 'Philipp Kuhn', wine: 'Kuhn Riesling', country: 'Germany', region: 'Pfalz' }))
+    expect(r!.binId).toBe('2.8 DE OTHER')
+  })
+
+  it('Greece → 2.8 DE OTHER', () => {
+    const r = resolve(makeBottle({ producer: 'Dougos', wine: 'Dougos Assyrtiko', country: 'Greece', region: 'Thessaly' }))
+    expect(r!.binId).toBe('2.8 DE OTHER')
+  })
+
+  it('Italy Veneto → 3.8 OVERFLOW', () => {
+    const r = resolve(makeBottle({ producer: 'Quintarelli', wine: 'Quintarelli VCS', country: 'Italy', region: 'Veneto' }))
+    expect(r!.binId).toBe('3.8 OVERFLOW')
+  })
+
+  it('Spain Catalunya → 3.8 OVERFLOW', () => {
+    const r = resolve(makeBottle({ producer: 'Clos Mogador', wine: 'Clos Mogador Priorat', country: 'Spain', region: 'Catalunya' }))
+    expect(r!.binId).toBe('3.8 OVERFLOW')
+  })
+
+  it('Unknown country → 2.8 DE OTHER (global fallback)', () => {
+    const r = resolve(makeBottle({ producer: 'Some', wine: 'Some', country: 'Lebanon', region: 'Bekaa' }))
+    expect(r!.binId).toBe('2.8 DE OTHER')
+  })
+})
+
+describe('REMOTE bin rules — priority ordering', () => {
+  it('Gaja Barolo beats generic Barolo classic', () => {
+    const r = resolve(makeBottle({ producer: 'Gaja', wine: 'Gaja Sperss Barolo', country: 'Italy', region: 'Piedmont' }))
+    expect(r!.binId).toBe('3.1 PIEMONTE PRESTIGE')
+  })
+
+  it('Guigal beats generic Rhône catchall', () => {
+    const r = resolve(makeBottle({ producer: 'E. Guigal', wine: 'E. Guigal Côte-Rôtie', country: 'France', region: 'Rhône' }))
+    expect(r!.binId).toBe('2.3 RHONE N')
+  })
+
+  it('Champagne beats France catchall', () => {
+    const r = resolve(makeBottle({ producer: 'Gosset', wine: 'Gosset Champagne', country: 'France', region: 'Champagne' }))
+    expect(r!.binId).toBe('2.5 CHAMPAGNE')
+  })
+
+  it('Barbaresco beats Italy catchall', () => {
+    const r = resolve(makeBottle({ producer: 'Produttori del Barbaresco', wine: 'PdB Barbaresco Riserva', country: 'Italy', region: 'Piedmont' }))
+    expect(r!.binId).toBe('3.4 BARBARESCO')
+  })
+})
