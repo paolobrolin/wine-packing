@@ -2,7 +2,7 @@ export type BottleState = 'pending' | 'packed' | 'in_transit' | 'shelved' | 'syn
 
 const VALID_TRANSITIONS: Record<BottleState, BottleState[]> = {
   pending: ['packed'],
-  packed: ['in_transit', 'pending'],
+  packed: ['in_transit', 'shelved', 'pending'],
   in_transit: ['shelved', 'packed'],
   shelved: ['synced'],
   synced: [],
