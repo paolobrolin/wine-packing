@@ -24,12 +24,22 @@ export const frCatchallRule: BinRule = {
 
 export const deCatchallRule: BinRule = {
   id: 'remote/de-catchall',
-  name: 'Germany + Other Europe',
+  name: 'Germany + Austria',
   priority: 10,
   location: 'REMOTE',
   binId: '2.8 DE OTHER',
   overflowBinId: null,
-  match: (b) => ['Germany', 'Greece', 'Austria', 'Hungary'].includes(b.country),
+  match: (b) => ['Germany', 'Austria'].includes(b.country),
+}
+
+export const medCatchallRule: BinRule = {
+  id: 'remote/med-catchall',
+  name: 'Mediterranean + Other',
+  priority: 10,
+  location: 'REMOTE',
+  binId: '1.7 NW + SP OTHER',
+  overflowBinId: null,
+  match: (b) => ['Greece', 'Lebanon', 'Hungary', 'Portugal'].includes(b.country),
 }
 
 export const itCatchallRule: BinRule = {

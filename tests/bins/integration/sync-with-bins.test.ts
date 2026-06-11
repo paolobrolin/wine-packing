@@ -70,12 +70,12 @@ describe('buildSyncRows with bin resolution', () => {
     expect(rows[0].recommended_bin).toBe('1.7 NW + SP OTHER')
   })
 
-  it('assigns global fallback for unknown country', () => {
+  it('assigns Mediterranean catchall for Lebanon', () => {
     const ct = makeCtBottle({
-      extra: { Vintage: '2020', Wine: 'Unknown Wine', Producer: 'Unknown', Country: 'Lebanon', Region: 'Bekaa' },
+      extra: { Vintage: '2020', Wine: 'Chateau Musar', Producer: 'Chateau Musar', Country: 'Lebanon', Region: 'Bekaa' },
     })
     const { rows } = buildSyncRows([ct], new Map(), 2026)
     expect(rows[0].recommended_location).toBe('REMOTE')
-    expect(rows[0].recommended_bin).toBe('2.8 DE OTHER')
+    expect(rows[0].recommended_bin).toBe('1.7 NW + SP OTHER')
   })
 })

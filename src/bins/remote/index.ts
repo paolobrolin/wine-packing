@@ -14,7 +14,7 @@ import { barbarescoRule } from './barbaresco'
 import { toscanaRule } from './toscana'
 import { siciliaRule } from './sicilia'
 import { spCastillaRule } from './sp-main'
-import { newWorldCatchallRule, frCatchallRule, deCatchallRule, itCatchallRule, spCatchallRule, globalFallbackRule } from './catchalls'
+import { newWorldCatchallRule, frCatchallRule, deCatchallRule, medCatchallRule, itCatchallRule, spCatchallRule, globalFallbackRule } from './catchalls'
 
 export const remoteBinRules: BinRule[] = [
   owcRule,
@@ -31,6 +31,6 @@ export const remoteBinRules: BinRule[] = [
   toscanaRule, siciliaRule,
   spCastillaRule,
   californiaRule,
-  newWorldCatchallRule, frCatchallRule, deCatchallRule, itCatchallRule, spCatchallRule,
+  newWorldCatchallRule, frCatchallRule, deCatchallRule, medCatchallRule, itCatchallRule, spCatchallRule,
   globalFallbackRule,
 ]

@@ -240,9 +240,9 @@ describe('REMOTE bin rules — catchalls (p10)', () => {
     expect(r!.binId).toBe('2.8 DE OTHER')
   })
 
-  it('Greece → 2.8 DE OTHER', () => {
-    const r = resolve(makeBottle({ producer: 'Dougos', wine: 'Dougos Assyrtiko', country: 'Greece', region: 'Thessaly' }))
-    expect(r!.binId).toBe('2.8 DE OTHER')
+  it('Greece → 1.7 NW + SP OTHER', () => {
+    const r = resolve(makeBottle({ producer: 'Dougos', wine: 'Dougos Rapsani', country: 'Greece', region: 'Thessaly' }))
+    expect(r!.binId).toBe('1.7 NW + SP OTHER')
   })
 
   it('Italy Veneto → 3.7 IT OTHER', () => {
@@ -260,9 +260,9 @@ describe('REMOTE bin rules — catchalls (p10)', () => {
     expect(r!.binId).toBe('2.5 CHAMPAGNE')
   })
 
-  it('Unknown country → 2.8 DE OTHER (global fallback)', () => {
-    const r = resolve(makeBottle({ producer: 'Some', wine: 'Some', country: 'Lebanon', region: 'Bekaa' }))
-    expect(r!.binId).toBe('2.8 DE OTHER')
+  it('Lebanon → 1.7 NW + SP OTHER', () => {
+    const r = resolve(makeBottle({ producer: 'Chateau Musar', wine: 'Musar', country: 'Lebanon', region: 'Bekaa' }))
+    expect(r!.binId).toBe('1.7 NW + SP OTHER')
   })
 })
 
