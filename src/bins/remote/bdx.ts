@@ -1,7 +1,7 @@
 import type { BinRule } from '../types'
 
 const RIGHT_BANK_PRODUCERS = [
-  'Angélus', 'Angelus', 'Cheval Blanc', 'Tertre Roteboeuf', 'Clos Fourtet',
+  'Angélus', 'Angelus', 'Cheval Blanc', 'Tertre', 'Clos Fourtet',
   'Fonroque', 'La Grave', 'Figeac', 'Pavie', 'Troplong', 'Canon',
   'Lafleur', 'Pétrus', 'Petrus', 'Le Pin', 'Trotanoy', 'Gazin',
   'La Conseillante', 'Vieux Château Certan',
@@ -11,7 +11,7 @@ const LEFT_BANK_PRODUCERS = [
   'Latour', 'Lafite', 'Mouton', 'Margaux', 'Haut-Brion',
   'Lynch-Bages', 'Ducru', 'Calon', 'Léoville', 'Pichon',
   'd\'Issan', 'Rauzan', 'Palmer', 'Cos d\'Estournel',
-  'Montrose', 'Pontet-Canet', 'LLC',
+  'Montrose', 'Pontet-Canet', 'LLC', 'Lagrange',
 ]
 
 function isBordeaux(country: string, region: string): boolean {
