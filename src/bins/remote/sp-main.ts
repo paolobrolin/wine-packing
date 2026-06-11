@@ -7,7 +7,7 @@ export const spMainRule: BinRule = {
   name: 'Spanien Castilla + Rioja',
   priority: 30,
   location: 'REMOTE',
-  binId: '1.9 SPANIEN',
-  overflowBinId: '1.8 NEW WORLD OTHER',
+  binId: '1.8 SPANIEN',
+  overflowBinId: '1.7 NEW WORLD OTHER',
   match: (b) => b.country === 'Spain' && REGIONS.some((r) => b.region.includes(r)),
 }

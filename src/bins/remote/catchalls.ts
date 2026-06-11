@@ -1,13 +1,13 @@
 import type { BinRule } from '../types'
 
-const NEW_WORLD_COUNTRIES = ['USA', 'Australia', 'New Zealand', 'South Africa', 'Argentina', 'Chile']
+const NEW_WORLD_COUNTRIES = ['Australia', 'New Zealand', 'South Africa', 'Argentina', 'Chile']
 
-export const usaCatchallRule: BinRule = {
-  id: 'remote/usa-catchall',
-  name: 'USA + New World Other',
+export const newWorldCatchallRule: BinRule = {
+  id: 'remote/new-world-catchall',
+  name: 'New World Other (non-USA)',
   priority: 10,
   location: 'REMOTE',
-  binId: '1.8 NEW WORLD OTHER',
+  binId: '1.7 NEW WORLD OTHER',
   overflowBinId: null,
   match: (b) => NEW_WORLD_COUNTRIES.includes(b.country),
 }
@@ -47,8 +47,8 @@ export const spCatchallRule: BinRule = {
   name: 'Spain Other',
   priority: 10,
   location: 'REMOTE',
-  binId: '1.9 SPANIEN',
-  overflowBinId: '1.8 NEW WORLD OTHER',
+  binId: '1.8 SPANIEN',
+  overflowBinId: '1.7 NEW WORLD OTHER',
   match: (b) => b.country === 'Spain',
 }
 

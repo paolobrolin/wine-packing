@@ -37,7 +37,7 @@ describe('REMOTE bin rules — general OWC (p95)', () => {
 
   it('non-OWC bottle does not match', () => {
     const r = resolve(makeBottle({ producer: 'Bodega Catena Zapata', wine: 'Catena Malbec', country: 'Argentina', region: 'Mendoza', owcGroup: null }))
-    expect(r!.binId).toBe('1.8 NEW WORLD OTHER')
+    expect(r!.binId).toBe('1.7 NEW WORLD OTHER')
   })
 
   it('SQN OWC still goes to 1.2 (higher priority)', () => {
@@ -72,41 +72,51 @@ describe('REMOTE bin rules — producer-specific (p100)', () => {
     expect(r!.binId).toBe('1.2 OWC')
   })
 
-  it('Colgin → 1.5 COLGIN', () => {
+  it('Colgin → 1.5 NAPA', () => {
     const r = resolve(makeBottle({ producer: 'Colgin', wine: 'Colgin IX Estate Red', country: 'USA', region: 'California' }))
-    expect(r!.binId).toBe('1.5 COLGIN')
+    expect(r!.binId).toBe('1.5 NAPA')
   })
 })
 
-describe('REMOTE bin rules — producer groups (p90)', () => {
-  it('Saxum 750ml → 1.6 SAX + KONGS + ANDR', () => {
-    const r = resolve(makeBottle({ producer: 'Saxum', wine: 'Saxum G2', country: 'USA', region: 'California' }))
-    expect(r!.binId).toBe('1.6 SAX + KONGS + ANDR')
-  })
-
-  it('Kongsgaard 750ml → 1.6', () => {
+describe('REMOTE bin rules — Napa + California (p90/p15)', () => {
+  it('Kongsgaard → 1.5 NAPA', () => {
     const r = resolve(makeBottle({ producer: 'Kongsgaard', wine: 'Kongsgaard Chardonnay', country: 'USA', region: 'California' }))
-    expect(r!.binId).toBe('1.6 SAX + KONGS + ANDR')
+    expect(r!.binId).toBe('1.5 NAPA')
   })
 
-  it('Andremily 750ml non-OWC → 1.6', () => {
-    const r = resolve(makeBottle({ producer: 'Andremily', wine: 'Andremily EABA', country: 'USA', region: 'California' }))
-    expect(r!.binId).toBe('1.6 SAX + KONGS + ANDR')
-  })
-
-  it('Spottswoode → 1.7 SPOTS + HIRSCH + RIDGE', () => {
+  it('Spottswoode → 1.5 NAPA', () => {
     const r = resolve(makeBottle({ producer: 'Spottswoode', wine: 'Spottswoode Cabernet Sauvignon Estate', country: 'USA', region: 'California' }))
-    expect(r!.binId).toBe('1.7 SPOTS + HIRSCH + RIDGE')
+    expect(r!.binId).toBe('1.5 NAPA')
   })
 
-  it('Hirsch → 1.7', () => {
+  it('BOND → 1.5 NAPA', () => {
+    const r = resolve(makeBottle({ producer: 'BOND', wine: 'BOND Melbury', country: 'USA', region: 'California' }))
+    expect(r!.binId).toBe('1.5 NAPA')
+  })
+
+  it('Saxum → 1.6 CALIFORNIA OTHER', () => {
+    const r = resolve(makeBottle({ producer: 'Saxum', wine: 'Saxum G2', country: 'USA', region: 'California' }))
+    expect(r!.binId).toBe('1.6 CALIFORNIA OTHER')
+  })
+
+  it('Andremily 750ml → 1.6 CALIFORNIA OTHER', () => {
+    const r = resolve(makeBottle({ producer: 'Andremily', wine: 'Andremily EABA', country: 'USA', region: 'California' }))
+    expect(r!.binId).toBe('1.6 CALIFORNIA OTHER')
+  })
+
+  it('Hirsch → 1.6 CALIFORNIA OTHER', () => {
     const r = resolve(makeBottle({ producer: 'Hirsch Vineyards', wine: 'Hirsch Vineyards Pinot Noir East Ridge', country: 'USA', region: 'California' }))
-    expect(r!.binId).toBe('1.7 SPOTS + HIRSCH + RIDGE')
+    expect(r!.binId).toBe('1.6 CALIFORNIA OTHER')
   })
 
-  it('Ridge → 1.7', () => {
+  it('Ridge → 1.6 CALIFORNIA OTHER', () => {
     const r = resolve(makeBottle({ producer: 'Ridge', wine: 'Ridge Monte Bello', country: 'USA', region: 'California' }))
-    expect(r!.binId).toBe('1.7 SPOTS + HIRSCH + RIDGE')
+    expect(r!.binId).toBe('1.6 CALIFORNIA OTHER')
+  })
+
+  it('Bedrock → 1.6 CALIFORNIA OTHER', () => {
+    const r = resolve(makeBottle({ producer: 'Bedrock Wine Co.', wine: 'Bedrock Old Vine Zin', country: 'USA', region: 'California' }))
+    expect(r!.binId).toBe('1.6 CALIFORNIA OTHER')
   })
 
   it('Gaja Piedmont → 3.1 PIEMONTE PRESTIGE', () => {
@@ -198,26 +208,26 @@ describe('REMOTE bin rules — region (p30-40)', () => {
     expect(r!.binId).toBe('3.6 SICILIEN')
   })
 
-  it('Castilla y León → 1.9 SPANIEN', () => {
+  it('Castilla y León → 1.8 SPANIEN', () => {
     const r = resolve(makeBottle({ producer: 'Raúl Pérez', wine: 'Raúl Pérez Ultreia', country: 'Spain', region: 'Castilla y León' }))
-    expect(r!.binId).toBe('1.9 SPANIEN')
+    expect(r!.binId).toBe('1.8 SPANIEN')
   })
 
-  it('La Rioja → 1.9 SPANIEN', () => {
+  it('La Rioja → 1.8 SPANIEN', () => {
     const r = resolve(makeBottle({ producer: 'Bodegas Roda', wine: 'Roda I Reserva', country: 'Spain', region: 'La Rioja' }))
-    expect(r!.binId).toBe('1.9 SPANIEN')
+    expect(r!.binId).toBe('1.8 SPANIEN')
   })
 })
 
 describe('REMOTE bin rules — catchalls (p10)', () => {
-  it('Unknown USA → 1.8 NEW WORLD OTHER', () => {
+  it('Unknown USA → 1.6 CALIFORNIA OTHER', () => {
     const r = resolve(makeBottle({ producer: 'Some Winery', wine: 'Some Wine', country: 'USA', region: 'Oregon' }))
-    expect(r!.binId).toBe('1.8 NEW WORLD OTHER')
+    expect(r!.binId).toBe('1.6 CALIFORNIA OTHER')
   })
 
-  it('New Zealand → 1.8 NEW WORLD OTHER', () => {
+  it('New Zealand → 1.7 NEW WORLD OTHER', () => {
     const r = resolve(makeBottle({ producer: 'Felton Road', wine: 'Felton Road Pinot Noir', country: 'New Zealand', region: 'South Island' }))
-    expect(r!.binId).toBe('1.8 NEW WORLD OTHER')
+    expect(r!.binId).toBe('1.7 NEW WORLD OTHER')
   })
 
   it('Unknown French wine → 2.6 FR OTHER', () => {
@@ -240,9 +250,9 @@ describe('REMOTE bin rules — catchalls (p10)', () => {
     expect(r!.binId).toBe('3.8 IT OTHER')
   })
 
-  it('Spain Catalunya → 1.9 SPANIEN', () => {
+  it('Spain Catalunya → 1.8 SPANIEN', () => {
     const r = resolve(makeBottle({ producer: 'Clos Mogador', wine: 'Clos Mogador Priorat', country: 'Spain', region: 'Catalunya' }))
-    expect(r!.binId).toBe('1.9 SPANIEN')
+    expect(r!.binId).toBe('1.8 SPANIEN')
   })
 
   it('Ferrari Perlé (Italian sparkling) → 2.5 CHAMPAGNE', () => {
@@ -257,6 +267,11 @@ describe('REMOTE bin rules — catchalls (p10)', () => {
 })
 
 describe('REMOTE bin rules — priority ordering', () => {
+  it('Colgin beats California catchall', () => {
+    const r = resolve(makeBottle({ producer: 'Colgin', wine: 'Colgin IX Estate', country: 'USA', region: 'California' }))
+    expect(r!.binId).toBe('1.5 NAPA')
+  })
+
   it('Gaja Barolo beats generic Barolo classic', () => {
     const r = resolve(makeBottle({ producer: 'Gaja', wine: 'Gaja Sperss Barolo', country: 'Italy', region: 'Piedmont' }))
     expect(r!.binId).toBe('3.1 PIEMONTE PRESTIGE')

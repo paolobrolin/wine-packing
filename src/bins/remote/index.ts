@@ -1,9 +1,8 @@
 import type { BinRule } from '../types'
 import { owcRule } from './owc'
 import { sqnOwcRule, sqnRegularRule, nokRegularRule } from './sqn'
-import { colginRule } from './colgin'
-import { saxumGroupRule } from './saxum-group'
-import { spotsGroupRule } from './spots-group'
+import { napaRule } from './napa'
+import { californiaRule } from './california'
 import { piemontePrestigeRule } from './piemonte-prestige'
 import { bdxLbRule, bdxRbRule } from './bdx'
 import { rhoneNorthRule, rhoneSouthRule } from './rhone'
@@ -15,13 +14,12 @@ import { barbarescoRule } from './barbaresco'
 import { toscanaRule } from './toscana'
 import { siciliaRule } from './sicilia'
 import { spMainRule } from './sp-main'
-import { usaCatchallRule, frCatchallRule, deCatchallRule, itCatchallRule, spCatchallRule, globalFallbackRule } from './catchalls'
+import { newWorldCatchallRule, frCatchallRule, deCatchallRule, itCatchallRule, spCatchallRule, globalFallbackRule } from './catchalls'
 
 export const remoteBinRules: BinRule[] = [
   owcRule,
   sqnOwcRule, sqnRegularRule, nokRegularRule,
-  colginRule,
-  saxumGroupRule, spotsGroupRule,
+  napaRule,
   piemontePrestigeRule,
   bdxLbRule, bdxRbRule,
   rhoneNorthRule, rhoneSouthRule,
@@ -32,6 +30,7 @@ export const remoteBinRules: BinRule[] = [
   barbarescoRule,
   toscanaRule, siciliaRule,
   spMainRule,
-  usaCatchallRule, frCatchallRule, deCatchallRule, itCatchallRule, spCatchallRule,
+  californiaRule,
+  newWorldCatchallRule, frCatchallRule, deCatchallRule, itCatchallRule, spCatchallRule,
   globalFallbackRule,
 ]
