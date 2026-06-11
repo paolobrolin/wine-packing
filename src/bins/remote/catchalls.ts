@@ -37,7 +37,7 @@ export const itCatchallRule: BinRule = {
   name: 'Italy Other',
   priority: 10,
   location: 'REMOTE',
-  binId: '3.8 IT OTHER',
+  binId: '3.7 IT OTHER',
   overflowBinId: null,
   match: (b) => b.country === 'Italy',
 }

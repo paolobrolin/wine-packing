@@ -245,9 +245,9 @@ describe('REMOTE bin rules — catchalls (p10)', () => {
     expect(r!.binId).toBe('2.8 DE OTHER')
   })
 
-  it('Italy Veneto → 3.8 IT OTHER', () => {
+  it('Italy Veneto → 3.7 IT OTHER', () => {
     const r = resolve(makeBottle({ producer: 'Quintarelli', wine: 'Quintarelli VCS', country: 'Italy', region: 'Veneto' }))
-    expect(r!.binId).toBe('3.8 IT OTHER')
+    expect(r!.binId).toBe('3.7 IT OTHER')
   })
 
   it('Spain Catalunya → 1.7 NW + SP OTHER', () => {
