@@ -32,6 +32,7 @@ export interface CtBottle {
 export interface SyncResult {
   upserted: number
   deleted: number
+  orphanedBarcodes: string[]
   alreadyAtDestination: number
   needsMove: number
   home: number
@@ -151,11 +152,15 @@ export function buildSyncRows(
     } satisfies Partial<DbBottle>
   })
 
+  const ctBarcodes = new Set(ctBottles.map((ct) => ct.barcode))
+  const orphanedBarcodes = [...existingByBarcode.keys()].filter((bc) => !ctBarcodes.has(bc)).sort()
+
   return {
     rows,
     stats: {
       upserted: rows.length,
-      deleted: 0,
+      deleted: orphanedBarcodes.length,
+      orphanedBarcodes,
       alreadyAtDestination,
       needsMove: needsMoveCount,
       home: homeCount,

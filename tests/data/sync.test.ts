@@ -97,6 +97,28 @@ describe('buildSyncRows', () => {
     expect(rows[0].recommended_location).toBeNull()
   })
 
+  it('returns orphaned barcodes for deletion', () => {
+    const ct = makeCtBottle({ barcode: '0001', begin_consume: 2025, end_consume: 2045 })
+    const existing = new Map([
+      ['0001', { state: 'pending' as const, packed_at: null, in_transit_at: null, shelved_at: null, synced_at: null, trip_id: null, owc_group: null }],
+      ['0002', { state: 'pending' as const, packed_at: null, in_transit_at: null, shelved_at: null, synced_at: null, trip_id: null, owc_group: null }],
+      ['0003', { state: 'packed' as const, packed_at: '2026-06-01T00:00:00Z', in_transit_at: null, shelved_at: null, synced_at: null, trip_id: null, owc_group: null }],
+    ])
+    const { stats } = buildSyncRows([ct], existing, 2026)
+    expect(stats.deleted).toBe(2)
+    expect(stats.orphanedBarcodes).toEqual(['0002', '0003'])
+  })
+
+  it('does not flag CT bottles as orphaned', () => {
+    const ct = makeCtBottle({ barcode: '0001' })
+    const existing = new Map([
+      ['0001', { state: 'pending' as const, packed_at: null, in_transit_at: null, shelved_at: null, synced_at: null, trip_id: null, owc_group: null }],
+    ])
+    const { stats } = buildSyncRows([ct], existing, 2026)
+    expect(stats.deleted).toBe(0)
+    expect(stats.orphanedBarcodes).toEqual([])
+  })
+
   it('copies CT location/bin to ct_*_at_sync fields', () => {
     const ct = makeCtBottle({ location: 'REMOTE', bin: '1.2 OWC' })
     const { rows } = buildSyncRows([ct], new Map(), 2026)
