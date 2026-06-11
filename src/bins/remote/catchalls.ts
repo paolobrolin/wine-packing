@@ -4,10 +4,10 @@ const NEW_WORLD_COUNTRIES = ['Australia', 'New Zealand', 'South Africa', 'Argent
 
 export const newWorldCatchallRule: BinRule = {
   id: 'remote/new-world-catchall',
-  name: 'New World Other (non-USA)',
+  name: 'New World + SP Other',
   priority: 10,
   location: 'REMOTE',
-  binId: '1.7 NEW WORLD OTHER',
+  binId: '1.7 NW + SP OTHER',
   overflowBinId: null,
   match: (b) => NEW_WORLD_COUNTRIES.includes(b.country),
 }
@@ -44,11 +44,11 @@ export const itCatchallRule: BinRule = {
 
 export const spCatchallRule: BinRule = {
   id: 'remote/sp-catchall',
-  name: 'Spain Other',
+  name: 'Spain Other (Rioja, Catalunya, etc.)',
   priority: 10,
   location: 'REMOTE',
-  binId: '1.8 SPANIEN',
-  overflowBinId: '1.7 NEW WORLD OTHER',
+  binId: '1.7 NW + SP OTHER',
+  overflowBinId: null,
   match: (b) => b.country === 'Spain',
 }
 

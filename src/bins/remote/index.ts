@@ -13,7 +13,7 @@ import { baroloModernRule, baroloClassicRule, baroloFallbackRule } from './barol
 import { barbarescoRule } from './barbaresco'
 import { toscanaRule } from './toscana'
 import { siciliaRule } from './sicilia'
-import { spMainRule } from './sp-main'
+import { spCastillaRule } from './sp-main'
 import { newWorldCatchallRule, frCatchallRule, deCatchallRule, itCatchallRule, spCatchallRule, globalFallbackRule } from './catchalls'
 
 export const remoteBinRules: BinRule[] = [
@@ -29,7 +29,7 @@ export const remoteBinRules: BinRule[] = [
   baroloModernRule, baroloClassicRule, baroloFallbackRule,
   barbarescoRule,
   toscanaRule, siciliaRule,
-  spMainRule,
+  spCastillaRule,
   californiaRule,
   newWorldCatchallRule, frCatchallRule, deCatchallRule, itCatchallRule, spCatchallRule,
   globalFallbackRule,

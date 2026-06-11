@@ -67,7 +67,7 @@ describe('buildSyncRows with bin resolution', () => {
       bottle_note: null,
     })
     const { rows } = buildSyncRows([ct], new Map(), 2026)
-    expect(rows[0].recommended_bin).toBe('1.7 NEW WORLD OTHER')
+    expect(rows[0].recommended_bin).toBe('1.7 NW + SP OTHER')
   })
 
   it('assigns global fallback for unknown country', () => {

@@ -37,7 +37,7 @@ describe('REMOTE bin rules — general OWC (p95)', () => {
 
   it('non-OWC bottle does not match', () => {
     const r = resolve(makeBottle({ producer: 'Bodega Catena Zapata', wine: 'Catena Malbec', country: 'Argentina', region: 'Mendoza', owcGroup: null }))
-    expect(r!.binId).toBe('1.7 NEW WORLD OTHER')
+    expect(r!.binId).toBe('1.7 NW + SP OTHER')
   })
 
   it('SQN OWC still goes to 1.2 (higher priority)', () => {
@@ -208,14 +208,14 @@ describe('REMOTE bin rules — region (p30-40)', () => {
     expect(r!.binId).toBe('3.6 SICILIEN')
   })
 
-  it('Castilla y León → 1.8 SPANIEN', () => {
+  it('Castilla y León → 1.8 CASTILLA', () => {
     const r = resolve(makeBottle({ producer: 'Raúl Pérez', wine: 'Raúl Pérez Ultreia', country: 'Spain', region: 'Castilla y León' }))
-    expect(r!.binId).toBe('1.8 SPANIEN')
+    expect(r!.binId).toBe('1.8 CASTILLA')
   })
 
-  it('La Rioja → 1.8 SPANIEN', () => {
+  it('La Rioja → 1.7 NW + SP OTHER', () => {
     const r = resolve(makeBottle({ producer: 'Bodegas Roda', wine: 'Roda I Reserva', country: 'Spain', region: 'La Rioja' }))
-    expect(r!.binId).toBe('1.8 SPANIEN')
+    expect(r!.binId).toBe('1.7 NW + SP OTHER')
   })
 })
 
@@ -225,9 +225,9 @@ describe('REMOTE bin rules — catchalls (p10)', () => {
     expect(r!.binId).toBe('1.6 CALIFORNIA OTHER')
   })
 
-  it('New Zealand → 1.7 NEW WORLD OTHER', () => {
+  it('New Zealand → 1.7 NW + SP OTHER', () => {
     const r = resolve(makeBottle({ producer: 'Felton Road', wine: 'Felton Road Pinot Noir', country: 'New Zealand', region: 'South Island' }))
-    expect(r!.binId).toBe('1.7 NEW WORLD OTHER')
+    expect(r!.binId).toBe('1.7 NW + SP OTHER')
   })
 
   it('Unknown French wine → 2.6 FR OTHER', () => {
@@ -250,9 +250,9 @@ describe('REMOTE bin rules — catchalls (p10)', () => {
     expect(r!.binId).toBe('3.8 IT OTHER')
   })
 
-  it('Spain Catalunya → 1.8 SPANIEN', () => {
+  it('Spain Catalunya → 1.7 NW + SP OTHER', () => {
     const r = resolve(makeBottle({ producer: 'Clos Mogador', wine: 'Clos Mogador Priorat', country: 'Spain', region: 'Catalunya' }))
-    expect(r!.binId).toBe('1.8 SPANIEN')
+    expect(r!.binId).toBe('1.7 NW + SP OTHER')
   })
 
   it('Ferrari Perlé (Italian sparkling) → 2.5 CHAMPAGNE', () => {
