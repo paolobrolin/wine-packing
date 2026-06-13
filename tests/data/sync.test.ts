@@ -20,6 +20,7 @@ function makeCtBottle(overrides: Partial<CtBottle> = {}): CtBottle {
       Producer: 'Test Producer',
       Country: 'France',
       Region: 'Bordeaux',
+      Type: null,
     },
     ...overrides,
   }

@@ -26,6 +26,7 @@ export interface CtBottle {
     Producer: string
     Country: string
     Region: string
+    Type: string | null
   }
 }
 
@@ -132,6 +133,7 @@ export function buildSyncRows(
       size: ct.size,
       cost: ct.bottle_cost,
       cost_currency: ct.bottle_cost_currency ?? 'SEK',
+      wine_type: ct.extra.Type ?? null,
       begin_consume: sanitizeDrinkWindow(ct.begin_consume),
       end_consume: sanitizeDrinkWindow(ct.end_consume),
       current_location: ct.location,
@@ -196,6 +198,7 @@ function toRuleBottle(ct: CtBottle): Bottle {
     currentLocation: ct.location,
     currentBin: ct.bin,
     owcGroup: detectOwcGroup(ct),
+    wineType: ct.extra.Type ?? null,
   }
 }
 

@@ -17,7 +17,7 @@ function makeBottle(overrides: Partial<Bottle> = {}): Bottle {
     endConsume: 2035,
     currentLocation: 'Cellar',
     currentBin: 'Källaren',
-    owcGroup: null,
+    owcGroup: null, wineType: null,
     ...overrides,
   }
 }

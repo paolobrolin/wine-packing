@@ -11,6 +11,7 @@ export interface DbBottle {
   size: string
   cost: number | null
   cost_currency: string
+  wine_type: string | null
   begin_consume: number | null
   end_consume: number | null
   current_location: string | null

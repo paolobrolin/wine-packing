@@ -13,6 +13,7 @@ export interface Bottle {
   currentLocation: string | null
   currentBin: string | null
   owcGroup: string | null
+  wineType: string | null
 }
 
 export interface PlacementResult {

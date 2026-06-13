@@ -10,7 +10,7 @@ function makeBottle(overrides: Partial<Bottle> = {}): Bottle {
     barcode: '0001', iwine: 1, vintage: '2020', wine: 'Test Wine',
     producer: 'Test', country: 'France', region: 'Bordeaux', size: '750ml',
     cost: 500, beginConsume: 2025, endConsume: 2035,
-    currentLocation: null, currentBin: null, owcGroup: null,
+    currentLocation: null, currentBin: null, owcGroup: null, wineType: null,
     ...overrides,
   }
 }
@@ -255,8 +255,13 @@ describe('REMOTE bin rules — catchalls (p10)', () => {
     expect(r!.binId).toBe('1.7 NW + SP OTHER')
   })
 
-  it('Ferrari Perlé (Italian sparkling) → 2.5 CHAMPAGNE', () => {
-    const r = resolve(makeBottle({ producer: 'Ferrari', wine: 'Ferrari Perlé', country: 'Italy', region: 'Trentino-Alto Adige' }))
+  it('Ferrari Perlé (Italian sparkling via wineType) → 2.5 CHAMPAGNE', () => {
+    const r = resolve(makeBottle({ producer: 'Ferrari', wine: 'Ferrari Perlé', country: 'Italy', region: 'Trentino-Alto Adige', wineType: 'White - Sparkling' }))
+    expect(r!.binId).toBe('2.5 CHAMPAGNE')
+  })
+
+  it('Rosé Sparkling via wineType → 2.5 CHAMPAGNE', () => {
+    const r = resolve(makeBottle({ producer: 'Test', wine: 'Test Rosé Brut', country: 'Italy', region: 'Piedmont', wineType: 'Rosé - Sparkling' }))
     expect(r!.binId).toBe('2.5 CHAMPAGNE')
   })
 

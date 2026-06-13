@@ -7,7 +7,7 @@ function makeBottle(overrides: Partial<Bottle> = {}): Bottle {
     barcode: '0001', iwine: 1, vintage: '2020', wine: 'Test Wine',
     producer: 'Test', country: 'France', region: 'Bordeaux', size: '750ml',
     cost: 500, beginConsume: 2025, endConsume: 2035,
-    currentLocation: null, currentBin: null, owcGroup: null,
+    currentLocation: null, currentBin: null, owcGroup: null, wineType: null,
     ...overrides,
   }
 }
@@ -18,41 +18,35 @@ const context: RuleContext = {
 }
 
 describe('sweetWinesRule', () => {
-  it('keeps Sauternes home', () => {
-    const r = sweetWinesRule.evaluate(makeBottle({ wine: 'Château La Tour Blanche Sauternes' }), context)
+  it('keeps White - Sweet/Dessert home', () => {
+    const r = sweetWinesRule.evaluate(makeBottle({ wineType: 'White - Sweet/Dessert' }), context)
     expect(r).not.toBeNull()
     expect(r!.recommendedLocation).toBe('HOME')
   })
 
-  it('keeps Barsac home', () => {
-    const r = sweetWinesRule.evaluate(makeBottle({ wine: 'Château Coutet Barsac' }), context)
-    expect(r).not.toBeNull()
+  it('keeps Red - Sweet/Dessert home', () => {
+    const r = sweetWinesRule.evaluate(makeBottle({ wineType: 'Red - Sweet/Dessert' }), context)
     expect(r!.recommendedLocation).toBe('HOME')
   })
 
-  it('keeps Auslese home', () => {
-    const r = sweetWinesRule.evaluate(makeBottle({ wine: 'Molitor Riesling Auslese' }), context)
-    expect(r!.recommendedLocation).toBe('HOME')
+  it('does not match Red', () => {
+    expect(sweetWinesRule.evaluate(makeBottle({ wineType: 'Red' }), context)).toBeNull()
   })
 
-  it('keeps Recioto home', () => {
-    const r = sweetWinesRule.evaluate(makeBottle({ wine: 'Quintarelli Recioto della Valpolicella' }), context)
-    expect(r!.recommendedLocation).toBe('HOME')
+  it('does not match White', () => {
+    expect(sweetWinesRule.evaluate(makeBottle({ wineType: 'White' }), context)).toBeNull()
   })
 
-  it('keeps Vin Santo home', () => {
-    const r = sweetWinesRule.evaluate(makeBottle({ wine: 'Tenuta Trerose Vin Santo di Montepulciano' }), context)
-    expect(r!.recommendedLocation).toBe('HOME')
+  it('does not match White - Sparkling', () => {
+    expect(sweetWinesRule.evaluate(makeBottle({ wineType: 'White - Sparkling' }), context)).toBeNull()
   })
 
-  it('keeps Moscato home', () => {
-    const r = sweetWinesRule.evaluate(makeBottle({ wine: 'G.D. Vajra Moscato d Asti' }), context)
-    expect(r!.recommendedLocation).toBe('HOME')
+  it('does not match White - Off-dry', () => {
+    expect(sweetWinesRule.evaluate(makeBottle({ wineType: 'White - Off-dry' }), context)).toBeNull()
   })
 
-  it('does not match dry wines', () => {
-    const r = sweetWinesRule.evaluate(makeBottle({ wine: 'Oddero Barolo Brunate' }), context)
-    expect(r).toBeNull()
+  it('does not match null wineType', () => {
+    expect(sweetWinesRule.evaluate(makeBottle({ wineType: null }), context)).toBeNull()
   })
 
   it('has priority 35', () => {

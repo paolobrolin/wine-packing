@@ -1,12 +1,8 @@
 import type { Rule, Bottle } from '../types'
 
-const SWEET_KEYWORDS = [
-  'Sauternes', 'Barsac', 'Auslese', 'Beerenauslese', 'Trockenbeerenauslese',
-  'Eiswein', 'Recioto', 'Vin Santo', 'Moscato',
-]
-
 function isSweetWine(bottle: Bottle): boolean {
-  return SWEET_KEYWORDS.some((k) => bottle.wine.includes(k) || bottle.region.includes(k))
+  const t = bottle.wineType ?? ''
+  return t.includes('Sweet') || t.includes('Dessert')
 }
 
 export const sweetWinesRule: Rule = {

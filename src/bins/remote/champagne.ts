@@ -1,7 +1,5 @@
 import type { BinRule } from '../types'
 
-const SPARKLING_KEYWORDS = ['Champagne', 'Crémant', 'Cremant', 'Franciacorta', 'Perlé', 'Perle', 'TrentoDOC', 'Cava']
-
 export const champagneRule: BinRule = {
   id: 'remote/champagne',
   name: 'Champagne + Sparkling',
@@ -11,6 +9,6 @@ export const champagneRule: BinRule = {
   overflowBinId: '2.6 FR OTHER',
   match: (b) => {
     if (b.region === 'Champagne') return true
-    return SPARKLING_KEYWORDS.some((k) => b.wine.includes(k))
+    return (b.wineType ?? '').includes('Sparkling')
   },
 }

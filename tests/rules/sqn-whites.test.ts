@@ -7,7 +7,7 @@ function makeBottle(overrides: Partial<Bottle> = {}): Bottle {
     barcode: '0001', iwine: 1, vintage: '2020', wine: 'Test Wine',
     producer: 'Test', country: 'USA', region: 'California', size: '750ml',
     cost: 500, beginConsume: 2025, endConsume: 2045,
-    currentLocation: 'REMOTE', currentBin: '1.3 SQN REGULAR', owcGroup: null,
+    currentLocation: 'REMOTE', currentBin: '1.3 SQN REGULAR', owcGroup: null, wineType: null,
     ...overrides,
   }
 }

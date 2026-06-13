@@ -10,7 +10,7 @@ function makeCtBottle(overrides: Partial<CtBottle> = {}): CtBottle {
     bottle_note: null, purchase_note: null,
     extra: {
       Vintage: '2020', Wine: 'Test Wine', Producer: 'Test Producer',
-      Country: 'France', Region: 'Bordeaux',
+      Country: 'France', Region: 'Bordeaux', Type: null,
     },
     ...overrides,
   }
@@ -68,6 +68,22 @@ describe('buildSyncRows with bin resolution', () => {
     })
     const { rows } = buildSyncRows([ct], new Map(), 2026)
     expect(rows[0].recommended_bin).toBe('1.7 NW + SP OTHER')
+  })
+
+  it('keeps sweet wine home via wineType (no REMOTE recommendation)', () => {
+    const ct = makeCtBottle({
+      extra: { Vintage: '2023', Wine: 'Château Coutet Barsac', Producer: 'Château Coutet', Country: 'France', Region: 'Bordeaux', Type: 'White - Sweet/Dessert' },
+    })
+    const { rows } = buildSyncRows([ct], new Map(), 2026)
+    expect(rows[0].recommended_location).not.toBe('REMOTE')
+  })
+
+  it('routes sparkling to champagne via wineType', () => {
+    const ct = makeCtBottle({
+      extra: { Vintage: '2020', Wine: 'Ferrari Perlé', Producer: 'Ferrari', Country: 'Italy', Region: 'Trentino-Alto Adige', Type: 'White - Sparkling' },
+    })
+    const { rows } = buildSyncRows([ct], new Map(), 2026)
+    expect(rows[0].recommended_bin).toBe('2.5 CHAMPAGNE')
   })
 
   it('assigns Mediterranean catchall for Lebanon', () => {

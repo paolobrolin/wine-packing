@@ -7,7 +7,7 @@ function mb(overrides: Partial<Bottle> = {}): Bottle {
     barcode: '0001', iwine: 1, vintage: '2020', wine: 'Test',
     producer: 'Test', country: 'Italy', region: 'Piedmont', size: '750ml',
     cost: 500, beginConsume: 2030, endConsume: 2045,
-    currentLocation: 'Cellar', currentBin: null, owcGroup: null,
+    currentLocation: 'Cellar', currentBin: null, owcGroup: null, wineType: null,
     ...overrides,
   }
 }

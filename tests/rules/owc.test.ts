@@ -7,7 +7,7 @@ function makeBottle(overrides: Partial<Bottle> = {}): Bottle {
     barcode: '0001', iwine: 1, vintage: '2021', wine: 'Andremily EABA',
     producer: 'Andremily', country: 'USA', region: 'California', size: '1.5L',
     cost: 3000, beginConsume: 2024, endConsume: 2030,
-    currentLocation: 'Cellar', currentBin: null, owcGroup: 'Andremily MAG Box 2',
+    currentLocation: 'Cellar', currentBin: null, owcGroup: 'Andremily MAG Box 2', wineType: null,
     ...overrides,
   }
 }
