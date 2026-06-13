@@ -52,12 +52,26 @@ describe('buildSyncRows', () => {
     expect(stats.needsMove).toBe(0)
   })
 
-  it('does not set recommendation for HOME bottles', () => {
-    const ct = makeCtBottle({ begin_consume: 2024, end_consume: 2028 })
-    const { rows, stats } = buildSyncRows([ct], new Map(), 2026)
+  it('assigns HOME placement with bin for HOME bottles', () => {
+    const ct = makeCtBottle({
+      begin_consume: 2024, end_consume: 2028,
+      extra: { Vintage: '2020', Wine: 'Test Wine', Producer: 'Test', Country: 'France', Region: 'Burgundy', Type: null },
+    })
+    const { rows } = buildSyncRows([ct], new Map(), 2026)
 
-    expect(rows[0].recommended_location).toBeNull()
-    expect(stats.home).toBe(1)
+    expect(rows[0].recommended_location).toBe('HOME')
+    expect(rows[0].recommended_bin).not.toBeNull()
+  })
+
+  it('HOME bottle already at correct bin is synced (no action)', () => {
+    const ct = makeCtBottle({
+      begin_consume: 2024, end_consume: 2028, location: 'Cellar', bin: 'Lgh 2. FRANKRIKE',
+      extra: { Vintage: '2020', Wine: 'Test Bordeaux', Producer: 'Test', Country: 'France', Region: 'Burgundy', Type: null },
+    })
+    const { rows } = buildSyncRows([ct], new Map(), 2026)
+
+    expect(rows[0].recommended_location).toBe('HOME')
+    expect(rows[0].state).toBe('synced')
   })
 
   it('preserves existing state for known bottles', () => {
@@ -134,7 +148,7 @@ describe('buildSyncRows', () => {
 
     expect(rows[0].begin_consume).toBeNull()
     // midpoint with null begin: min(2026, 2028)=2026, mp=(2026+2028)/2=2027 → HOME
-    expect(rows[0].recommended_location).toBeNull()
+    expect(rows[0].recommended_location).toBe('HOME')
   })
 
   it('treats end_consume=9999 as null', () => {
@@ -151,8 +165,7 @@ describe('buildSyncRows', () => {
     const ct = makeCtBottle({ begin_consume: 9999, end_consume: 2028 })
     const { rows, stats } = buildSyncRows([ct], new Map(), 2026)
 
-    expect(rows[0].recommended_location).toBeNull()
-    expect(stats.home).toBe(1)
+    expect(rows[0].recommended_location).toBe('HOME')
     expect(stats.needsMove).toBe(0)
   })
 

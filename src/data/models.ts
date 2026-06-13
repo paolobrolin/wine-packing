@@ -53,6 +53,21 @@ export interface DbTrip {
   notes: string | null
 }
 
+export function normalizeLocation(loc: string | null): 'REMOTE' | 'HOME' {
+  return loc === 'REMOTE' ? 'REMOTE' : 'HOME'
+}
+
+export type MoveType = 'cross-location' | 'within-location' | 'none'
+
+export function moveType(bottle: DbBottle): MoveType {
+  if (bottle.recommended_location == null) return 'none'
+  const currentNorm = normalizeLocation(bottle.current_location)
+  if (currentNorm !== bottle.recommended_location) return 'cross-location'
+  if (bottle.recommended_bin == null) return 'none'
+  if (bottle.current_bin !== bottle.recommended_bin) return 'within-location'
+  return 'none'
+}
+
 export function needsMove(bottle: DbBottle): boolean {
   if (bottle.recommended_location == null) return false
   if (bottle.current_location !== bottle.recommended_location) return true

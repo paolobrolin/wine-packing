@@ -1,10 +1,10 @@
 import { describe, it, expect } from 'vitest'
-import { needsMove, isOverdue, type DbBottle } from '../../src/data/models'
+import { needsMove, isOverdue, normalizeLocation, moveType, type DbBottle } from '../../src/data/models'
 
 function makeDbBottle(overrides: Partial<DbBottle> = {}): DbBottle {
   return {
     barcode: '0001', iwine: 1, vintage: '2020', wine: 'Test', producer: 'Test',
-    country: 'France', region: 'Bordeaux', size: '750ml', cost: 500, cost_currency: 'SEK',
+    country: 'France', region: 'Bordeaux', size: '750ml', cost: 500, cost_currency: 'SEK', wine_type: null,
     begin_consume: 2025, end_consume: 2035,
     current_location: 'Cellar', current_bin: 'Källaren',
     recommended_location: 'REMOTE', recommended_bin: '2.1 BDX LB',
@@ -50,6 +50,62 @@ describe('needsMove', () => {
       recommended_location: 'REMOTE',
       recommended_bin: '1.8 NEW WORLD OTHER',
     }))).toBe(true)
+  })
+})
+
+describe('normalizeLocation', () => {
+  it('returns REMOTE for "REMOTE"', () => {
+    expect(normalizeLocation('REMOTE')).toBe('REMOTE')
+  })
+
+  it('returns HOME for null', () => {
+    expect(normalizeLocation(null)).toBe('HOME')
+  })
+
+  it('returns HOME for "Cellar"', () => {
+    expect(normalizeLocation('Cellar')).toBe('HOME')
+  })
+
+  it('returns HOME for empty string', () => {
+    expect(normalizeLocation('')).toBe('HOME')
+  })
+})
+
+describe('moveType', () => {
+  it('returns cross-location when locations differ', () => {
+    expect(moveType(makeDbBottle({ current_location: 'Cellar', recommended_location: 'REMOTE' }))).toBe('cross-location')
+  })
+
+  it('returns within-location when same location but different bin', () => {
+    expect(moveType(makeDbBottle({
+      current_location: null, recommended_location: 'HOME',
+      current_bin: 'Kall 2. FRANKRIKE', recommended_bin: 'Lgh 2. FRANKRIKE',
+    }))).toBe('within-location')
+  })
+
+  it('returns none when recommended_location is null', () => {
+    expect(moveType(makeDbBottle({ recommended_location: null }))).toBe('none')
+  })
+
+  it('returns none when both location and bin match', () => {
+    expect(moveType(makeDbBottle({
+      current_location: 'REMOTE', recommended_location: 'REMOTE',
+      current_bin: '2.1 BDX LB', recommended_bin: '2.1 BDX LB',
+    }))).toBe('none')
+  })
+
+  it('returns none when recommended_bin is null (no bin requirement)', () => {
+    expect(moveType(makeDbBottle({
+      current_location: 'REMOTE', recommended_location: 'REMOTE',
+      current_bin: '2.1 BDX LB', recommended_bin: null,
+    }))).toBe('none')
+  })
+
+  it('returns cross-location for HOME bottle going REMOTE', () => {
+    expect(moveType(makeDbBottle({
+      current_location: null, recommended_location: 'REMOTE',
+      recommended_bin: '3.4 BARBARESCO',
+    }))).toBe('cross-location')
   })
 })
 

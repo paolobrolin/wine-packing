@@ -44,11 +44,11 @@ describe('buildSyncRows with bin resolution', () => {
     expect(rows[0].recommended_bin).toBe('2.5 CHAMPAGNE')
   })
 
-  it('does not assign bin for HOME bottles (no recommended_location)', () => {
+  it('assigns HOME placement with bin for HOME bottles', () => {
     const ct = makeCtBottle({ begin_consume: 2024, end_consume: 2028 })
     const { rows } = buildSyncRows([ct], new Map(), 2026)
-    expect(rows[0].recommended_location).toBeNull()
-    expect(rows[0].recommended_bin).toBeNull()
+    expect(rows[0].recommended_location).toBe('HOME')
+    expect(rows[0].recommended_bin).not.toBeNull()
   })
 
   it('routes OWC-marked bottle to 1.1 OWC via bottle_note', () => {

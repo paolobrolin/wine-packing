@@ -1,7 +1,7 @@
 export type BottleState = 'pending' | 'packed' | 'in_transit' | 'shelved' | 'synced'
 
 const VALID_TRANSITIONS: Record<BottleState, BottleState[]> = {
-  pending: ['packed'],
+  pending: ['packed', 'synced'],
   packed: ['in_transit', 'shelved', 'pending'],
   in_transit: ['shelved', 'packed'],
   shelved: ['synced'],

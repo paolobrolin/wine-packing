@@ -4,6 +4,7 @@ import { canTransition, transition, timestampField, type BottleState } from '../
 describe('canTransition', () => {
   const valid: [BottleState, BottleState][] = [
     ['pending', 'packed'],
+    ['pending', 'synced'],
     ['packed', 'in_transit'],
     ['packed', 'pending'],
     ['packed', 'shelved'],
@@ -18,7 +19,6 @@ describe('canTransition', () => {
   const invalid: [BottleState, BottleState][] = [
     ['pending', 'in_transit'],
     ['pending', 'shelved'],
-    ['pending', 'synced'],
     ['packed', 'synced'],
     ['in_transit', 'pending'],
     ['in_transit', 'synced'],
@@ -38,7 +38,7 @@ describe('transition', () => {
   })
 
   it('throws on invalid transition', () => {
-    expect(() => transition('pending', 'synced')).toThrow('Invalid transition: pending → synced')
+    expect(() => transition('pending', 'shelved')).toThrow('Invalid transition: pending → shelved')
   })
 })
 

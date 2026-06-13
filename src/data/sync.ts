@@ -3,10 +3,11 @@ import type { DbBottle } from './models'
 import type { ResolvedLocation } from '../bins/types'
 import { defaultRules } from '../rules/criteria'
 import { evaluatePlacement } from '../rules/evaluate'
-import { resolveAllBins } from '../bins/resolve'
+import { resolveAllBins, resolveBin } from '../bins/resolve'
 import { createCapacityTracker } from '../bins/capacity'
 import { remoteBinRules } from '../bins/remote'
 import { homeBinRules } from '../bins/home'
+import { determineHomeSubLocation, buildHomeBinId } from '../bins/home-sub-location'
 
 export interface CtBottle {
   barcode: string
@@ -58,6 +59,7 @@ export function buildSyncRows(
   let alreadyAtDestination = 0
   let needsMoveCount = 0
   let homeCount = 0
+  const remoteAtDest = new Set<number>()
 
   // Pass 1: evaluate placement (location only)
   const placements = ctBottles.map((_ct, i) => {
@@ -65,14 +67,44 @@ export function buildSyncRows(
     const placement = evaluatePlacement(bottle, defaultRules, context)
     if (placement != null && bottle.currentLocation === placement.recommendedLocation) {
       alreadyAtDestination++
+      remoteAtDest.add(i)
       return null
     }
     if (placement != null) {
       needsMoveCount++
       return placement
     }
-    homeCount++
     return null
+  })
+
+  // Pass 1.5: HOME placement — resolve bin for HOME bottles (skip REMOTE-at-dest)
+  const homePlacements = bottles.map((bottle, i) => {
+    if (placements[i] != null) return null
+    if (remoteAtDest.has(i)) return null
+
+    const sortedRules = [...homeBinRules].sort((a, b) => b.priority - a.priority)
+    let categoryBinId: string | null = null
+    let matchedRuleId: string | null = null
+    for (const rule of sortedRules) {
+      if (rule.match(bottle)) {
+        categoryBinId = rule.binId
+        matchedRuleId = rule.id
+        break
+      }
+    }
+    if (categoryBinId == null) { homeCount++; return null }
+
+    const subLocation = determineHomeSubLocation(bottle, currentYear)
+    const binId = buildHomeBinId(categoryBinId, subLocation)
+    const currentNorm = bottle.currentLocation === 'REMOTE' ? 'REMOTE' : 'HOME'
+
+    if (currentNorm === 'HOME' && bottle.currentBin === binId) {
+      alreadyAtDestination++
+    } else {
+      homeCount++
+    }
+
+    return { recommendedLocation: 'HOME', recommendedBin: binId, reason: `home: ${subLocation}`, ruleId: matchedRuleId }
   })
 
   // Pass 2: resolve bins for bottles that need to move
@@ -114,13 +146,25 @@ export function buildSyncRows(
       if (binRes != null) {
         recBin = binRes.binId
       }
+    } else {
+      const homePlacement = homePlacements[i]
+      if (homePlacement != null) {
+        recLoc = homePlacement.recommendedLocation
+        recBin = homePlacement.recommendedBin
+        reason = homePlacement.reason
+        ruleId = homePlacement.ruleId
+      }
     }
 
     const existing = existingByBarcode.get(ct.barcode)
     const preservedState = existing?.state ?? 'pending'
-    const state = recLoc == null && preservedState !== 'synced'
-      ? (bottle.currentLocation != null ? 'synced' : 'pending')
-      : preservedState
+    let state: string = preservedState
+
+    if (recLoc == null) {
+      state = bottle.currentLocation != null ? 'synced' : 'pending'
+    } else if (recLoc === 'HOME' && recBin != null && bottle.currentBin === recBin) {
+      state = 'synced'
+    }
 
     return {
       barcode: ct.barcode,
