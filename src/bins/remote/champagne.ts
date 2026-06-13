@@ -1,6 +1,6 @@
 import type { BinRule } from '../types'
 
-const SPARKLING_KEYWORDS = ['Champagne', 'Crémant', 'Cremant', 'Franciacorta', 'Perlé', 'TrentoDOC', 'Cava']
+const SPARKLING_KEYWORDS = ['Champagne', 'Crémant', 'Cremant', 'Franciacorta', 'Perlé', 'Perle', 'TrentoDOC', 'Cava']
 
 export const champagneRule: BinRule = {
   id: 'remote/champagne',
