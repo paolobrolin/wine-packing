@@ -10,11 +10,12 @@ interface Props {
   onPack: (barcode: string) => void
   onShelve?: (barcode: string) => void
   onUnpack?: (barcode: string) => void
+  onRebin?: (barcode: string) => void
 }
 
 const TIER3_CAP = 5
 
-export function SearchPanel({ bottles, mode, onPack, onShelve, onUnpack }: Props) {
+export function SearchPanel({ bottles, mode, onPack, onShelve, onUnpack, onRebin }: Props) {
   const [query, setQuery] = useState('')
   const [toast, setToast] = useState<string | null>(null)
   const [showAllNoMove, setShowAllNoMove] = useState(false)
@@ -46,6 +47,17 @@ export function SearchPanel({ bottles, mode, onPack, onShelve, onUnpack }: Props
       setTimeout(() => setToast(null), 2000)
     }
   }, [bottles, onShelve])
+
+  const handleRebin = useCallback((barcode: string) => {
+    const bottle = bottles.find(b => b.barcode === barcode)
+    if (onRebin) onRebin(barcode)
+
+    if (bottle) {
+      const v = bottle.vintage === '1001' ? 'NV' : bottle.vintage
+      setToast(`${v} ${bottle.wine} — moved to ${bottle.recommended_bin}`)
+      setTimeout(() => setToast(null), 2000)
+    }
+  }, [bottles, onRebin])
 
   const noMoveVisible = showAllNoMove ? results.noMove : results.noMove.slice(0, TIER3_CAP)
   const noMoveHidden = results.noMove.length - noMoveVisible.length
@@ -81,7 +93,7 @@ export function SearchPanel({ bottles, mode, onPack, onShelve, onUnpack }: Props
             <div className="search-panel__tier">
               <div className="search-panel__tier-header">NEEDS ACTION ({results.needsAction.length})</div>
               {results.needsAction.map((r) => (
-                <SearchResultCard key={r.bottle.barcode} result={r} mode={mode} onPack={handlePack} onShelve={handleShelve} onUnpack={onUnpack} />
+                <SearchResultCard key={r.bottle.barcode} result={r} mode={mode} onPack={handlePack} onShelve={handleShelve} onUnpack={onUnpack} onRebin={handleRebin} />
               ))}
             </div>
           )}
@@ -90,7 +102,7 @@ export function SearchPanel({ bottles, mode, onPack, onShelve, onUnpack }: Props
             <div className="search-panel__tier search-panel__tier--muted">
               <div className="search-panel__tier-header">IN PROGRESS ({results.inProgress.length})</div>
               {results.inProgress.map((r) => (
-                <SearchResultCard key={r.bottle.barcode} result={r} mode={mode} onPack={handlePack} onShelve={handleShelve} onUnpack={onUnpack} />
+                <SearchResultCard key={r.bottle.barcode} result={r} mode={mode} onPack={handlePack} onShelve={handleShelve} onUnpack={onUnpack} onRebin={handleRebin} />
               ))}
             </div>
           )}
@@ -99,7 +111,7 @@ export function SearchPanel({ bottles, mode, onPack, onShelve, onUnpack }: Props
             <div className="search-panel__tier search-panel__tier--dim">
               <div className="search-panel__tier-header">NO MOVE NEEDED ({results.noMove.length})</div>
               {noMoveVisible.map((r) => (
-                <SearchResultCard key={r.bottle.barcode} result={r} mode={mode} onPack={handlePack} onShelve={handleShelve} onUnpack={onUnpack} />
+                <SearchResultCard key={r.bottle.barcode} result={r} mode={mode} onPack={handlePack} onShelve={handleShelve} onUnpack={onUnpack} onRebin={handleRebin} />
               ))}
               {noMoveHidden > 0 && (
                 <button className="search-panel__show-more" onClick={() => setShowAllNoMove(true)}>

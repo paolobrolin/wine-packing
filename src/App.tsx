@@ -91,6 +91,9 @@ export default function App() {
       }} onUnpack={(barcode) => {
         updateBottleLocally(barcode, { state: 'pending', packed_at: null })
         unpack(barcode)
+      }} onRebin={(barcode) => {
+        updateBottleLocally(barcode, { state: 'synced', synced_at: new Date().toISOString() })
+        shelve(barcode)
       }} />
 
       {error && <div className="app__error" role="alert">Error: {error.message}</div>}

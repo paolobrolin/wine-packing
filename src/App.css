@@ -208,12 +208,17 @@ body {
 /* Search Result Card */
 .search-card { margin: 4px 0; border-radius: 8px; overflow: hidden; }
 .search-card--move { border-left: 4px solid var(--packed-border); background: var(--surface); }
+.search-card--rebin { border-left: 4px solid #4a9aba; background: var(--surface); }
+.search-card--home-placed { border-left: 4px solid var(--green); background: var(--surface); }
 .search-card--home { border-left: 4px solid var(--green); background: var(--surface); }
 .search-card__verdict {
   padding: 6px 12px; font-size: 12px; font-weight: 700; letter-spacing: 0.3px;
 }
 .search-card--move .search-card__verdict { background: var(--packed); color: #e0c060; }
+.search-card--rebin .search-card__verdict { background: #1a3a4a; color: #60b0d0; }
+.search-card--home-placed .search-card__verdict { background: var(--shelved); color: #60c060; }
 .search-card--home .search-card__verdict { background: var(--shelved); color: #60c060; }
+.search-card__action--rebin { background: #4a9aba; }
 .search-card__body { display: flex; align-items: center; padding: 8px 12px; gap: 12px; }
 .search-card__info { flex: 1; min-width: 0; }
 .search-card__name { font-size: 14px; font-weight: 500; color: inherit; text-decoration: none; display: block; }
