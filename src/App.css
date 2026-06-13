@@ -169,6 +169,10 @@ body {
 .home-view__name { font-size: 14px; font-weight: 500; }
 .home-view__detail { font-size: 12px; color: var(--text-dim); margin-top: 2px; }
 .home-view__collapsed { font-size: 14px; color: var(--text-dim); padding: 8px 0; }
+.home-view__rebin-alert { background: #1a3a4a; color: #60b0d0; padding: 10px 16px; border-radius: 8px; margin-bottom: 16px; font-weight: 600; font-size: 14px; }
+.home-view__bin-group { margin-bottom: 8px; }
+.home-view__bin-label { font-size: 12px; font-weight: 600; color: var(--text-dim); padding: 4px 0; text-transform: uppercase; letter-spacing: 0.5px; }
+.home-view__rebin-badge { color: #60b0d0; font-weight: 600; }
 
 /* Search */
 .search-panel { position: sticky; top: 52px; z-index: 9; background: var(--bg); padding: 8px 0; }
