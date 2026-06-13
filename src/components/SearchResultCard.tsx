@@ -1,6 +1,6 @@
 import { memo } from 'react'
 import type { ScoredBottle, Mode } from '../search/types'
-import { needsMove, moveType } from '../data/models'
+import { moveType } from '../data/models'
 import { displayVintage, displayCost } from '../data/format'
 
 interface Props {
@@ -19,7 +19,6 @@ function ctUrl(iwine: number): string {
 export const SearchResultCard = memo(function SearchResultCard({ result, mode, onPack, onShelve, onUnpack, onRebin }: Props) {
   const { bottle, tier } = result
   const mt = moveType(bottle)
-  const moves = needsMove(bottle)
   const canAct = tier === 'needs-action'
   const canUndo = tier === 'in-progress' && bottle.state === 'packed'
 

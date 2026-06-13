@@ -1,5 +1,5 @@
 import type { DbBottle } from '../data/models'
-import { needsMove, moveType } from '../data/models'
+import { moveType } from '../data/models'
 import { displayVintage } from '../data/format'
 
 interface Props {
