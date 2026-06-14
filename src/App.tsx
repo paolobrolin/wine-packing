@@ -6,6 +6,7 @@ import { Overview } from './components/Overview'
 import { ShelfGroup } from './components/ShelfGroup'
 import { HomeView } from './components/HomeView'
 import { SearchPanel } from './components/SearchPanel'
+import { OverrideSheet } from './components/OverrideSheet'
 import { inferTransition, reverseTransition } from './rules/state-machine'
 import { actionLabel } from './data/models'
 import type { DbBottle } from './data/models'
@@ -21,6 +22,7 @@ function dedupeBottles(primary: DbBottle[], secondary: DbBottle[]): DbBottle[] {
 export default function App() {
   const [view, setView] = useState<View>('overview')
   const [selectedSource, setSelectedSource] = useState<string | null>(null)
+  const [overrideBottle, setOverrideBottle] = useState<DbBottle | null>(null)
 
   const { bottles: moveBottles, loading: moveLoading, error: moveError, updateBottleLocally } = useBottles({ type: 'needs-move' })
   const { bottles: homeBottles, loading: homeLoading, error: homeError } = useBottles({ type: 'home' })
@@ -31,6 +33,17 @@ export default function App() {
   const handleDone = (barcode: string) => {
     const bottle = [...moveBottles, ...homeBottles].find((b) => b.barcode === barcode)
     if (!bottle) return
+
+    setOverrideBottle(bottle)
+  }
+
+  const handleConfirmDone = (barcode: string, overrideBin: string | null) => {
+    const bottle = [...moveBottles, ...homeBottles].find((b) => b.barcode === barcode)
+    if (!bottle) { setOverrideBottle(null); return }
+
+    if (overrideBin) {
+      updateBottleLocally(barcode, { recommended_bin: overrideBin } as Partial<typeof bottle>)
+    }
 
     const label = actionLabel(bottle)
     const nextState = inferTransition(bottle)
@@ -63,6 +76,7 @@ export default function App() {
         showToast(`${v} ${bottle.wine} — undone`, 'info')
       },
     )
+    setOverrideBottle(null)
   }
 
   const handleUndo = (barcode: string) => {
@@ -143,6 +157,14 @@ export default function App() {
       )}
 
       {!loading && view === 'home' && <HomeView bottles={homeBottles} />}
+
+      {overrideBottle && (
+        <OverrideSheet
+          bottle={overrideBottle}
+          onConfirm={handleConfirmDone}
+          onCancel={() => setOverrideBottle(null)}
+        />
+      )}
 
       {toast && (
         <div className={`app__toast app__toast--${toast.type}`} role="status">
