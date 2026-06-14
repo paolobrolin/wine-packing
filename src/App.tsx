@@ -177,12 +177,14 @@ export default function App() {
         <OverrideSheet
           bottle={overrideBottle}
           onConfirm={handleConfirmDone}
-          onKeep={(barcode) => {
+          onKeep={async (barcode) => {
             updateBottleLocally(barcode, {
               state: 'synced',
               recommended_location: null,
               recommended_bin: null,
             } as Partial<DbBottle>)
+            const { dismissRecommendation } = await import('./data/queries')
+            dismissRecommendation(barcode)
             const b = overrideBottle
             const v = b.vintage === '1001' ? 'NV' : b.vintage
             showToast(`${v} ${b.wine} — kept in place`, 'info')

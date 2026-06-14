@@ -155,3 +155,20 @@ export async function fetchHomeBottles(): Promise<DbBottle[]> {
   if (error) throw error
   return data ?? []
 }
+
+export async function dismissRecommendation(barcode: string): Promise<void> {
+  const { error } = await getSupabase()
+    .from('bottles')
+    .update({
+      recommended_location: null,
+      recommended_bin: null,
+      move_reason: null,
+      rule_id: null,
+      state: 'synced',
+      synced_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq('barcode', barcode)
+
+  if (error) throw error
+}
