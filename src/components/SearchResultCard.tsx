@@ -1,26 +1,22 @@
 import { memo } from 'react'
-import type { ScoredBottle, Mode } from '../search/types'
+import type { ScoredBottle } from '../search/types'
 import { moveType } from '../data/models'
 import { displayVintage, displayCost } from '../data/format'
 
 interface Props {
   result: ScoredBottle
-  mode: Mode
-  onPack: (barcode: string) => void
-  onShelve?: (barcode: string) => void
-  onUnpack?: (barcode: string) => void
-  onRebin?: (barcode: string) => void
+  onDone: (barcode: string) => void
+  onUndo?: (barcode: string) => void
 }
 
 function ctUrl(iwine: number): string {
   return `https://www.cellartracker.com/wine.asp?iWine=${iwine}`
 }
 
-export const SearchResultCard = memo(function SearchResultCard({ result, mode, onPack, onShelve, onUnpack, onRebin }: Props) {
+export const SearchResultCard = memo(function SearchResultCard({ result, onDone, onUndo }: Props) {
   const { bottle, tier } = result
   const mt = moveType(bottle)
   const canAct = tier === 'needs-action'
-  const canUndo = tier === 'in-progress' && bottle.state === 'packed'
 
   const verdictClass = mt === 'cross-location' ? 'search-card--move'
     : mt === 'within-location' ? 'search-card--rebin'
@@ -28,31 +24,26 @@ export const SearchResultCard = memo(function SearchResultCard({ result, mode, o
     : 'search-card--home'
 
   const locationPrefix = bottle.recommended_location === 'REMOTE' ? 'REMOTE ' : ''
-  const verdictText = mt === 'cross-location' ? `MOVE → ${locationPrefix}${bottle.recommended_bin ?? 'TBD'}`
-    : mt === 'within-location' ? `REBIN → ${bottle.recommended_bin ?? 'TBD'}`
-    : bottle.recommended_bin ? `${bottle.recommended_bin}`
+  const verdictText = (mt === 'cross-location' || mt === 'within-location')
+    ? `MOVE TO ${locationPrefix}${bottle.recommended_bin ?? 'TBD'}`
+    : bottle.recommended_bin ? `IN PLACE ${bottle.recommended_bin}`
     : 'HOME'
 
-  const handleAction = (e: React.MouseEvent) => {
+  const currentBin = bottle.current_bin ?? bottle.current_location ?? 'Unknown'
+
+  const handleDone = (e: React.MouseEvent) => {
     e.stopPropagation()
-    if (mt === 'within-location' && onRebin) {
-      onRebin(bottle.barcode)
-      return
-    }
-    if (canAct) {
-      if (mode === 'unpacking' && onShelve) onShelve(bottle.barcode)
-      else onPack(bottle.barcode)
-    } else if (canUndo && onUnpack) {
-      onUnpack(bottle.barcode)
-    }
+    onDone(bottle.barcode)
+  }
+
+  const handleUndo = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (onUndo) onUndo(bottle.barcode)
   }
 
   const handleCtLink = (e: React.MouseEvent) => {
     e.stopPropagation()
   }
-
-  const actionLabel = mt === 'within-location' ? 'Move'
-    : mode === 'unpacking' ? 'Shelve' : 'Pack'
 
   return (
     <div className={`search-card ${verdictClass}`} data-testid={`search-${bottle.barcode}`}>
@@ -75,14 +66,17 @@ export const SearchResultCard = memo(function SearchResultCard({ result, mode, o
               <span className="search-card__window">{bottle.begin_consume}–{bottle.end_consume}</span>
             )}
           </div>
+          {(mt === 'cross-location' || mt === 'within-location') && (
+            <div className="search-card__current">Currently: {currentBin}</div>
+          )}
         </div>
-        {(canAct || (mt === 'within-location' && bottle.state === 'pending')) && (
-          <button className={`search-card__action${mt === 'within-location' ? ' search-card__action--rebin' : ''}`} onClick={handleAction}>
-            {actionLabel}
+        {canAct && (
+          <button className="search-card__action" onClick={handleDone}>
+            Done
           </button>
         )}
-        {canUndo && (
-          <button className="search-card__action search-card__action--undo" onClick={handleAction}>
+        {!canAct && (bottle.state === 'packed' || bottle.state === 'in_transit') && onUndo && (
+          <button className="search-card__action search-card__action--undo" onClick={handleUndo}>
             Undo
           </button>
         )}
@@ -92,6 +86,5 @@ export const SearchResultCard = memo(function SearchResultCard({ result, mode, o
 }, (prev, next) =>
   prev.result.bottle.barcode === next.result.bottle.barcode &&
   prev.result.bottle.state === next.result.bottle.state &&
-  prev.result.tier === next.result.tier &&
-  prev.mode === next.mode
+  prev.result.tier === next.result.tier
 )

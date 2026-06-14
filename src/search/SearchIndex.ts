@@ -1,6 +1,6 @@
 import type { DbBottle } from '../data/models'
 import { needsMove } from '../data/models'
-import type { Mode, Tier, ScoredBottle, TieredResults } from './types'
+import type { Tier, ScoredBottle, TieredResults } from './types'
 import { SEARCH_FIELDS } from './types'
 
 interface IndexedBottle {
@@ -16,15 +16,10 @@ function tokenize(value: string): string[] {
   return stripDiacritics(value.toLowerCase()).split(/\s+/).filter(Boolean)
 }
 
-function classifyTier(bottle: DbBottle, mode: Mode): Tier {
+function classifyTier(bottle: DbBottle): Tier {
   const moves = needsMove(bottle)
-  if (mode === 'packing') {
-    if (moves && bottle.state === 'pending') return 'needs-action'
-    if (moves && (bottle.state === 'packed' || bottle.state === 'in_transit')) return 'in-progress'
-    return 'no-move'
-  }
-  if (bottle.state === 'in_transit' || bottle.state === 'packed') return 'needs-action'
-  if (bottle.state === 'shelved') return 'in-progress'
+  if (moves && bottle.state === 'pending') return 'needs-action'
+  if (bottle.state === 'packed' || bottle.state === 'in_transit') return 'needs-action'
   return 'no-move'
 }
 
@@ -51,7 +46,7 @@ export class SearchIndex {
     })
   }
 
-  search(query: string, mode: Mode): TieredResults {
+  search(query: string): TieredResults {
     const trimmed = query.trim()
     if (!trimmed || trimmed.length < 2) return { needsAction: [], inProgress: [], noMove: [], total: 0 }
 
@@ -62,7 +57,7 @@ export class SearchIndex {
       const relevance = this.scoreEntry(entry, terms)
       if (relevance === 0) continue
 
-      const tier = classifyTier(entry.bottle, mode)
+      const tier = classifyTier(entry.bottle)
       const score = relevance * 100 + actionScore(tier)
 
       scored.push({ bottle: entry.bottle, score, tier })

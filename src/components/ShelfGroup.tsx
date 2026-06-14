@@ -1,4 +1,5 @@
 import type { DbBottle } from '../data/models'
+import { needsMove } from '../data/models'
 import { BottleCard } from './BottleCard'
 import { OwcGroupCard } from './OwcGroupCard'
 import { groupByOwc } from '../hooks/useBottles'
@@ -6,23 +7,18 @@ import { groupByOwc } from '../hooks/useBottles'
 interface Props {
   shelfName: string
   bottles: DbBottle[]
-  mode: 'packing' | 'unpacking'
   capacity?: { current: number; max: number }
-  onAction: (barcode: string) => void
-  onBatchAction: (barcodes: string[]) => void
-  onRebin?: (barcode: string) => void
+  onDone: (barcode: string) => void
+  onBatchDone: (barcodes: string[]) => void
 }
 
-export function ShelfGroup({ shelfName, bottles, mode, capacity, onAction, onBatchAction, onRebin }: Props) {
+export function ShelfGroup({ shelfName, bottles, capacity, onDone, onBatchDone }: Props) {
   const { owc, loose } = groupByOwc(bottles)
   const total = bottles.length
-  const done = bottles.filter((b) =>
-    mode === 'packing' ? b.state !== 'pending' : b.state === 'shelved' || b.state === 'synced',
-  ).length
+  const done = bottles.filter((b) => b.state === 'shelved' || b.state === 'synced').length
 
-  const allActionable = mode === 'packing'
-    ? bottles.every((b) => b.state === 'pending')
-    : bottles.every((b) => b.state === 'packed' || b.state === 'in_transit')
+  const actionable = bottles.filter((b) => needsMove(b) && (b.state === 'pending' || b.state === 'packed' || b.state === 'in_transit'))
+  const allActionable = actionable.length === total && total > 0
 
   return (
     <section className="shelf-group" data-testid={`shelf-${shelfName}`}>
@@ -56,10 +52,10 @@ export function ShelfGroup({ shelfName, bottles, mode, capacity, onAction, onBat
         {allActionable && (
           <button
             className="shelf-group__batch-action"
-            onClick={() => onBatchAction(bottles.map((b) => b.barcode))}
+            onClick={() => onBatchDone(bottles.map((b) => b.barcode))}
             data-testid={`batch-${shelfName}`}
           >
-            {mode === 'packing' ? 'Pack All ▸' : 'Shelve All ▸'}
+            Done All ▸
           </button>
         )}
       </div>
@@ -70,12 +66,11 @@ export function ShelfGroup({ shelfName, bottles, mode, capacity, onAction, onBat
             key={groupName}
             groupName={groupName}
             bottles={groupBottles}
-            mode={mode}
-            onActionAll={onBatchAction}
+            onDoneAll={onBatchDone}
           />
         ))}
         {loose.map((b) => (
-          <BottleCard key={b.barcode} bottle={b} mode={mode} onAction={onAction} onRebin={onRebin} />
+          <BottleCard key={b.barcode} bottle={b} onDone={onDone} />
         ))}
       </div>
     </section>

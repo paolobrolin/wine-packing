@@ -134,7 +134,13 @@ body {
 .bottle-card__window { color: var(--green); }
 .bottle-card__dest { color: var(--yellow); }
 .bottle-card__reason { font-size: 11px; color: var(--text-dim); margin-top: 2px; font-style: italic; }
-.bottle-card__move-btn { background: #4a9aba; color: white; border: none; border-radius: 6px; padding: 6px 14px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; align-self: center; margin-left: auto; }
+.bottle-card__explanation { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+.bottle-card__done-btn { background: var(--accent); color: white; border: none; border-radius: 6px; padding: 6px 14px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; align-self: center; margin-left: auto; }
+.search-card__current { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+.search-panel__toast--success { background: #1a3a1a; border-color: #2a6a2a; }
+.search-panel__toast--info { background: #1a3a4a; border-color: #4a9aba; }
+.search-panel__toast--error { background: #4a1a1a; border-color: #aa3333; }
+.search-panel__toast-undo { background: transparent; border: 1px solid currentColor; color: inherit; border-radius: 4px; padding: 2px 8px; margin-left: 8px; cursor: pointer; font-size: 12px; }
 
 .owc-card {
   padding: 12px; background: var(--surface);

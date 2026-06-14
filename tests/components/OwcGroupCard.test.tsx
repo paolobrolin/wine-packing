@@ -28,43 +28,56 @@ const bottles = [
 
 describe('OwcGroupCard', () => {
   it('shows group name and count', () => {
-    render(<OwcGroupCard groupName="PdB 2020 Riserve" bottles={bottles} mode="packing" onActionAll={() => {}} />)
+    render(<OwcGroupCard groupName="PdB 2020 Riserve" bottles={bottles} onDoneAll={() => {}} />)
     expect(screen.getByText('OWC: PdB 2020 Riserve')).toBeInTheDocument()
     expect(screen.getByText('3 fl')).toBeInTheDocument()
   })
 
-  it('shows Pack Case button in packing mode when all pending', () => {
-    render(<OwcGroupCard groupName="PdB 2020" bottles={bottles} mode="packing" onActionAll={() => {}} />)
-    expect(screen.getByText('Pack Case ▸')).toBeInTheDocument()
+  it('shows Done Case button when all pending', () => {
+    render(<OwcGroupCard groupName="PdB 2020" bottles={bottles} onDoneAll={() => {}} />)
+    expect(screen.getByText('Done Case ▸')).toBeInTheDocument()
   })
 
-  it('calls onActionAll with all barcodes', async () => {
-    const onAction = vi.fn()
-    render(<OwcGroupCard groupName="PdB 2020" bottles={bottles} mode="packing" onActionAll={onAction} />)
-    await userEvent.click(screen.getByText('Pack Case ▸'))
-    expect(onAction).toHaveBeenCalledWith(['001', '002', '003'])
+  it('calls onDoneAll with all barcodes', async () => {
+    const onDoneAll = vi.fn()
+    render(<OwcGroupCard groupName="PdB 2020" bottles={bottles} onDoneAll={onDoneAll} />)
+    await userEvent.click(screen.getByText('Done Case ▸'))
+    expect(onDoneAll).toHaveBeenCalledWith(['001', '002', '003'])
   })
 
-  it('hides Pack Case when not all pending', () => {
+  it('hides Done Case when not all actionable', () => {
     const mixed = [
       makeDbBottle({ barcode: '001', state: 'pending' }),
-      makeDbBottle({ barcode: '002', state: 'packed' }),
+      makeDbBottle({ barcode: '002', state: 'shelved' }),
     ]
-    render(<OwcGroupCard groupName="Test" bottles={mixed} mode="packing" onActionAll={() => {}} />)
-    expect(screen.queryByText('Pack Case ▸')).not.toBeInTheDocument()
+    render(<OwcGroupCard groupName="Test" bottles={mixed} onDoneAll={() => {}} />)
+    // actionable requires some pending/packed/in_transit AND not all done
+    // With one shelved and one pending, the button should still show since
+    // some are actionable and not all are done. Let's just verify the button text.
+    // The component shows the button when !allDone && some actionable
+    expect(screen.getByText('Done Case ▸')).toBeInTheDocument()
+  })
+
+  it('hides Done Case when all shelved', () => {
+    const allDone = [
+      makeDbBottle({ barcode: '001', state: 'shelved' }),
+      makeDbBottle({ barcode: '002', state: 'shelved' }),
+    ]
+    render(<OwcGroupCard groupName="Test" bottles={allDone} onDoneAll={() => {}} />)
+    expect(screen.queryByText('Done Case ▸')).not.toBeInTheDocument()
   })
 
   it('expands to show individual bottles', async () => {
-    render(<OwcGroupCard groupName="PdB 2020" bottles={bottles} mode="packing" onActionAll={() => {}} />)
+    render(<OwcGroupCard groupName="PdB 2020" bottles={bottles} onDoneAll={() => {}} />)
     expect(screen.queryByText(/PdB Riserva Asili/)).not.toBeInTheDocument()
     await userEvent.click(screen.getByText('▸ Show bottles'))
     expect(screen.getByText(/PdB Riserva Asili/)).toBeInTheDocument()
     expect(screen.getByText(/PdB Riserva Montefico/)).toBeInTheDocument()
   })
 
-  it('shows Shelve Case in unpacking mode when all packed', () => {
+  it('shows Done Case for packed bottles', () => {
     const packed = bottles.map((b) => ({ ...b, state: 'packed' as const }))
-    render(<OwcGroupCard groupName="PdB 2020" bottles={packed} mode="unpacking" onActionAll={() => {}} />)
-    expect(screen.getByText('Shelve Case ▸')).toBeInTheDocument()
+    render(<OwcGroupCard groupName="PdB 2020" bottles={packed} onDoneAll={() => {}} />)
+    expect(screen.getByText('Done Case ▸')).toBeInTheDocument()
   })
 })

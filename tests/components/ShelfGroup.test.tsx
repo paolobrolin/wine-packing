@@ -28,50 +28,49 @@ describe('ShelfGroup', () => {
   ]
 
   it('shows shelf name and count', () => {
-    render(<ShelfGroup shelfName="2.1 BDX LB" bottles={bottles} mode="packing" onAction={() => {}} onBatchAction={() => {}} />)
+    render(<ShelfGroup shelfName="2.1 BDX LB" bottles={bottles} onDone={() => {}} onBatchDone={() => {}} />)
     expect(screen.getByTestId('shelf-2.1 BDX LB')).toBeInTheDocument()
     expect(screen.getByText('3 fl')).toBeInTheDocument()
   })
 
   it('shows progress', () => {
-    render(<ShelfGroup shelfName="2.1 BDX LB" bottles={bottles} mode="packing" onAction={() => {}} onBatchAction={() => {}} />)
+    render(<ShelfGroup shelfName="2.1 BDX LB" bottles={bottles} onDone={() => {}} onBatchDone={() => {}} />)
     expect(screen.getByText('0/3')).toBeInTheDocument()
   })
 
-  it('shows Pack All when all pending in packing mode', () => {
-    render(<ShelfGroup shelfName="2.1 BDX LB" bottles={bottles} mode="packing" onAction={() => {}} onBatchAction={() => {}} />)
-    expect(screen.getByText('Pack All ▸')).toBeInTheDocument()
+  it('shows Done All when all pending', () => {
+    render(<ShelfGroup shelfName="2.1 BDX LB" bottles={bottles} onDone={() => {}} onBatchDone={() => {}} />)
+    expect(screen.getByText('Done All ▸')).toBeInTheDocument()
   })
 
-  it('calls onBatchAction with all barcodes on Pack All', async () => {
+  it('calls onBatchDone with all barcodes on Done All', async () => {
     const onBatch = vi.fn()
-    render(<ShelfGroup shelfName="2.1 BDX LB" bottles={bottles} mode="packing" onAction={() => {}} onBatchAction={onBatch} />)
-    await userEvent.click(screen.getByText('Pack All ▸'))
+    render(<ShelfGroup shelfName="2.1 BDX LB" bottles={bottles} onDone={() => {}} onBatchDone={onBatch} />)
+    await userEvent.click(screen.getByText('Done All ▸'))
     expect(onBatch).toHaveBeenCalledWith(['001', '002', '003'])
   })
 
-  it('hides Pack All when not all pending', () => {
+  it('hides Done All when not all actionable', () => {
     const mixed = [
       makeDbBottle({ barcode: '001', state: 'pending' }),
-      makeDbBottle({ barcode: '002', state: 'packed' }),
+      makeDbBottle({ barcode: '002', state: 'shelved' }),
     ]
-    render(<ShelfGroup shelfName="test" bottles={mixed} mode="packing" onAction={() => {}} onBatchAction={() => {}} />)
-    expect(screen.queryByText('Pack All ▸')).not.toBeInTheDocument()
+    render(<ShelfGroup shelfName="test" bottles={mixed} onDone={() => {}} onBatchDone={() => {}} />)
+    expect(screen.queryByText('Done All ▸')).not.toBeInTheDocument()
   })
 
   it('shows capacity bar when provided', () => {
-    render(<ShelfGroup shelfName="test" bottles={bottles} mode="packing" capacity={{ current: 8, max: 20 }} onAction={() => {}} onBatchAction={() => {}} />)
+    render(<ShelfGroup shelfName="test" bottles={bottles} capacity={{ current: 8, max: 20 }} onDone={() => {}} onBatchDone={() => {}} />)
     expect(screen.getByText('8/20')).toBeInTheDocument()
   })
 
-  it('shows Shelve All in unpacking mode when all in_transit', () => {
+  it('shows Done All for in_transit bottles', () => {
     const transitBottles = [
       makeDbBottle({ barcode: '001', state: 'in_transit' }),
       makeDbBottle({ barcode: '002', state: 'in_transit' }),
     ]
-    render(<ShelfGroup shelfName="test" bottles={transitBottles} mode="unpacking" onAction={() => {}} onBatchAction={() => {}} />)
-    expect(screen.getByText('Shelve All ▸')).toBeInTheDocument()
-    expect(screen.queryByText('Pack All ▸')).not.toBeInTheDocument()
+    render(<ShelfGroup shelfName="test" bottles={transitBottles} onDone={() => {}} onBatchDone={() => {}} />)
+    expect(screen.getByText('Done All ▸')).toBeInTheDocument()
   })
 
   it('renders OWC bottles as group card', () => {
@@ -80,7 +79,7 @@ describe('ShelfGroup', () => {
       makeDbBottle({ barcode: '002', owc_group: 'PdB 2020' }),
       makeDbBottle({ barcode: '003', owc_group: null }),
     ]
-    render(<ShelfGroup shelfName="test" bottles={owcBottles} mode="packing" onAction={() => {}} onBatchAction={() => {}} />)
+    render(<ShelfGroup shelfName="test" bottles={owcBottles} onDone={() => {}} onBatchDone={() => {}} />)
     expect(screen.getByText('OWC: PdB 2020')).toBeInTheDocument()
     expect(screen.getByText('2 fl')).toBeInTheDocument()
   })

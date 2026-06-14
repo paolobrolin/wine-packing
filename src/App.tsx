@@ -3,9 +3,9 @@ import { useBottles, groupByShelf } from './hooks/useBottles'
 import { useMoveActions } from './hooks/useMoveActions'
 import { Overview } from './components/Overview'
 import { ShelfGroup } from './components/ShelfGroup'
-import { ModeToggle } from './components/ModeToggle'
 import { HomeView } from './components/HomeView'
 import { SearchPanel } from './components/SearchPanel'
+import { inferTransition, reverseTransition } from './rules/state-machine'
 import type { DbBottle } from './data/models'
 import './App.css'
 
@@ -17,40 +17,49 @@ function dedupeBottles(primary: DbBottle[], secondary: DbBottle[]): DbBottle[] {
 }
 
 export default function App() {
-  const [mode, setMode] = useState<'packing' | 'unpacking'>('packing')
   const [view, setView] = useState<View>('overview')
   const [selectedSource, setSelectedSource] = useState<string | null>(null)
 
   const { bottles: moveBottles, loading: moveLoading, error: moveError, updateBottleLocally } = useBottles({ type: 'needs-move' })
   const { bottles: homeBottles, loading: homeLoading, error: homeError } = useBottles({ type: 'home' })
-  const { pack, unpack, shelve, packBatch, shelveBatch } = useMoveActions()
+  const { pack, unpack, shelve } = useMoveActions()
   const error = moveError || homeError
 
-  const handleAction = (barcode: string) => {
-    const bottle = moveBottles.find((b) => b.barcode === barcode)
+  const handleDone = (barcode: string) => {
+    const bottle = [...moveBottles, ...homeBottles].find((b) => b.barcode === barcode)
     if (!bottle) return
-    if (mode === 'packing') {
-      if (bottle.state === 'packed') {
-        updateBottleLocally(barcode, { state: 'pending', packed_at: null })
-        unpack(barcode)
-      } else {
-        updateBottleLocally(barcode, { state: 'packed', packed_at: new Date().toISOString() })
-        pack(barcode)
-      }
-    } else {
-      updateBottleLocally(barcode, { state: 'shelved', shelved_at: new Date().toISOString() })
-      shelve(barcode)
-    }
+
+    const nextState = inferTransition(bottle)
+    const tsField = nextState === 'packed' ? 'packed_at'
+      : nextState === 'shelved' ? 'shelved_at'
+      : nextState === 'synced' ? 'synced_at' : null
+
+    updateBottleLocally(barcode, {
+      state: nextState,
+      ...(tsField ? { [tsField]: new Date().toISOString() } : {}),
+    } as Partial<typeof bottle>)
+
+    if (nextState === 'packed') pack(barcode)
+    else if (nextState === 'shelved') shelve(barcode)
+    else if (nextState === 'synced') shelve(barcode)
   }
 
-  const handleBatchAction = (barcodes: string[]) => {
-    const newState = mode === 'packing' ? 'packed' : 'shelved'
-    const tsField = mode === 'packing' ? 'packed_at' : 'shelved_at'
+  const handleUndo = (barcode: string) => {
+    const bottle = [...moveBottles, ...homeBottles].find((b) => b.barcode === barcode)
+    if (!bottle) return
+
+    const prevState = reverseTransition(bottle.state)
+    updateBottleLocally(barcode, {
+      state: prevState,
+      packed_at: prevState === 'pending' ? null : bottle.packed_at,
+    } as Partial<typeof bottle>)
+    unpack(barcode)
+  }
+
+  const handleBatchDone = (barcodes: string[]) => {
     for (const bc of barcodes) {
-      updateBottleLocally(bc, { state: newState, [tsField]: new Date().toISOString() } as Partial<typeof moveBottles[0]>)
+      handleDone(bc)
     }
-    if (mode === 'packing') packBatch(barcodes)
-    else shelveBatch(barcodes)
   }
 
   const handleSelectSource = (source: string) => {
@@ -68,42 +77,28 @@ export default function App() {
   return (
     <div className="app">
       <header className="app__header">
-        <h1 className="app__title">Wine Cellar Tracker</h1>
+        <h1 className="app__title">Vinflytt</h1>
         <nav className="app__nav">
           <button className={view === 'overview' || view === 'source' ? 'active' : ''} onClick={() => { setView('overview'); setSelectedSource(null) }}>
-            Moves
+            Tasks
           </button>
           <button className={view === 'home' ? 'active' : ''} onClick={() => setView('home')}>
-            Home
+            Cellar
           </button>
         </nav>
       </header>
 
-      <SearchPanel bottles={dedupeBottles(moveBottles, homeBottles)} mode={mode} onPack={(barcode) => {
-        const bottle = moveBottles.find(b => b.barcode === barcode)
-        if (bottle) {
-          updateBottleLocally(barcode, { state: 'packed', packed_at: new Date().toISOString() })
-          pack(barcode)
-        }
-      }} onShelve={(barcode) => {
-        updateBottleLocally(barcode, { state: 'shelved', shelved_at: new Date().toISOString() })
-        shelve(barcode)
-      }} onUnpack={(barcode) => {
-        updateBottleLocally(barcode, { state: 'pending', packed_at: null })
-        unpack(barcode)
-      }} onRebin={(barcode) => {
-        updateBottleLocally(barcode, { state: 'synced', synced_at: new Date().toISOString() })
-        shelve(barcode)
-      }} />
+      <SearchPanel
+        bottles={dedupeBottles(moveBottles, homeBottles)}
+        onDone={handleDone}
+        onUndo={handleUndo}
+      />
 
       {error && <div className="app__error" role="alert">Error: {error.message}</div>}
       {loading && !error && <div className="app__loading">Loading...</div>}
 
       {!loading && view === 'overview' && (
-        <>
-          <ModeToggle mode={mode} onToggle={setMode} />
-          <Overview bottles={moveBottles} onSelectSource={handleSelectSource} />
-        </>
+        <Overview bottles={moveBottles} onSelectSource={handleSelectSource} />
       )}
 
       {!loading && view === 'source' && (
@@ -112,7 +107,6 @@ export default function App() {
             <button className="app__back" onClick={() => { setView('overview'); setSelectedSource(null) }}>← Back</button>
             <h2>{selectedSource}</h2>
           </div>
-          <ModeToggle mode={mode} onToggle={setMode} />
           {[...shelves.entries()]
             .sort(([a], [b]) => a.localeCompare(b))
             .map(([shelfName, shelfBottles]) => (
@@ -120,13 +114,8 @@ export default function App() {
                 key={shelfName}
                 shelfName={shelfName}
                 bottles={shelfBottles}
-                mode={mode}
-                onAction={handleAction}
-                onBatchAction={handleBatchAction}
-                onRebin={(barcode) => {
-                  updateBottleLocally(barcode, { state: 'synced', synced_at: new Date().toISOString() })
-                  shelve(barcode)
-                }}
+                onDone={handleDone}
+                onBatchDone={handleBatchDone}
               />
             ))}
         </>

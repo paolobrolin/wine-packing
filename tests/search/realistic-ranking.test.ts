@@ -58,7 +58,7 @@ describe('realistic ranking', () => {
 
   describe('"bar" query — Barolo vs Santa Barbara', () => {
     it('ranks Barolo wines above Santa Barbara wines', () => {
-      const r = index.search('bar', 'packing')
+      const r = index.search('bar')
       const all = [...r.needsAction, ...r.inProgress, ...r.noMove]
       const barolo = all.filter(s => s.bottle.wine.includes('Barolo') || s.bottle.wine.includes('Barbaresco'))
       const barbara = all.filter(s => s.bottle.wine.includes('Barbara'))
@@ -73,14 +73,14 @@ describe('realistic ranking', () => {
     })
 
     it('does not match Bordeaux wines (no "bar" in Bordeaux fields)', () => {
-      const r = index.search('bar', 'packing')
+      const r = index.search('bar')
       const all = [...r.needsAction, ...r.inProgress, ...r.noMove]
       const bordeaux = all.filter(s => s.bottle.producer === 'Château Latour')
       expect(bordeaux.length).toBe(0)
     })
 
     it('matches Barbaresco via wine name and bin', () => {
-      const r = index.search('bar', 'packing')
+      const r = index.search('bar')
       const all = [...r.needsAction, ...r.inProgress, ...r.noMove]
       expect(all.some(s => s.bottle.wine.includes('Barbaresco'))).toBe(true)
     })
@@ -88,7 +88,7 @@ describe('realistic ranking', () => {
 
   describe('"barolo" query — specific wine type', () => {
     it('returns only Barolo wines (not Barbaresco, not Barbara)', () => {
-      const r = index.search('barolo', 'packing')
+      const r = index.search('barolo')
       const all = [...r.needsAction, ...r.inProgress, ...r.noMove]
       all.forEach(s => {
         const hasBarolo = s.bottle.wine.toLowerCase().includes('barolo') ||
@@ -100,7 +100,7 @@ describe('realistic ranking', () => {
 
   describe('"cont" query — producer prefix ranking', () => {
     it('ranks Giacomo Conterno above Vieux Château des Conti', () => {
-      const r = index.search('cont', 'packing')
+      const r = index.search('cont')
       const all = [...r.needsAction, ...r.inProgress, ...r.noMove]
       const conternoIdx = all.findIndex(s => s.bottle.producer === 'Giacomo Conterno')
       const contiIdx = all.findIndex(s => s.bottle.producer.includes('Conti'))
@@ -110,7 +110,7 @@ describe('realistic ranking', () => {
 
   describe('"kongsgaard" — home wine appears in no-move tier', () => {
     it('shows Kongsgaard in noMove tier', () => {
-      const r = index.search('kongsgaard', 'packing')
+      const r = index.search('kongsgaard')
       expect(r.noMove.length).toBe(1)
       expect(r.noMove[0].bottle.producer).toBe('Kongsgaard')
     })
@@ -118,7 +118,7 @@ describe('realistic ranking', () => {
 
   describe('multi-word queries', () => {
     it('"barolo 2021" returns only 2021 Barolo', () => {
-      const r = index.search('barolo 2021', 'packing')
+      const r = index.search('barolo 2021')
       const all = [...r.needsAction, ...r.inProgress, ...r.noMove]
       expect(all.length).toBeGreaterThan(0)
       all.forEach(s => {
@@ -127,7 +127,7 @@ describe('realistic ranking', () => {
     })
 
     it('"cristal rose" finds Roederer Cristal', () => {
-      const r = index.search('cristal rose', 'packing')
+      const r = index.search('cristal rose')
       const all = [...r.needsAction, ...r.inProgress, ...r.noMove]
       expect(all.length).toBe(1)
       expect(all[0].bottle.producer).toBe('Louis Roederer')
@@ -136,23 +136,23 @@ describe('realistic ranking', () => {
 
   describe('minimum query length', () => {
     it('returns nothing for single character', () => {
-      expect(index.search('b', 'packing').total).toBe(0)
+      expect(index.search('b').total).toBe(0)
     })
 
     it('returns results for two characters', () => {
-      expect(index.search('ba', 'packing').total).toBeGreaterThan(0)
+      expect(index.search('ba').total).toBeGreaterThan(0)
     })
   })
 
   describe('result count sanity', () => {
     it('"ba" returns fewer results than total bottles', () => {
-      const r = index.search('ba', 'packing')
+      const r = index.search('ba')
       expect(r.total).toBeLessThan(REALISTIC_BOTTLES.length)
     })
 
     it('more specific query returns fewer results', () => {
-      const broad = index.search('bar', 'packing')
-      const specific = index.search('barolo', 'packing')
+      const broad = index.search('bar')
+      const specific = index.search('barolo')
       expect(specific.total).toBeLessThanOrEqual(broad.total)
     })
   })

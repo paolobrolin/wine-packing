@@ -36,30 +36,30 @@ const bottles: DbBottle[] = [
 
 describe('SearchPanel', () => {
   it('shows no results for empty input', () => {
-    render(<SearchPanel bottles={bottles} mode="packing" onPack={() => {}} />)
+    render(<SearchPanel bottles={bottles} onDone={() => {}} />)
     expect(screen.queryByText(/NEEDS ACTION/)).not.toBeInTheDocument()
   })
 
   it('shows no results for single character', async () => {
-    render(<SearchPanel bottles={bottles} mode="packing" onPack={() => {}} />)
+    render(<SearchPanel bottles={bottles} onDone={() => {}} />)
     await userEvent.type(screen.getByPlaceholderText('Search wines...'), 'b')
     expect(screen.queryByText(/NEEDS ACTION/)).not.toBeInTheDocument()
   })
 
   it('shows results for two characters', async () => {
-    render(<SearchPanel bottles={bottles} mode="packing" onPack={() => {}} />)
+    render(<SearchPanel bottles={bottles} onDone={() => {}} />)
     await userEvent.type(screen.getByPlaceholderText('Search wines...'), 'ba')
     expect(screen.getByText(/NEEDS ACTION/)).toBeInTheDocument()
   })
 
   it('displays matching wine names in results', async () => {
-    render(<SearchPanel bottles={bottles} mode="packing" onPack={() => {}} />)
+    render(<SearchPanel bottles={bottles} onDone={() => {}} />)
     await userEvent.type(screen.getByPlaceholderText('Search wines...'), 'barolo')
     expect(screen.getByText(/Oddero Barolo Brunate/)).toBeInTheDocument()
   })
 
   it('results update when query changes', async () => {
-    render(<SearchPanel bottles={bottles} mode="packing" onPack={() => {}} />)
+    render(<SearchPanel bottles={bottles} onDone={() => {}} />)
     const input = screen.getByPlaceholderText('Search wines...')
 
     await userEvent.type(input, 'oddero')
@@ -72,54 +72,54 @@ describe('SearchPanel', () => {
     expect(screen.getByText(/Kongsgaard/)).toBeInTheDocument()
   })
 
-  it('shows verdict banner MOVE for bottles that need to move', async () => {
-    render(<SearchPanel bottles={bottles} mode="packing" onPack={() => {}} />)
+  it('shows verdict banner MOVE TO for bottles that need to move', async () => {
+    render(<SearchPanel bottles={bottles} onDone={() => {}} />)
     await userEvent.type(screen.getByPlaceholderText('Search wines...'), 'oddero')
-    expect(screen.getByText(/MOVE → REMOTE 3.3 BAROLO CLASSIC/)).toBeInTheDocument()
+    expect(screen.getByText(/MOVE TO REMOTE 3.3 BAROLO CLASSIC/)).toBeInTheDocument()
   })
 
-  it('shows verdict banner STAYS HOME for home bottles', async () => {
-    render(<SearchPanel bottles={bottles} mode="packing" onPack={() => {}} />)
+  it('shows verdict banner HOME for home bottles', async () => {
+    render(<SearchPanel bottles={bottles} onDone={() => {}} />)
     await userEvent.type(screen.getByPlaceholderText('Search wines...'), 'kongs')
     expect(screen.getByText(/HOME/)).toBeInTheDocument()
   })
 
-  it('calls onPack when Pack button is clicked', async () => {
-    const onPack = vi.fn()
-    render(<SearchPanel bottles={bottles} mode="packing" onPack={onPack} />)
+  it('calls onDone when Done button is clicked', async () => {
+    const onDone = vi.fn()
+    render(<SearchPanel bottles={bottles} onDone={onDone} />)
     await userEvent.type(screen.getByPlaceholderText('Search wines...'), 'oddero')
-    await userEvent.click(screen.getByText('Pack'))
-    expect(onPack).toHaveBeenCalledWith('B01')
+    await userEvent.click(screen.getByText('Done'))
+    expect(onDone).toHaveBeenCalledWith('B01')
   })
 
-  it('keeps search query after Pack (user clears manually)', async () => {
-    render(<SearchPanel bottles={bottles} mode="packing" onPack={() => {}} />)
+  it('keeps search query after Done (user clears manually)', async () => {
+    render(<SearchPanel bottles={bottles} onDone={() => {}} />)
     const input = screen.getByPlaceholderText('Search wines...')
     await userEvent.type(input, 'oddero')
-    await userEvent.click(screen.getByText('Pack'))
+    await userEvent.click(screen.getByText('Done'))
     await new Promise(r => setTimeout(r, 400))
     expect(input).toHaveValue('oddero')
   })
 
-  it('can pack multiple results from same search', async () => {
-    const onPack = vi.fn()
-    render(<SearchPanel bottles={bottles} mode="packing" onPack={onPack} />)
+  it('can mark multiple results from same search as done', async () => {
+    const onDone = vi.fn()
+    render(<SearchPanel bottles={bottles} onDone={onDone} />)
     await userEvent.type(screen.getByPlaceholderText('Search wines...'), 'barolo')
-    const packButtons = screen.getAllByText('Pack')
-    await userEvent.click(packButtons[0])
-    expect(onPack).toHaveBeenCalledTimes(1)
-    // Search still shows results — can pack another
+    const doneButtons = screen.getAllByText('Done')
+    await userEvent.click(doneButtons[0])
+    expect(onDone).toHaveBeenCalledTimes(1)
+    // Search still shows results — can mark another
     expect(screen.getByPlaceholderText('Search wines...')).toHaveValue('barolo')
   })
 
   it('shows "No bottles match" for unmatched query', async () => {
-    render(<SearchPanel bottles={bottles} mode="packing" onPack={() => {}} />)
+    render(<SearchPanel bottles={bottles} onDone={() => {}} />)
     await userEvent.type(screen.getByPlaceholderText('Search wines...'), 'zzznotawine')
     expect(screen.getByText(/No bottles match/)).toBeInTheDocument()
   })
 
   it('clear button resets search', async () => {
-    render(<SearchPanel bottles={bottles} mode="packing" onPack={() => {}} />)
+    render(<SearchPanel bottles={bottles} onDone={() => {}} />)
     await userEvent.type(screen.getByPlaceholderText('Search wines...'), 'barolo')
     expect(screen.getByText(/Oddero/)).toBeInTheDocument()
     await userEvent.click(screen.getByText('×'))
@@ -128,7 +128,7 @@ describe('SearchPanel', () => {
 
   describe('result cards update as query refines', () => {
     it('narrowing query removes non-matching cards', async () => {
-      render(<SearchPanel bottles={bottles} mode="packing" onPack={() => {}} />)
+      render(<SearchPanel bottles={bottles} onDone={() => {}} />)
       const input = screen.getByPlaceholderText('Search wines...')
 
       // "ba" matches Barolo + Banfi + Barbara
@@ -145,7 +145,7 @@ describe('SearchPanel', () => {
     })
 
     it('changing query completely replaces results', async () => {
-      render(<SearchPanel bottles={bottles} mode="packing" onPack={() => {}} />)
+      render(<SearchPanel bottles={bottles} onDone={() => {}} />)
       const input = screen.getByPlaceholderText('Search wines...')
 
       await userEvent.type(input, 'oddero')
@@ -159,7 +159,7 @@ describe('SearchPanel', () => {
     })
 
     it('each keystroke produces correct result count', async () => {
-      render(<SearchPanel bottles={bottles} mode="packing" onPack={() => {}} />)
+      render(<SearchPanel bottles={bottles} onDone={() => {}} />)
       const input = screen.getByPlaceholderText('Search wines...')
 
       await userEvent.type(input, 'ba')
@@ -183,7 +183,7 @@ describe('SearchPanel', () => {
         // Same barcode as B01 but from a different query
         mb({ barcode: 'B01', iwine: 1, producer: 'Oddero', wine: 'Oddero Barolo Brunate', vintage: '2021', recommended_bin: '3.3 BAROLO CLASSIC' }),
       ]
-      render(<SearchPanel bottles={duplicated} mode="packing" onPack={() => {}} />)
+      render(<SearchPanel bottles={duplicated} onDone={() => {}} />)
       await userEvent.type(screen.getByPlaceholderText('Search wines...'), 'oddero')
 
       // Should show Oddero once, not twice
@@ -194,42 +194,9 @@ describe('SearchPanel', () => {
     })
   })
 
-  describe('unpack mode', () => {
-    const unpackBottles: DbBottle[] = [
-      mb({ barcode: 'U01', iwine: 10, producer: 'Oddero', wine: 'Oddero Barolo Brunate', vintage: '2021', state: 'in_transit', recommended_bin: '3.3 BAROLO CLASSIC' }),
-      mb({ barcode: 'U02', iwine: 11, producer: 'Massolino', wine: 'Massolino Barolo Parafada', vintage: '2021', state: 'packed', recommended_bin: '3.3 BAROLO CLASSIC' }),
-      mb({ barcode: 'U03', iwine: 12, producer: 'Cavallotto', wine: 'Cavallotto Barolo Riserva Vignolo', vintage: '2018', state: 'shelved', recommended_bin: '3.2 BAROLO MODERN' }),
-    ]
-
-    it('shows "Shelve" button (not "Pack") in unpack mode', async () => {
-      render(<SearchPanel bottles={unpackBottles} mode="unpacking" onPack={() => {}} onShelve={() => {}} />)
-      await userEvent.type(screen.getByPlaceholderText('Search wines...'), 'oddero')
-      expect(screen.getByText('Shelve')).toBeInTheDocument()
-      expect(screen.queryByText('Pack')).not.toBeInTheDocument()
-    })
-
-    it('calls onShelve (not onPack) when Shelve is clicked in unpack mode', async () => {
-      const onShelve = vi.fn()
-      const onPack = vi.fn()
-      render(<SearchPanel bottles={unpackBottles} mode="unpacking" onPack={onPack} onShelve={onShelve} />)
-      await userEvent.type(screen.getByPlaceholderText('Search wines...'), 'oddero')
-      await userEvent.click(screen.getByText('Shelve'))
-      expect(onShelve).toHaveBeenCalledWith('U01')
-      expect(onPack).not.toHaveBeenCalled()
-    })
-
-    it('shows "shelved" toast (not "packed") when shelving in unpack mode', async () => {
-      render(<SearchPanel bottles={unpackBottles} mode="unpacking" onPack={() => {}} onShelve={() => {}} />)
-      await userEvent.type(screen.getByPlaceholderText('Search wines...'), 'oddero')
-      await userEvent.click(screen.getByText('Shelve'))
-      expect(screen.getByText(/shelved/)).toBeInTheDocument()
-      expect(screen.queryByText(/packed/)).not.toBeInTheDocument()
-    })
-  })
-
   describe('no false matches on refined query', () => {
     it('"caval" only shows Cavallotto, not Castello/Castellare', async () => {
-      render(<SearchPanel bottles={bottles} mode="packing" onPack={() => {}} />)
+      render(<SearchPanel bottles={bottles} onDone={() => {}} />)
       await userEvent.type(screen.getByPlaceholderText('Search wines...'), 'caval')
       expect(screen.getByText(/Cavallotto/)).toBeInTheDocument()
       expect(screen.queryByText(/Castello Banfi/)).not.toBeInTheDocument()
@@ -237,7 +204,7 @@ describe('SearchPanel', () => {
     })
 
     it('"barolo" does not match "Brunello" or "Barbaresco"', async () => {
-      render(<SearchPanel bottles={bottles} mode="packing" onPack={() => {}} />)
+      render(<SearchPanel bottles={bottles} onDone={() => {}} />)
       await userEvent.type(screen.getByPlaceholderText('Search wines...'), 'barolo')
       // Banfi is Brunello, should not match "barolo"
       expect(screen.queryByText(/Castello Banfi Brunello/)).not.toBeInTheDocument()

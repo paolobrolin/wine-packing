@@ -1,7 +1,6 @@
 import type { DbBottle } from '../data/models'
 
 export type Scope = 'home-unsorted' | 'home-all' | 'everywhere'
-export type Mode = 'packing' | 'unpacking'
 export type Tier = 'needs-action' | 'in-progress' | 'no-move'
 
 export interface ScoredBottle {

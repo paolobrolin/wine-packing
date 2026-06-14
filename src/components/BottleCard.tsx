@@ -1,18 +1,16 @@
 import type { DbBottle } from '../data/models'
-import { moveType } from '../data/models'
+import { moveType, needsMove } from '../data/models'
 import { displayVintage, displayCost } from '../data/format'
 
 interface Props {
   bottle: DbBottle
-  mode: 'packing' | 'unpacking'
-  onAction: (barcode: string) => void
-  onRebin?: (barcode: string) => void
+  onDone: (barcode: string) => void
 }
 
 const STATE_STYLES: Record<string, string> = {
   pending: 'bottle-card--pending',
   packed: 'bottle-card--packed',
-  in_transit: 'bottle-card--transit',
+  in_transit: 'bottle-card--packed',
   shelved: 'bottle-card--shelved',
   synced: 'bottle-card--synced',
 }
@@ -21,26 +19,28 @@ function ctUrl(iwine: number): string {
   return `https://www.cellartracker.com/wine.asp?iWine=${iwine}`
 }
 
-export function BottleCard({ bottle, mode, onAction, onRebin }: Props) {
-  const mt = moveType(bottle)
-  const isRebin = mt === 'within-location' && bottle.state === 'pending'
+function stateExplanation(state: string): string | null {
+  if (state === 'shelved' || state === 'synced') return 'Already placed'
+  if (state === 'packed' || state === 'in_transit') return 'Packed, awaiting transport'
+  return null
+}
 
-  const canAct =
-    (mode === 'packing' && bottle.state === 'pending' && mt !== 'within-location') ||
-    (mode === 'unpacking' && (bottle.state === 'in_transit' || bottle.state === 'packed'))
-  const canUndo =
-    (mode === 'packing' && bottle.state === 'packed')
-  const actionable = canAct || canUndo || isRebin
+export function BottleCard({ bottle, onDone }: Props) {
+  const mt = moveType(bottle)
+  const moves = needsMove(bottle)
+
+  const canAct = moves && (
+    (bottle.state === 'pending') ||
+    (bottle.state === 'packed') ||
+    (bottle.state === 'in_transit')
+  )
 
   const stateClass = STATE_STYLES[bottle.state] ?? ''
   const sizeLabel = bottle.size !== '750ml' ? bottle.size : null
+  const explanation = !canAct ? stateExplanation(bottle.state) : null
 
   const handleClick = () => {
-    if (isRebin && onRebin) {
-      onRebin(bottle.barcode)
-    } else if (canAct || canUndo) {
-      onAction(bottle.barcode)
-    }
+    if (canAct) onDone(bottle.barcode)
   }
 
   const handleCtLink = (e: React.MouseEvent) => {
@@ -49,16 +49,14 @@ export function BottleCard({ bottle, mode, onAction, onRebin }: Props) {
 
   return (
     <div
-      className={`bottle-card ${stateClass} ${actionable ? '' : 'bottle-card--disabled'}`}
+      className={`bottle-card ${stateClass} ${canAct ? '' : 'bottle-card--disabled'}`}
       onClick={handleClick}
       data-testid={`bottle-${bottle.barcode}`}
     >
       <div className="bottle-card__state">
         {bottle.state === 'pending' && '○'}
-        {bottle.state === 'packed' && '●'}
-        {bottle.state === 'in_transit' && '◉'}
-        {bottle.state === 'shelved' && '✓'}
-        {bottle.state === 'synced' && '✓'}
+        {(bottle.state === 'packed' || bottle.state === 'in_transit') && '◐'}
+        {(bottle.state === 'shelved' || bottle.state === 'synced') && '✓'}
       </div>
       <div className="bottle-card__info">
         <div className="bottle-card__name">
@@ -82,13 +80,13 @@ export function BottleCard({ bottle, mode, onAction, onRebin }: Props) {
             <span className="bottle-card__dest">→ {bottle.recommended_location === 'REMOTE' ? 'REMOTE ' : ''}{bottle.recommended_bin}</span>
           )}
         </div>
-        {bottle.move_reason && (
-          <div className="bottle-card__reason">{bottle.move_reason}</div>
+        {explanation && (
+          <div className="bottle-card__explanation">{explanation}</div>
         )}
       </div>
-      {isRebin && onRebin && (
-        <button className="bottle-card__move-btn" onClick={(e) => { e.stopPropagation(); onRebin(bottle.barcode) }}>
-          Move
+      {canAct && (
+        <button className="bottle-card__done-btn" onClick={(e) => { e.stopPropagation(); onDone(bottle.barcode) }}>
+          Done
         </button>
       )}
     </div>

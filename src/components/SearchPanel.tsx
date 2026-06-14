@@ -2,62 +2,51 @@ import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
 import { SearchIndex } from '../search/SearchIndex'
 import { SearchResultCard } from './SearchResultCard'
 import type { DbBottle } from '../data/models'
-import type { Mode } from '../search/types'
+import { useToast } from '../hooks/useToast'
 
 interface Props {
   bottles: DbBottle[]
-  mode: Mode
-  onPack: (barcode: string) => void
-  onShelve?: (barcode: string) => void
-  onUnpack?: (barcode: string) => void
-  onRebin?: (barcode: string) => void
+  onDone: (barcode: string) => void
+  onUndo?: (barcode: string) => void
 }
 
 const TIER3_CAP = 5
 
-export function SearchPanel({ bottles, mode, onPack, onShelve, onUnpack, onRebin }: Props) {
+export function SearchPanel({ bottles, onDone, onUndo }: Props) {
   const [query, setQuery] = useState('')
-  const [toast, setToast] = useState<string | null>(null)
   const [showAllNoMove, setShowAllNoMove] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
+  const { toast, show: showToast, dismiss: dismissToast } = useToast()
 
   const index = useMemo(() => new SearchIndex(bottles), [bottles])
-  const results = useMemo(() => index.search(query, mode), [index, query, mode])
+  const results = useMemo(() => index.search(query), [index, query])
 
   useEffect(() => { setShowAllNoMove(false) }, [query])
 
-  const handlePack = useCallback((barcode: string) => {
+  const handleDone = useCallback((barcode: string) => {
     const bottle = bottles.find(b => b.barcode === barcode)
-    onPack(barcode)
+    onDone(barcode)
 
     if (bottle) {
       const v = bottle.vintage === '1001' ? 'NV' : bottle.vintage
-      setToast(`${v} ${bottle.wine} — packed`)
-      setTimeout(() => setToast(null), 2000)
+      const dest = bottle.recommended_bin ?? 'destination'
+      showToast(
+        `${v} ${bottle.wine} → ${dest}`,
+        'success',
+        () => { if (onUndo) onUndo(barcode) },
+      )
     }
-  }, [bottles, onPack])
+  }, [bottles, onDone, onUndo, showToast])
 
-  const handleShelve = useCallback((barcode: string) => {
+  const handleUndo = useCallback((barcode: string) => {
     const bottle = bottles.find(b => b.barcode === barcode)
-    if (onShelve) onShelve(barcode)
+    if (onUndo) onUndo(barcode)
 
     if (bottle) {
       const v = bottle.vintage === '1001' ? 'NV' : bottle.vintage
-      setToast(`${v} ${bottle.wine} — shelved`)
-      setTimeout(() => setToast(null), 2000)
+      showToast(`${v} ${bottle.wine} — undone`, 'info')
     }
-  }, [bottles, onShelve])
-
-  const handleRebin = useCallback((barcode: string) => {
-    const bottle = bottles.find(b => b.barcode === barcode)
-    if (onRebin) onRebin(barcode)
-
-    if (bottle) {
-      const v = bottle.vintage === '1001' ? 'NV' : bottle.vintage
-      setToast(`${v} ${bottle.wine} — moved to ${bottle.recommended_bin}`)
-      setTimeout(() => setToast(null), 2000)
-    }
-  }, [bottles, onRebin])
+  }, [bottles, onUndo, showToast])
 
   const noMoveVisible = showAllNoMove ? results.noMove : results.noMove.slice(0, TIER3_CAP)
   const noMoveHidden = results.noMove.length - noMoveVisible.length
@@ -70,6 +59,7 @@ export function SearchPanel({ bottles, mode, onPack, onShelve, onUnpack, onRebin
           type="text"
           className="search-panel__input"
           placeholder="Search wines..."
+          aria-label="Search your wine collection"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           autoComplete="off"
@@ -93,7 +83,7 @@ export function SearchPanel({ bottles, mode, onPack, onShelve, onUnpack, onRebin
             <div className="search-panel__tier">
               <div className="search-panel__tier-header">NEEDS ACTION ({results.needsAction.length})</div>
               {results.needsAction.map((r) => (
-                <SearchResultCard key={r.bottle.barcode} result={r} mode={mode} onPack={handlePack} onShelve={handleShelve} onUnpack={onUnpack} onRebin={handleRebin} />
+                <SearchResultCard key={r.bottle.barcode} result={r} onDone={handleDone} onUndo={handleUndo} />
               ))}
             </div>
           )}
@@ -102,7 +92,7 @@ export function SearchPanel({ bottles, mode, onPack, onShelve, onUnpack, onRebin
             <div className="search-panel__tier search-panel__tier--muted">
               <div className="search-panel__tier-header">IN PROGRESS ({results.inProgress.length})</div>
               {results.inProgress.map((r) => (
-                <SearchResultCard key={r.bottle.barcode} result={r} mode={mode} onPack={handlePack} onShelve={handleShelve} onUnpack={onUnpack} onRebin={handleRebin} />
+                <SearchResultCard key={r.bottle.barcode} result={r} onDone={handleDone} onUndo={handleUndo} />
               ))}
             </div>
           )}
@@ -111,7 +101,7 @@ export function SearchPanel({ bottles, mode, onPack, onShelve, onUnpack, onRebin
             <div className="search-panel__tier search-panel__tier--dim">
               <div className="search-panel__tier-header">NO MOVE NEEDED ({results.noMove.length})</div>
               {noMoveVisible.map((r) => (
-                <SearchResultCard key={r.bottle.barcode} result={r} mode={mode} onPack={handlePack} onShelve={handleShelve} onUnpack={onUnpack} onRebin={handleRebin} />
+                <SearchResultCard key={r.bottle.barcode} result={r} onDone={handleDone} onUndo={handleUndo} />
               ))}
               {noMoveHidden > 0 && (
                 <button className="search-panel__show-more" onClick={() => setShowAllNoMove(true)}>
@@ -124,7 +114,14 @@ export function SearchPanel({ bottles, mode, onPack, onShelve, onUnpack, onRebin
       )}
 
       {toast && (
-        <div className="search-panel__toast">{toast}</div>
+        <div className={`search-panel__toast search-panel__toast--${toast.type}`}>
+          <span>{toast.message}</span>
+          {toast.undoAction && (
+            <button className="search-panel__toast-undo" onClick={() => { toast.undoAction!(); dismissToast() }}>
+              Undo
+            </button>
+          )}
+        </div>
       )}
     </div>
   )

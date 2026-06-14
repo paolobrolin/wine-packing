@@ -4,22 +4,16 @@ import type { DbBottle } from '../data/models'
 interface Props {
   groupName: string
   bottles: DbBottle[]
-  mode: 'packing' | 'unpacking'
-  onActionAll: (barcodes: string[]) => void
+  onDoneAll: (barcodes: string[]) => void
 }
 
-export function OwcGroupCard({ groupName, bottles, mode, onActionAll }: Props) {
+export function OwcGroupCard({ groupName, bottles, onDoneAll }: Props) {
   const [expanded, setExpanded] = useState(false)
 
-  const allPending = bottles.every((b) => b.state === 'pending')
-  const allPacked = bottles.every((b) => b.state === 'packed' || b.state === 'in_transit')
-  const allShelved = bottles.every((b) => b.state === 'shelved' || b.state === 'synced')
+  const allDone = bottles.every((b) => b.state === 'shelved' || b.state === 'synced')
+  const actionable = !allDone && bottles.some((b) => b.state === 'pending' || b.state === 'packed' || b.state === 'in_transit')
 
-  const actionable =
-    (mode === 'packing' && allPending) ||
-    (mode === 'unpacking' && allPacked)
-
-  const stateClass = allShelved ? 'owc-card--shelved' : allPacked ? 'owc-card--packed' : 'owc-card--pending'
+  const stateClass = allDone ? 'owc-card--shelved' : bottles.every((b) => b.state === 'packed' || b.state === 'in_transit') ? 'owc-card--packed' : 'owc-card--pending'
   const barcodes = bottles.map((b) => b.barcode)
 
   return (
@@ -33,10 +27,10 @@ export function OwcGroupCard({ groupName, bottles, mode, onActionAll }: Props) {
       {actionable && (
         <button
           className="owc-card__action"
-          onClick={() => onActionAll(barcodes)}
+          onClick={() => onDoneAll(barcodes)}
           data-testid={`owc-action-${groupName}`}
         >
-          {mode === 'packing' ? 'Pack Case ▸' : 'Shelve Case ▸'}
+          Done Case ▸
         </button>
       )}
 
@@ -52,7 +46,7 @@ export function OwcGroupCard({ groupName, bottles, mode, onActionAll }: Props) {
         <ul className="owc-card__bottles">
           {bottles.map((b) => (
             <li key={b.barcode} className="owc-card__bottle">
-              {b.state === 'shelved' ? '✓' : '○'} {b.vintage} {b.wine}
+              {(b.state === 'shelved' || b.state === 'synced') ? '✓' : (b.state === 'packed' || b.state === 'in_transit') ? '◐' : '○'} {b.vintage} {b.wine}
               {b.size !== '750ml' && <span className="owc-card__size">{b.size}</span>}
             </li>
           ))}

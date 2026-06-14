@@ -34,31 +34,31 @@ describe('SearchIndex', () => {
 
   describe('basic matching', () => {
     it('returns empty for empty query', () => {
-      expect(index.search('', 'packing')).toEqual({ needsAction: [], inProgress: [], noMove: [], total: 0 })
+      expect(index.search('')).toEqual({ needsAction: [], inProgress: [], noMove: [], total: 0 })
     })
 
     it('returns empty for single character', () => {
-      expect(index.search('b', 'packing').total).toBe(0)
+      expect(index.search('b').total).toBe(0)
     })
 
     it('returns empty for whitespace-only query', () => {
-      expect(index.search('   ', 'packing').total).toBe(0)
+      expect(index.search('   ').total).toBe(0)
     })
 
     it('matches producer prefix with high score', () => {
-      const r = index.search('cont', 'packing')
+      const r = index.search('cont')
       expect(r.total).toBeGreaterThan(0)
       const names = [...r.needsAction, ...r.inProgress, ...r.noMove].map(s => s.bottle.producer)
       expect(names[0]).toBe('Giacomo Conterno')
     })
 
     it('matches vintage', () => {
-      const r = index.search('2021', 'packing')
+      const r = index.search('2021')
       expect(r.total).toBeGreaterThanOrEqual(2)
     })
 
     it('multi-word AND: all terms must match', () => {
-      const r = index.search('barolo 2021', 'packing')
+      const r = index.search('barolo 2021')
       const all = [...r.needsAction, ...r.inProgress, ...r.noMove]
       all.forEach(s => {
         expect(s.bottle.wine.toLowerCase()).toContain('barolo')
@@ -67,28 +67,28 @@ describe('SearchIndex', () => {
     })
 
     it('is case-insensitive', () => {
-      const r1 = index.search('ODDERO', 'packing')
-      const r2 = index.search('oddero', 'packing')
+      const r1 = index.search('ODDERO')
+      const r2 = index.search('oddero')
       expect(r1.total).toBe(r2.total)
     })
   })
 
   describe('ranking', () => {
     it('ranks producer prefix match above mid-word match', () => {
-      const r = index.search('cont', 'packing')
+      const r = index.search('cont')
       const all = [...r.needsAction, ...r.inProgress, ...r.noMove]
       expect(all.length).toBeGreaterThanOrEqual(2)
       expect(all[0].bottle.producer).toBe('Giacomo Conterno')
     })
 
     it('ranks pending+needs-move above packed', () => {
-      const r = index.search('oddero', 'packing')
+      const r = index.search('oddero')
+      // Both pending and packed bottles with needs-move are now needs-action
       expect(r.needsAction.length).toBeGreaterThan(0)
-      expect(r.inProgress.length).toBeGreaterThan(0)
     })
 
     it('bottles that stay home go to noMove tier', () => {
-      const r = index.search('kongsgaard', 'packing')
+      const r = index.search('kongsgaard')
       expect(r.noMove.length).toBeGreaterThan(0)
       expect(r.noMove[0].bottle.producer).toBe('Kongsgaard')
     })
@@ -96,24 +96,24 @@ describe('SearchIndex', () => {
 
   describe('tiering', () => {
     it('pending + needs-move = needs-action', () => {
-      const r = index.search('conterno', 'packing')
+      const r = index.search('conterno')
       expect(r.needsAction.length).toBe(1)
       expect(r.needsAction[0].tier).toBe('needs-action')
     })
 
-    it('packed = in-progress', () => {
-      const r = index.search('rocche', 'packing')
-      expect(r.inProgress.length).toBe(1)
-      expect(r.inProgress[0].tier).toBe('in-progress')
+    it('packed = needs-action (actionable)', () => {
+      const r = index.search('rocche')
+      expect(r.needsAction.length).toBe(1)
+      expect(r.needsAction[0].tier).toBe('needs-action')
     })
 
     it('shelved = no-move', () => {
-      const r = index.search('conti pomerol', 'packing')
+      const r = index.search('conti pomerol')
       expect(r.noMove.length).toBe(1)
     })
 
     it('no recommended_location = no-move (stays home)', () => {
-      const r = index.search('kongsgaard', 'packing')
+      const r = index.search('kongsgaard')
       expect(r.noMove.length).toBe(1)
       expect(r.noMove[0].tier).toBe('no-move')
     })
@@ -137,7 +137,7 @@ describe('SearchIndex', () => {
       }))
       const idx = new SearchIndex(big)
       const start = performance.now()
-      idx.search('barolo 2020', 'packing')
+      idx.search('barolo 2020')
       expect(performance.now() - start).toBeLessThan(50)
     })
   })
