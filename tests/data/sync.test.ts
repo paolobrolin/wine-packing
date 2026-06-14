@@ -187,21 +187,40 @@ describe('buildSyncRows', () => {
     })
     const withoutOverride = buildSyncRows([ct], new Map(), 2026)
     expect(withoutOverride.rows[0].cost).toBe(0)
+    expect(withoutOverride.rows[0].estimated_value).toBeNull()
     expect(withoutOverride.rows[0].recommended_bin).toBe('Köket')
 
-    // With override: cost=603 → too expensive for kitchen
+    // With override: cost stays 0 but estimated_value=603 → too expensive for kitchen
     const overrides = new Map([[ct.iwine, 603]])
     const withOverride = buildSyncRows([ct], new Map(), 2026, overrides)
-    expect(withOverride.rows[0].cost).toBe(603)
+    expect(withOverride.rows[0].cost).toBe(0)
+    expect(withOverride.rows[0].estimated_value).toBe(603)
+    expect(withOverride.rows[0].value_source).toBe('ct_auction')
     expect(withOverride.rows[0].recommended_bin).not.toBe('Köket')
   })
 
-  it('does not override non-zero costs', () => {
+  it('preserves existing estimated_value when no new override', () => {
+    const ct = makeCtBottle({ bottle_cost: 0, begin_consume: 2024, end_consume: 2027 })
+    const existing = new Map([[ct.barcode, {
+      state: 'pending' as const, packed_at: null, in_transit_at: null,
+      shelved_at: null, synced_at: null, trip_id: null, owc_group: null,
+      estimated_value: 500, value_source: 'web_search',
+    }]])
+    const { rows } = buildSyncRows([ct], existing, 2026)
+
+    expect(rows[0].cost).toBe(0)
+    expect(rows[0].estimated_value).toBe(500)
+    expect(rows[0].value_source).toBe('web_search')
+    expect(rows[0].recommended_bin).not.toBe('Köket')
+  })
+
+  it('does not set estimated_value for non-zero costs', () => {
     const ct = makeCtBottle({ bottle_cost: 299, begin_consume: 2024, end_consume: 2027 })
     const overrides = new Map([[ct.iwine, 999]])
     const { rows } = buildSyncRows([ct], new Map(), 2026, overrides)
 
     expect(rows[0].cost).toBe(299)
+    expect(rows[0].estimated_value).toBeNull()
   })
 
   it('gives Fortified wines a HOME bin with Lgh/Kall prefix (Don PX bug)', () => {

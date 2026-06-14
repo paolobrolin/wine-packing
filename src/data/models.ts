@@ -27,6 +27,8 @@ export interface DbBottle {
   synced_at: string | null
   trip_id: string | null
   owc_group: string | null
+  estimated_value: number | null
+  value_source: string | null
   ct_location_at_sync: string | null
   ct_bin_at_sync: string | null
   created_at: string

@@ -42,17 +42,27 @@ export interface SyncResult {
 
 export function buildSyncRows(
   ctBottles: CtBottle[],
-  existingByBarcode: Map<string, Pick<DbBottle, 'state' | 'packed_at' | 'in_transit_at' | 'shelved_at' | 'synced_at' | 'trip_id' | 'owc_group'>>,
+  existingByBarcode: Map<string, Pick<DbBottle, 'state' | 'packed_at' | 'in_transit_at' | 'shelved_at' | 'synced_at' | 'trip_id' | 'owc_group' | 'estimated_value' | 'value_source'>>,
   currentYear: number,
   costOverrides?: Map<number, number>,
 ): { rows: Partial<DbBottle>[]; stats: SyncResult } {
-  const enriched = costOverrides ? ctBottles.map(ct => {
-    if ((ct.bottle_cost ?? 0) === 0 && costOverrides.has(ct.iwine)) {
-      return { ...ct, bottle_cost: costOverrides.get(ct.iwine)! }
+  const valuations = new Map<string, { value: number; source: string }>()
+  for (const ct of ctBottles) {
+    if ((ct.bottle_cost ?? 0) !== 0) continue
+    const override = costOverrides?.get(ct.iwine)
+    const existing = existingByBarcode.get(ct.barcode)
+    if (override != null) {
+      valuations.set(ct.barcode, { value: override, source: 'ct_auction' })
+    } else if (existing?.estimated_value != null) {
+      valuations.set(ct.barcode, { value: existing.estimated_value as number, source: (existing.value_source as string) ?? 'unknown' })
     }
-    return ct
-  }) : ctBottles
-  const bottles: Bottle[] = enriched.map(toRuleBottle)
+  }
+
+  const bottles: Bottle[] = ctBottles.map(ct => {
+    const valuation = valuations.get(ct.barcode)
+    const effectiveCost = (ct.bottle_cost ?? 0) !== 0 ? ct.bottle_cost : valuation?.value ?? null
+    return toRuleBottle({ ...ct, bottle_cost: effectiveCost })
+  })
 
   const verticals = buildVerticals(bottles)
   const owcGroups = buildOwcGroups(ctBottles, bottles)
@@ -207,7 +217,7 @@ export function buildSyncRows(
       country: ct.extra.Country,
       region: ct.extra.Region,
       size: ct.size,
-      cost: enriched[i].bottle_cost,
+      cost: ct.bottle_cost,
       cost_currency: ct.bottle_cost_currency ?? 'SEK',
       wine_type: ct.extra.Type ?? null,
       begin_consume: sanitizeDrinkWindow(ct.begin_consume),
@@ -225,6 +235,8 @@ export function buildSyncRows(
       synced_at: existing?.synced_at ?? null,
       trip_id: existing?.trip_id ?? null,
       owc_group: existing?.owc_group ?? null,
+      estimated_value: valuations.get(ct.barcode)?.value ?? existing?.estimated_value ?? null,
+      value_source: valuations.get(ct.barcode)?.source ?? existing?.value_source ?? null,
       ct_location_at_sync: ct.location,
       ct_bin_at_sync: ct.bin,
     } satisfies Partial<DbBottle>
