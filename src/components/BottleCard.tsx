@@ -1,5 +1,5 @@
 import type { DbBottle } from '../data/models'
-import { moveType, needsMove } from '../data/models'
+import { needsMove } from '../data/models'
 import { displayVintage, displayCost } from '../data/format'
 
 interface Props {
@@ -26,7 +26,6 @@ function stateExplanation(state: string): string | null {
 }
 
 export function BottleCard({ bottle, onDone }: Props) {
-  const mt = moveType(bottle)
   const moves = needsMove(bottle)
 
   const canAct = moves && (
