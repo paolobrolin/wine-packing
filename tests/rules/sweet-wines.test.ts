@@ -49,6 +49,18 @@ describe('sweetWinesRule', () => {
     expect(sweetWinesRule.evaluate(makeBottle({ wineType: null }), context)).toBeNull()
   })
 
+  it('keeps White - Fortified home (PX, sherry)', () => {
+    const r = sweetWinesRule.evaluate(makeBottle({ wineType: 'White - Fortified' }), context)
+    expect(r).not.toBeNull()
+    expect(r!.recommendedLocation).toBe('HOME')
+  })
+
+  it('keeps Red - Fortified home (port)', () => {
+    const r = sweetWinesRule.evaluate(makeBottle({ wineType: 'Red - Fortified' }), context)
+    expect(r).not.toBeNull()
+    expect(r!.recommendedLocation).toBe('HOME')
+  })
+
   it('has priority 35', () => {
     expect(sweetWinesRule.priority).toBe(35)
   })

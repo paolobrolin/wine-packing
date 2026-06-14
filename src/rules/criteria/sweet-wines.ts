@@ -2,7 +2,7 @@ import type { Rule, Bottle } from '../types'
 
 function isSweetWine(bottle: Bottle): boolean {
   const t = bottle.wineType ?? ''
-  return t.includes('Sweet') || t.includes('Dessert')
+  return t.includes('Sweet') || t.includes('Dessert') || t.includes('Fortified')
 }
 
 export const sweetWinesRule: Rule = {
