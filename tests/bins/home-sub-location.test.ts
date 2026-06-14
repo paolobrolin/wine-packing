@@ -25,18 +25,28 @@ describe('determineHomeSubLocation', () => {
     expect(determineHomeSubLocation(b, YEAR)).not.toBe('Cooler')
   })
 
-  it('drink-soon (end within 2 years) → Lagringsskåp', () => {
-    const b = makeBottle({ beginConsume: 2024, endConsume: 2028 })
+  it('end within 3 years → Lagringsskåp', () => {
+    const b = makeBottle({ beginConsume: 2024, endConsume: 2029 })
     expect(determineHomeSubLocation(b, YEAR)).toBe('Lagringsskåp')
   })
 
-  it('medium-term (begin within 3 years) → Lagringsskåp', () => {
-    const b = makeBottle({ beginConsume: 2029, endConsume: 2040 })
-    expect(determineHomeSubLocation(b, YEAR)).toBe('Lagringsskåp')
+  it('end beyond 3 years → Källaren', () => {
+    const b = makeBottle({ beginConsume: 2025, endConsume: 2040 })
+    expect(determineHomeSubLocation(b, YEAR)).toBe('Källaren')
   })
 
   it('no drink window data → Källaren', () => {
     const b = makeBottle({ beginConsume: null, endConsume: null })
+    expect(determineHomeSubLocation(b, YEAR)).toBe('Källaren')
+  })
+
+  it('boundary: end = currentYear+3 → Lagringsskåp', () => {
+    const b = makeBottle({ endConsume: 2029 })
+    expect(determineHomeSubLocation(b, YEAR)).toBe('Lagringsskåp')
+  })
+
+  it('boundary: end = currentYear+4 → Källaren', () => {
+    const b = makeBottle({ endConsume: 2030 })
     expect(determineHomeSubLocation(b, YEAR)).toBe('Källaren')
   })
 

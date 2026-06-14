@@ -104,7 +104,7 @@ describe('HOME bin rules — style overrides region', () => {
 
 describe('HOME bin rules — full bin ID with sub-location', () => {
   it('Italian drink-soon → Lgh 1. ITALIA', () => {
-    const r = resolveHome(makeBottle({ country: 'Italy', beginConsume: 2025, endConsume: 2030 }))
+    const r = resolveHome(makeBottle({ country: 'Italy', beginConsume: 2025, endConsume: 2029 }))
     expect(r!.fullBinId).toBe('Lgh 1. ITALIA')
   })
 

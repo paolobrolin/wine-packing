@@ -13,11 +13,7 @@ export function determineHomeSubLocation(
     return 'Cooler'
   }
 
-  const begin = bottle.beginConsume
-  if (begin != null && begin <= currentYear + 3) {
-    return 'Lagringsskåp'
-  }
-  if (begin == null && end != null) {
+  if (end != null && end <= currentYear + 3) {
     return 'Lagringsskåp'
   }
 
