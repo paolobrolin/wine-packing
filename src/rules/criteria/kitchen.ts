@@ -1,4 +1,4 @@
-import type { Rule, Bottle } from '../types'
+import type { Rule } from '../types'
 
 const KITCHEN_COST_THRESHOLD = 350
 
