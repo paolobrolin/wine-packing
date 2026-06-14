@@ -1,7 +1,7 @@
 import type { BinRule } from '../types'
 
 const SWEET_FORTIFIED_TYPES = ['Sweet', 'Dessert', 'Fortified']
-const SWEET_KEYWORDS = ['Moscato', 'Recioto', 'Vin Santo', 'Sherry', 'Jerez', 'Amontillado', 'Fino', 'Manzanilla', 'Oloroso', 'Palo Cortado', 'Porto', 'Port', 'Maury', 'Banyuls', 'Rivesaltes', 'Sauternes', 'Barsac', 'Auslese', 'Beerenauslese', 'Trockenbeerenauslese', 'Eiswein']
+const SWEET_KEYWORDS = ['Moscato', 'Recioto', 'Vin Santo', 'Sherry', 'Jerez', 'Amontillado', 'Fino', 'Manzanilla', 'Oloroso', 'Palo Cortado', 'Porto', 'Port', 'Maury', 'Banyuls', 'Rivesaltes', 'Sauternes', 'Barsac', 'Beerenauslese', 'Trockenbeerenauslese', 'Eiswein']
 
 export const homeSweetFortifiedRule: BinRule = {
   id: 'home/sweet-fortified',
