@@ -45,9 +45,19 @@ describe('determineHomeSubLocation', () => {
     expect(determineHomeSubLocation(b, YEAR)).toBe('Lagringsskåp')
   })
 
-  it('boundary: end = currentYear+4 → Källaren', () => {
+  it('boundary: end = currentYear+4 with empty cabinets → Lagringsskåp (grey zone, balanced)', () => {
     const b = makeBottle({ endConsume: 2030 })
-    expect(determineHomeSubLocation(b, YEAR)).toBe('Källaren')
+    expect(determineHomeSubLocation(b, YEAR, 0, 0)).toBe('Lagringsskåp')
+  })
+
+  it('boundary: end = currentYear+4 with full Lgh → Källaren', () => {
+    const b = makeBottle({ endConsume: 2030 })
+    expect(determineHomeSubLocation(b, YEAR, 210, 0)).toBe('Källaren')
+  })
+
+  it('boundary: end = currentYear+6 → Källaren (beyond grey zone)', () => {
+    const b = makeBottle({ endConsume: 2032 })
+    expect(determineHomeSubLocation(b, YEAR, 0, 0)).toBe('Källaren')
   })
 
   it('boundary: end = currentYear (past-peak) + expensive → Cooler', () => {

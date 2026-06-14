@@ -78,10 +78,23 @@ export function buildSyncRows(
   })
 
   // Pass 1.5: HOME placement — resolve bin for HOME bottles (skip REMOTE-at-dest)
-  const homePlacements = bottles.map((bottle, i) => {
-    if (placements[i] != null) return null
-    if (remoteAtDest.has(i)) return null
+  // Process drink-soon first to fill Lgh, then grey-zone balances capacity
+  let lghCount = 0
+  let kallCount = 0
 
+  const homeIndices = bottles
+    .map((_, i) => i)
+    .filter((i) => placements[i] == null && !remoteAtDest.has(i))
+    .sort((a, b) => {
+      const endA = bottles[a].endConsume ?? 9999
+      const endB = bottles[b].endConsume ?? 9999
+      return endA - endB
+    })
+
+  const homePlacements: ({ recommendedLocation: string; recommendedBin: string; reason: string; ruleId: string | null } | null)[] = new Array(bottles.length).fill(null)
+
+  for (const i of homeIndices) {
+    const bottle = bottles[i]
     const sortedRules = [...homeBinRules].sort((a, b) => b.priority - a.priority)
     let categoryBinId: string | null = null
     let matchedRuleId: string | null = null
@@ -92,10 +105,14 @@ export function buildSyncRows(
         break
       }
     }
-    if (categoryBinId == null) { homeCount++; return null }
+    if (categoryBinId == null) { homeCount++; continue }
 
-    const subLocation = determineHomeSubLocation(bottle, currentYear)
+    const subLocation = determineHomeSubLocation(bottle, currentYear, lghCount, kallCount)
     const binId = buildHomeBinId(categoryBinId, subLocation)
+
+    if (subLocation === 'Lagringsskåp') lghCount++
+    else if (subLocation === 'Källaren') kallCount++
+
     const currentNorm = bottle.currentLocation === 'REMOTE' ? 'REMOTE' : 'HOME'
 
     if (currentNorm === 'HOME' && bottle.currentBin === binId) {
@@ -104,8 +121,8 @@ export function buildSyncRows(
       homeCount++
     }
 
-    return { recommendedLocation: 'HOME', recommendedBin: binId, reason: `home: ${subLocation}`, ruleId: matchedRuleId }
-  })
+    homePlacements[i] = { recommendedLocation: 'HOME', recommendedBin: binId, reason: `home: ${subLocation}`, ruleId: matchedRuleId }
+  }
 
   // Pass 2: resolve bins for bottles that need to move
   const binInput = bottles
