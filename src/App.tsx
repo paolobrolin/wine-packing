@@ -162,6 +162,17 @@ export default function App() {
         <OverrideSheet
           bottle={overrideBottle}
           onConfirm={handleConfirmDone}
+          onKeep={(barcode) => {
+            updateBottleLocally(barcode, {
+              state: 'synced',
+              recommended_location: null,
+              recommended_bin: null,
+            } as Partial<DbBottle>)
+            const b = overrideBottle
+            const v = b.vintage === '1001' ? 'NV' : b.vintage
+            showToast(`${v} ${b.wine} — kept in place`, 'info')
+            setOverrideBottle(null)
+          }}
           onCancel={() => setOverrideBottle(null)}
         />
       )}

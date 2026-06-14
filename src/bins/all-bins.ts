@@ -15,7 +15,13 @@ export const HOME_BINS = [
   'Cooler',
 ] as const
 
-export function binsForLocation(location: string | null): string[] {
-  if (location === 'REMOTE') return [...REMOTE_BINS]
-  return [...HOME_BINS]
+export function allBinsGrouped(): { label: string; bins: string[] }[] {
+  return [
+    { label: 'Extern (Skap 1)', bins: REMOTE_BINS.filter(b => b.startsWith('1.')) as unknown as string[] },
+    { label: 'Extern (Skap 2)', bins: REMOTE_BINS.filter(b => b.startsWith('2.')) as unknown as string[] },
+    { label: 'Extern (Skap 3)', bins: REMOTE_BINS.filter(b => b.startsWith('3.')) as unknown as string[] },
+    { label: 'Lagringsskåp', bins: HOME_BINS.filter(b => b.startsWith('Lgh')) as unknown as string[] },
+    { label: 'Källaren', bins: HOME_BINS.filter(b => b.startsWith('Kall')) as unknown as string[] },
+    { label: 'Cooler', bins: ['Cooler'] },
+  ]
 }

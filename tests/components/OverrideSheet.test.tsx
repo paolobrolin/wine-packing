@@ -23,30 +23,30 @@ function makeDbBottle(overrides: Partial<DbBottle> = {}): DbBottle {
 
 describe('OverrideSheet', () => {
   it('renders with bottle name', () => {
-    render(<OverrideSheet bottle={makeDbBottle()} onConfirm={() => {}} onCancel={() => {}} />)
+    render(<OverrideSheet bottle={makeDbBottle()} onConfirm={() => {}} onKeep={() => {}} onCancel={() => {}} />)
     expect(screen.getByText(/2020.*Test Wine/)).toBeInTheDocument()
   })
 
   it('shows FROM with current bin', () => {
-    render(<OverrideSheet bottle={makeDbBottle()} onConfirm={() => {}} onCancel={() => {}} />)
+    render(<OverrideSheet bottle={makeDbBottle()} onConfirm={() => {}} onKeep={() => {}} onCancel={() => {}} />)
     expect(screen.getByText('Källaren')).toBeInTheDocument()
   })
 
   it('pre-selects recommended bin in dropdown', () => {
-    render(<OverrideSheet bottle={makeDbBottle()} onConfirm={() => {}} onCancel={() => {}} />)
+    render(<OverrideSheet bottle={makeDbBottle()} onConfirm={() => {}} onKeep={() => {}} onCancel={() => {}} />)
     const select = screen.getByTestId('override-select') as HTMLSelectElement
     expect(select.value).toBe('2.1 BDX LB')
   })
 
   it('shows REMOTE bins for REMOTE destination', () => {
-    render(<OverrideSheet bottle={makeDbBottle({ recommended_location: 'REMOTE' })} onConfirm={() => {}} onCancel={() => {}} />)
+    render(<OverrideSheet bottle={makeDbBottle({ recommended_location: 'REMOTE' })} onConfirm={() => {}} onKeep={() => {}} onCancel={() => {}} />)
     const select = screen.getByTestId('override-select')
     expect(select).toContainHTML('3.4 BARBARESCO')
     expect(select).toContainHTML('1.5 NAPA')
   })
 
   it('shows HOME bins for HOME destination', () => {
-    render(<OverrideSheet bottle={makeDbBottle({ recommended_location: 'HOME', recommended_bin: 'Lgh 2. FRANKRIKE' })} onConfirm={() => {}} onCancel={() => {}} />)
+    render(<OverrideSheet bottle={makeDbBottle({ recommended_location: 'HOME', recommended_bin: 'Lgh 2. FRANKRIKE' })} onConfirm={() => {}} onKeep={() => {}} onCancel={() => {}} />)
     const select = screen.getByTestId('override-select')
     expect(select).toContainHTML('Lgh 1. ITALIA')
     expect(select).toContainHTML('Cooler')
@@ -54,14 +54,14 @@ describe('OverrideSheet', () => {
 
   it('calls onConfirm with null overrideBin when keeping recommendation', async () => {
     const onConfirm = vi.fn()
-    render(<OverrideSheet bottle={makeDbBottle()} onConfirm={onConfirm} onCancel={() => {}} />)
+    render(<OverrideSheet bottle={makeDbBottle()} onConfirm={onConfirm} onKeep={() => {}} onCancel={() => {}} />)
     await userEvent.click(screen.getByTestId('override-confirm'))
     expect(onConfirm).toHaveBeenCalledWith('0001', null)
   })
 
   it('calls onConfirm with new bin when overriding', async () => {
     const onConfirm = vi.fn()
-    render(<OverrideSheet bottle={makeDbBottle()} onConfirm={onConfirm} onCancel={() => {}} />)
+    render(<OverrideSheet bottle={makeDbBottle()} onConfirm={onConfirm} onKeep={() => {}} onCancel={() => {}} />)
     await userEvent.selectOptions(screen.getByTestId('override-select'), '3.4 BARBARESCO')
     await userEvent.click(screen.getByTestId('override-confirm'))
     expect(onConfirm).toHaveBeenCalledWith('0001', '3.4 BARBARESCO')
@@ -69,14 +69,29 @@ describe('OverrideSheet', () => {
 
   it('calls onCancel when Cancel clicked', async () => {
     const onCancel = vi.fn()
-    render(<OverrideSheet bottle={makeDbBottle()} onConfirm={() => {}} onCancel={onCancel} />)
+    render(<OverrideSheet bottle={makeDbBottle()} onConfirm={() => {}} onKeep={() => {}} onCancel={onCancel} />)
     await userEvent.click(screen.getByText('Cancel'))
     expect(onCancel).toHaveBeenCalled()
   })
 
+  it('shows all bins (both REMOTE and HOME) grouped', () => {
+    render(<OverrideSheet bottle={makeDbBottle()} onConfirm={() => {}} onKeep={() => {}} onCancel={() => {}} />)
+    const select = screen.getByTestId('override-select')
+    expect(select).toContainHTML('1.5 NAPA')
+    expect(select).toContainHTML('Lgh 1. ITALIA')
+    expect(select).toContainHTML('Cooler')
+  })
+
+  it('calls onKeep when Keep here clicked', async () => {
+    const onKeep = vi.fn()
+    render(<OverrideSheet bottle={makeDbBottle()} onConfirm={() => {}} onKeep={onKeep} onCancel={() => {}} />)
+    await userEvent.click(screen.getByTestId('override-keep'))
+    expect(onKeep).toHaveBeenCalledWith('0001')
+  })
+
   it('calls onCancel when backdrop clicked', async () => {
     const onCancel = vi.fn()
-    render(<OverrideSheet bottle={makeDbBottle()} onConfirm={() => {}} onCancel={onCancel} />)
+    render(<OverrideSheet bottle={makeDbBottle()} onConfirm={() => {}} onKeep={() => {}} onCancel={onCancel} />)
     await userEvent.click(screen.getByText(/2020.*Test Wine/).closest('.override-sheet__backdrop')!)
     expect(onCancel).toHaveBeenCalled()
   })

@@ -242,11 +242,11 @@ body {
 /* Override Sheet */
 .override-sheet__backdrop {
   position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 200;
-  display: flex; align-items: flex-end; justify-content: center;
+  display: flex; align-items: center; justify-content: center; padding: 20px;
 }
 .override-sheet {
-  background: var(--surface); border-radius: 16px 16px 0 0; padding: 16px 20px 24px;
-  width: 100%; max-width: 500px; max-height: 80vh; overflow-y: auto;
+  background: var(--surface); border-radius: 16px; padding: 16px 20px 24px;
+  width: 100%; max-width: 420px; max-height: 80vh; overflow-y: auto;
 }
 .override-sheet__handle { width: 40px; height: 4px; background: var(--border); border-radius: 2px; margin: 0 auto 16px; }
 .override-sheet__title { font-size: 15px; font-weight: 600; margin-bottom: 16px; }
@@ -256,9 +256,10 @@ body {
   flex: 1; background: var(--bg); color: var(--text); border: 1px solid var(--border);
   border-radius: 6px; padding: 8px; font-size: 14px;
 }
-.override-sheet__actions { display: flex; gap: 8px; margin-top: 16px; }
-.override-sheet__confirm { flex: 1; background: var(--accent); color: white; border: none; border-radius: 8px; padding: 12px; font-size: 15px; font-weight: 600; cursor: pointer; }
-.override-sheet__cancel { flex: 1; background: transparent; border: 1px solid var(--border); color: var(--text-dim); border-radius: 8px; padding: 12px; font-size: 15px; cursor: pointer; }
+.override-sheet__actions { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
+.override-sheet__confirm { background: var(--accent); color: white; border: none; border-radius: 8px; padding: 12px; font-size: 15px; font-weight: 600; cursor: pointer; }
+.override-sheet__keep { background: transparent; border: 1px solid #4a9aba; color: #60b0d0; border-radius: 8px; padding: 10px; font-size: 14px; cursor: pointer; }
+.override-sheet__cancel { background: transparent; border: none; color: var(--text-dim); padding: 10px; font-size: 14px; cursor: pointer; }
 
 /* Search Result Card */
 .search-card { margin: 4px 0; border-radius: 8px; overflow: hidden; }
