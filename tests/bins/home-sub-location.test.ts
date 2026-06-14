@@ -30,34 +30,24 @@ describe('determineHomeSubLocation', () => {
     expect(determineHomeSubLocation(b, YEAR)).toBe('Lagringsskåp')
   })
 
-  it('end beyond 3 years → Källaren', () => {
-    const b = makeBottle({ beginConsume: 2025, endConsume: 2040 })
-    expect(determineHomeSubLocation(b, YEAR)).toBe('Källaren')
+  it('Lgh category under 31 → Lagringsskåp', () => {
+    const b = makeBottle({ endConsume: 2040 })
+    expect(determineHomeSubLocation(b, YEAR, 20)).toBe('Lagringsskåp')
   })
 
-  it('no drink window data → Källaren', () => {
-    const b = makeBottle({ beginConsume: null, endConsume: null })
-    expect(determineHomeSubLocation(b, YEAR)).toBe('Källaren')
+  it('Lgh category at 31 → Källaren (0.9 full)', () => {
+    const b = makeBottle({ endConsume: 2040 })
+    expect(determineHomeSubLocation(b, YEAR, 31)).toBe('Källaren')
   })
 
-  it('boundary: end = currentYear+3 → Lagringsskåp', () => {
-    const b = makeBottle({ endConsume: 2029 })
+  it('no count provided → Lagringsskåp (default)', () => {
+    const b = makeBottle({ endConsume: 2040 })
     expect(determineHomeSubLocation(b, YEAR)).toBe('Lagringsskåp')
   })
 
-  it('boundary: end = currentYear+4 with empty cabinets → Lagringsskåp (grey zone, balanced)', () => {
-    const b = makeBottle({ endConsume: 2030 })
-    expect(determineHomeSubLocation(b, YEAR, 0, 0)).toBe('Lagringsskåp')
-  })
-
-  it('boundary: end = currentYear+4 with full Lgh → Källaren', () => {
-    const b = makeBottle({ endConsume: 2030 })
-    expect(determineHomeSubLocation(b, YEAR, 210, 0)).toBe('Källaren')
-  })
-
-  it('boundary: end = currentYear+6 → Källaren (beyond grey zone)', () => {
-    const b = makeBottle({ endConsume: 2032 })
-    expect(determineHomeSubLocation(b, YEAR, 0, 0)).toBe('Källaren')
+  it('no drink window data → Lagringsskåp (if under limit)', () => {
+    const b = makeBottle({ beginConsume: null, endConsume: null })
+    expect(determineHomeSubLocation(b, YEAR, 0)).toBe('Lagringsskåp')
   })
 
   it('boundary: end = currentYear (past-peak) + expensive → Cooler', () => {

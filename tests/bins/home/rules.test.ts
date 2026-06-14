@@ -108,9 +108,9 @@ describe('HOME bin rules — full bin ID with sub-location', () => {
     expect(r!.fullBinId).toBe('Lgh 1. ITALIA')
   })
 
-  it('Italian no window → Källaren', () => {
+  it('Italian no window → Lagringsskåp (under 0.9 limit)', () => {
     const r = resolveHome(makeBottle({ country: 'Italy', beginConsume: null, endConsume: null }))
-    expect(r!.fullBinId).toBe('Kall 1. ITALIA')
+    expect(r!.fullBinId).toBe('Lgh 1. ITALIA')
   })
 
   it('French past-peak expensive → Cooler', () => {

@@ -78,9 +78,8 @@ export function buildSyncRows(
   })
 
   // Pass 1.5: HOME placement — resolve bin for HOME bottles (skip REMOTE-at-dest)
-  // Process drink-soon first to fill Lgh, then grey-zone balances capacity
-  let lghCount = 0
-  let kallCount = 0
+  // Fill each Lgh category to 0.9 capacity (31 bottles), overflow to Kall
+  const lghPerCategory = new Map<string, number>()
 
   const homeIndices = bottles
     .map((_, i) => i)
@@ -107,11 +106,13 @@ export function buildSyncRows(
     }
     if (categoryBinId == null) { homeCount++; continue }
 
-    const subLocation = determineHomeSubLocation(bottle, currentYear, lghCount, kallCount)
+    const catCount = lghPerCategory.get(categoryBinId) ?? 0
+    const subLocation = determineHomeSubLocation(bottle, currentYear, catCount)
     const binId = buildHomeBinId(categoryBinId, subLocation)
 
-    if (subLocation === 'Lagringsskåp') lghCount++
-    else if (subLocation === 'Källaren') kallCount++
+    if (subLocation === 'Lagringsskåp') {
+      lghPerCategory.set(categoryBinId, catCount + 1)
+    }
 
     const currentNorm = bottle.currentLocation === 'REMOTE' ? 'REMOTE' : 'HOME'
 

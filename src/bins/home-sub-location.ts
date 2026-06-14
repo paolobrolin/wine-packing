@@ -2,15 +2,12 @@ import type { Bottle } from '../rules/types'
 
 export type HomeSubLocation = 'Lagringsskåp' | 'Källaren' | 'Cooler'
 
-const SHELF_CAPACITY = 35
-const SHELVES_PER_CABINET = 6
-const CABINET_CAPACITY = SHELF_CAPACITY * SHELVES_PER_CABINET
+const LGH_PER_CATEGORY = 31
 
 export function determineHomeSubLocation(
   bottle: Bottle,
   currentYear: number,
-  lghCount?: number,
-  kallCount?: number,
+  lghCategoryCount?: number,
 ): HomeSubLocation {
   const end = bottle.endConsume
   const cost = bottle.cost ?? 0
@@ -19,21 +16,8 @@ export function determineHomeSubLocation(
     return 'Cooler'
   }
 
-  const drinkSoon = end != null && end <= currentYear + 3
-  const lghFull = (lghCount ?? 0) >= CABINET_CAPACITY
-  const kallFull = (kallCount ?? 0) >= CABINET_CAPACITY
-
-  if (drinkSoon) {
-    return lghFull ? 'Källaren' : 'Lagringsskåp'
-  }
-
-  if (end != null && end <= currentYear + 5) {
-    const lghRoom = CABINET_CAPACITY - (lghCount ?? 0)
-    const kallRoom = CABINET_CAPACITY - (kallCount ?? 0)
-    return lghRoom >= kallRoom ? 'Lagringsskåp' : 'Källaren'
-  }
-
-  return kallFull ? 'Lagringsskåp' : 'Källaren'
+  const lghFull = (lghCategoryCount ?? 0) >= LGH_PER_CATEGORY
+  return lghFull ? 'Källaren' : 'Lagringsskåp'
 }
 
 export function buildHomeBinId(
