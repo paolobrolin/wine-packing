@@ -67,6 +67,7 @@ export default function App() {
     updateBottleLocally(barcode, {
       state: nextState,
       recommended_bin: effectiveBin,
+      current_bin: effectiveBin,
       ...(tsField ? { [tsField]: new Date().toISOString() } : {}),
     } as Partial<typeof bottle>)
 
