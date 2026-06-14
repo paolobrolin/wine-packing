@@ -123,6 +123,10 @@ export default function App() {
                 mode={mode}
                 onAction={handleAction}
                 onBatchAction={handleBatchAction}
+                onRebin={(barcode) => {
+                  updateBottleLocally(barcode, { state: 'synced', synced_at: new Date().toISOString() })
+                  shelve(barcode)
+                }}
               />
             ))}
         </>

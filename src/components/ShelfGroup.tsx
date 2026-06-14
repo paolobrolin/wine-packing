@@ -10,9 +10,10 @@ interface Props {
   capacity?: { current: number; max: number }
   onAction: (barcode: string) => void
   onBatchAction: (barcodes: string[]) => void
+  onRebin?: (barcode: string) => void
 }
 
-export function ShelfGroup({ shelfName, bottles, mode, capacity, onAction, onBatchAction }: Props) {
+export function ShelfGroup({ shelfName, bottles, mode, capacity, onAction, onBatchAction, onRebin }: Props) {
   const { owc, loose } = groupByOwc(bottles)
   const total = bottles.length
   const done = bottles.filter((b) =>
@@ -74,7 +75,7 @@ export function ShelfGroup({ shelfName, bottles, mode, capacity, onAction, onBat
           />
         ))}
         {loose.map((b) => (
-          <BottleCard key={b.barcode} bottle={b} mode={mode} onAction={onAction} />
+          <BottleCard key={b.barcode} bottle={b} mode={mode} onAction={onAction} onRebin={onRebin} />
         ))}
       </div>
     </section>

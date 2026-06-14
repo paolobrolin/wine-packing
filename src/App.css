@@ -134,6 +134,7 @@ body {
 .bottle-card__window { color: var(--green); }
 .bottle-card__dest { color: var(--yellow); }
 .bottle-card__reason { font-size: 11px; color: var(--text-dim); margin-top: 2px; font-style: italic; }
+.bottle-card__move-btn { background: #4a9aba; color: white; border: none; border-radius: 6px; padding: 6px 14px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; align-self: center; margin-left: auto; }
 
 .owc-card {
   padding: 12px; background: var(--surface);

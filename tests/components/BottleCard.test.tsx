@@ -8,7 +8,7 @@ function makeDbBottle(overrides: Partial<DbBottle> = {}): DbBottle {
   return {
     barcode: '0207097736', iwine: 1, vintage: '2018', wine: 'Colgin IX Estate',
     producer: 'Colgin', country: 'USA', region: 'California', size: '750ml',
-    cost: 8499, cost_currency: 'SEK', begin_consume: 2023, end_consume: 2045,
+    cost: 8499, cost_currency: 'SEK', wine_type: null, begin_consume: 2023, end_consume: 2045,
     current_location: 'Cellar', current_bin: 'Lagringsskåp',
     recommended_location: 'REMOTE', recommended_bin: '1.5 COLGIN',
     move_reason: 'midpoint 2034 (8y away)', rule_id: 'midpoint',
@@ -85,5 +85,59 @@ describe('BottleCard', () => {
   it('shows shelved indicator', () => {
     render(<BottleCard bottle={makeDbBottle({ state: 'shelved' })} mode="packing" onAction={() => {}} />)
     expect(screen.getByText('✓')).toBeInTheDocument()
+  })
+
+  it('shows Move button for within-location pending bottles', () => {
+    const bottle = makeDbBottle({
+      current_location: null,
+      recommended_location: 'HOME',
+      current_bin: 'Kall 2. FRANKRIKE',
+      recommended_bin: 'Lgh 2. FRANKRIKE',
+      state: 'pending',
+    })
+    render(<BottleCard bottle={bottle} mode="packing" onAction={() => {}} onRebin={() => {}} />)
+    expect(screen.getByText('Move')).toBeInTheDocument()
+  })
+
+  it('calls onRebin (not onAction) when Move is clicked', async () => {
+    const onAction = vi.fn()
+    const onRebin = vi.fn()
+    const bottle = makeDbBottle({
+      current_location: null,
+      recommended_location: 'HOME',
+      current_bin: 'Kall 2. FRANKRIKE',
+      recommended_bin: 'Lgh 2. FRANKRIKE',
+      state: 'pending',
+    })
+    render(<BottleCard bottle={bottle} mode="packing" onAction={onAction} onRebin={onRebin} />)
+    await userEvent.click(screen.getByText('Move'))
+    expect(onRebin).toHaveBeenCalledWith('0207097736')
+    expect(onAction).not.toHaveBeenCalled()
+  })
+
+  it('does not show Move button for cross-location bottles', () => {
+    render(<BottleCard bottle={makeDbBottle()} mode="packing" onAction={() => {}} onRebin={() => {}} />)
+    expect(screen.queryByText('Move')).not.toBeInTheDocument()
+  })
+
+  it('does not show Move button for synced within-location bottles', () => {
+    const bottle = makeDbBottle({
+      current_location: null,
+      recommended_location: 'HOME',
+      current_bin: 'Lgh 2. FRANKRIKE',
+      recommended_bin: 'Lgh 2. FRANKRIKE',
+      state: 'synced',
+    })
+    render(<BottleCard bottle={bottle} mode="packing" onAction={() => {}} onRebin={() => {}} />)
+    expect(screen.queryByText('Move')).not.toBeInTheDocument()
+  })
+
+  it('cross-location pending still calls onAction (not onRebin)', async () => {
+    const onAction = vi.fn()
+    const onRebin = vi.fn()
+    render(<BottleCard bottle={makeDbBottle()} mode="packing" onAction={onAction} onRebin={onRebin} />)
+    await userEvent.click(screen.getByTestId('bottle-0207097736'))
+    expect(onAction).toHaveBeenCalledWith('0207097736')
+    expect(onRebin).not.toHaveBeenCalled()
   })
 })
