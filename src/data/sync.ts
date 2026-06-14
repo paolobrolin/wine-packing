@@ -44,8 +44,15 @@ export function buildSyncRows(
   ctBottles: CtBottle[],
   existingByBarcode: Map<string, Pick<DbBottle, 'state' | 'packed_at' | 'in_transit_at' | 'shelved_at' | 'synced_at' | 'trip_id' | 'owc_group'>>,
   currentYear: number,
+  costOverrides?: Map<number, number>,
 ): { rows: Partial<DbBottle>[]; stats: SyncResult } {
-  const bottles: Bottle[] = ctBottles.map(toRuleBottle)
+  const enriched = costOverrides ? ctBottles.map(ct => {
+    if ((ct.bottle_cost ?? 0) === 0 && costOverrides.has(ct.iwine)) {
+      return { ...ct, bottle_cost: costOverrides.get(ct.iwine)! }
+    }
+    return ct
+  }) : ctBottles
+  const bottles: Bottle[] = enriched.map(toRuleBottle)
 
   const verticals = buildVerticals(bottles)
   const owcGroups = buildOwcGroups(ctBottles, bottles)
@@ -165,9 +172,11 @@ export function buildSyncRows(
       reason = placement.reason
       ruleId = extractRuleId(placement.reason)
 
-      const binRes = binResolutions.get(bottle.barcode)
-      if (binRes != null) {
-        recBin = binRes.binId
+      if (recBin == null) {
+        const binRes = binResolutions.get(bottle.barcode)
+        if (binRes != null) {
+          recBin = binRes.binId
+        }
       }
     }
 
@@ -198,7 +207,7 @@ export function buildSyncRows(
       country: ct.extra.Country,
       region: ct.extra.Region,
       size: ct.size,
-      cost: ct.bottle_cost,
+      cost: enriched[i].bottle_cost,
       cost_currency: ct.bottle_cost_currency ?? 'SEK',
       wine_type: ct.extra.Type ?? null,
       begin_consume: sanitizeDrinkWindow(ct.begin_consume),

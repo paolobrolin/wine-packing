@@ -177,6 +177,33 @@ describe('buildSyncRows', () => {
     expect(rows[0].recommended_location).toBe('REMOTE')
   })
 
+  it('uses costOverrides for 0-cost bottles (kitchen rule respects enriched price)', () => {
+    // Without override: cost=0, end=2027 → kitchen (HOME, Köket)
+    const ct = makeCtBottle({
+      bottle_cost: 0,
+      begin_consume: 2024,
+      end_consume: 2027,
+      extra: { Vintage: '2013', Wine: 'Voerzio Barolo La Serra', Producer: 'Voerzio Martini', Country: 'Italy', Region: 'Piedmont', Type: null },
+    })
+    const withoutOverride = buildSyncRows([ct], new Map(), 2026)
+    expect(withoutOverride.rows[0].cost).toBe(0)
+    expect(withoutOverride.rows[0].recommended_bin).toBe('Köket')
+
+    // With override: cost=603 → too expensive for kitchen
+    const overrides = new Map([[ct.iwine, 603]])
+    const withOverride = buildSyncRows([ct], new Map(), 2026, overrides)
+    expect(withOverride.rows[0].cost).toBe(603)
+    expect(withOverride.rows[0].recommended_bin).not.toBe('Köket')
+  })
+
+  it('does not override non-zero costs', () => {
+    const ct = makeCtBottle({ bottle_cost: 299, begin_consume: 2024, end_consume: 2027 })
+    const overrides = new Map([[ct.iwine, 999]])
+    const { rows } = buildSyncRows([ct], new Map(), 2026, overrides)
+
+    expect(rows[0].cost).toBe(299)
+  })
+
   it('gives Fortified wines a HOME bin with Lgh/Kall prefix (Don PX bug)', () => {
     const ct = makeCtBottle({
       location: 'Cellar',
