@@ -176,4 +176,18 @@ describe('buildSyncRows', () => {
 
     expect(rows[0].recommended_location).toBe('REMOTE')
   })
+
+  it('gives Fortified wines a HOME bin with Lgh/Kall prefix (Don PX bug)', () => {
+    const ct = makeCtBottle({
+      location: 'Cellar',
+      begin_consume: 2019,
+      end_consume: 2042,
+      bottle_cost: 399,
+      extra: { Vintage: '2003', Wine: 'Bodegas Toro Albalá Don PX', Producer: 'Bodegas Toro Albalá', Country: 'Spain', Region: 'Andalucía', Type: 'White - Fortified' },
+    })
+    const { rows } = buildSyncRows([ct], new Map(), 2026)
+
+    expect(rows[0].recommended_location).toBe('HOME')
+    expect(rows[0].recommended_bin).toMatch(/^(Lgh|Kall) 7\. SOTA \+ STARKVIN$/)
+  })
 })

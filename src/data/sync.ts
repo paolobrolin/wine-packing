@@ -169,14 +169,14 @@ export function buildSyncRows(
       if (binRes != null) {
         recBin = binRes.binId
       }
-    } else {
-      const homePlacement = homePlacements[i]
-      if (homePlacement != null) {
-        recLoc = homePlacement.recommendedLocation
-        recBin = homePlacement.recommendedBin
-        reason = homePlacement.reason
-        ruleId = homePlacement.ruleId
-      }
+    }
+
+    const homePlacement = homePlacements[i]
+    if (homePlacement != null) {
+      recLoc = homePlacement.recommendedLocation
+      recBin = homePlacement.recommendedBin
+      reason = homePlacement.reason
+      ruleId = homePlacement.ruleId
     }
 
     const existing = existingByBarcode.get(ct.barcode)
