@@ -83,7 +83,12 @@ export function buildSyncRows(
 
   const homeIndices = bottles
     .map((_, i) => i)
-    .filter((i) => placements[i] == null && !remoteAtDest.has(i))
+    .filter((i) => {
+      if (remoteAtDest.has(i)) return false
+      if (placements[i] == null) return true
+      const p = placements[i]!
+      return p.recommendedLocation === 'HOME' && p.recommendedBin == null
+    })
     .sort((a, b) => {
       const endA = bottles[a].endConsume ?? 9999
       const endB = bottles[b].endConsume ?? 9999

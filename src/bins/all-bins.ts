@@ -10,8 +10,10 @@ export const REMOTE_BINS = [
 export const HOME_BINS = [
   'Lgh 1. ITALIA', 'Lgh 2. FRANKRIKE', 'Lgh 3. SPANIEN + OVRIGT',
   'Lgh 4. USA', 'Lgh 5. BUBBEL', 'Lgh 6. VITA',
+  'Lgh 7. SOTA + STARKVIN',
   'Kall 1. ITALIA', 'Kall 2. FRANKRIKE', 'Kall 3. SPANIEN + OVRIGT',
   'Kall 4. USA', 'Kall 5. BUBBEL + VITA', 'Kall 6. OVRIGT',
+  'Kall 7. SOTA + STARKVIN',
   'Cooler',
 ] as const
 
