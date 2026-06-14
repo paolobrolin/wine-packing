@@ -5,7 +5,7 @@ const KITCHEN_COST_THRESHOLD = 350
 export const kitchenRule: Rule = {
   id: 'kitchen',
   name: 'Cheap Peak Wines — Kitchen',
-  priority: 25,
+  priority: 36,
 
   evaluate(bottle, context) {
     const end = bottle.endConsume

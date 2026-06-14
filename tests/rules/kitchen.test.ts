@@ -50,7 +50,7 @@ describe('kitchenRule', () => {
     expect(r).not.toBeNull()
   })
 
-  it('has priority 25', () => {
-    expect(kitchenRule.priority).toBe(25)
+  it('has priority 36 (beats sweetWines at 35)', () => {
+    expect(kitchenRule.priority).toBe(36)
   })
 })
