@@ -21,10 +21,15 @@ export function ShelfGroup({ shelfName, bottles, capacity, onDone, onBatchDone, 
   const actionable = bottles.filter((b) => needsMove(b) && (b.state === 'pending' || b.state === 'packed' || b.state === 'in_transit'))
   const allActionable = actionable.length === total && total > 0
 
+  const isRemote = bottles.some((b) => b.recommended_location === 'REMOTE')
+  const groupClass = isRemote ? 'shelf-group--remote' : 'shelf-group--local'
+  const locationLabel = isRemote ? 'EXTERN' : 'HEMMA'
+
   return (
-    <section className="shelf-group" data-testid={`shelf-${shelfName}`}>
+    <section className={`shelf-group ${groupClass}`} data-testid={`shelf-${shelfName}`}>
       <div className="shelf-group__header">
         <div className="shelf-group__title">
+          <span className="shelf-group__location-badge">{locationLabel}</span>
           <span className="shelf-group__name">→ {shelfName}</span>
           <span className="shelf-group__count">{total} fl</span>
         </div>

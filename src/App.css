@@ -83,12 +83,20 @@ body {
 .progress-bar__label { font-size: 13px; color: var(--text-dim); white-space: nowrap; }
 
 .shelf-group { margin: 16px 0; }
+.shelf-group--remote { border-left: 4px solid var(--packed-border); }
+.shelf-group--local { border-left: 4px solid #4a9aba; }
 .shelf-group__header {
-  background: var(--surface); padding: 12px; border-radius: 8px 8px 0 0;
-  border: 1px solid var(--border); border-bottom: none;
+  background: var(--surface); padding: 12px; border-radius: 0 8px 0 0;
+  border: 1px solid var(--border); border-bottom: none; border-left: none;
 }
-.shelf-group__title { display: flex; justify-content: space-between; align-items: center; }
-.shelf-group__name { font-size: 15px; font-weight: 600; }
+.shelf-group__title { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.shelf-group__name { font-size: 15px; font-weight: 600; flex: 1; }
+.shelf-group__location-badge {
+  font-size: 10px; font-weight: 700; letter-spacing: 0.5px; padding: 2px 6px;
+  border-radius: 3px; text-transform: uppercase;
+}
+.shelf-group--remote .shelf-group__location-badge { background: var(--packed); color: #e0c060; }
+.shelf-group--local .shelf-group__location-badge { background: #1a3a4a; color: #60b0d0; }
 .shelf-group__count { font-size: 13px; color: var(--text-dim); }
 .shelf-group__progress { margin-top: 6px; }
 .shelf-group__capacity { margin-top: 4px; }
