@@ -15,6 +15,7 @@ export const HOME_BINS = [
   'Kall 4. USA', 'Kall 5. BUBBEL + VITA', 'Kall 6. OVRIGT',
   'Kall 7. SOTA + STARKVIN',
   'Cooler',
+  'Köket',
 ] as const
 
 export function allBinsGrouped(): { label: string; bins: string[] }[] {
@@ -24,6 +25,6 @@ export function allBinsGrouped(): { label: string; bins: string[] }[] {
     { label: 'Extern (Skap 3)', bins: REMOTE_BINS.filter(b => b.startsWith('3.')) as unknown as string[] },
     { label: 'Lagringsskåp', bins: HOME_BINS.filter(b => b.startsWith('Lgh')) as unknown as string[] },
     { label: 'Källaren', bins: HOME_BINS.filter(b => b.startsWith('Kall')) as unknown as string[] },
-    { label: 'Cooler', bins: ['Cooler'] },
+    { label: 'Övrigt', bins: ['Cooler', 'Köket'] },
   ]
 }

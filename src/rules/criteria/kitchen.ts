@@ -10,13 +10,13 @@ export const kitchenRule: Rule = {
   evaluate(bottle, context) {
     const end = bottle.endConsume
     if (end == null) return null
-    if (end > context.currentYear + 1) return null
+    if (end > context.currentYear + 2) return null
     const cost = bottle.cost ?? 0
     if (cost >= KITCHEN_COST_THRESHOLD) return null
 
     return {
       recommendedLocation: 'HOME',
-      recommendedBin: null,
+      recommendedBin: 'Köket',
       reason: `kitchen: peak wine under ${KITCHEN_COST_THRESHOLD} kr`,
     }
   },

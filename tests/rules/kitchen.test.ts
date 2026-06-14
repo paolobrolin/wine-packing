@@ -18,16 +18,17 @@ const context: RuleContext = {
 }
 
 describe('kitchenRule', () => {
-  it('catches cheap past-peak wine (end <= 2027, cost < 350)', () => {
+  it('catches cheap past-peak wine (end <= 2028, cost < 350)', () => {
     const r = kitchenRule.evaluate(makeBottle({ endConsume: 2026, cost: 139 }), context)
     expect(r).not.toBeNull()
     expect(r!.recommendedLocation).toBe('HOME')
-    expect(r!.recommendedBin).toBeNull()
+    expect(r!.recommendedBin).toBe('Köket')
   })
 
-  it('catches end=2027 wine under 350', () => {
-    const r = kitchenRule.evaluate(makeBottle({ endConsume: 2027, cost: 269 }), context)
+  it('catches end=2028 wine under 350 (Spinetta rosé case)', () => {
+    const r = kitchenRule.evaluate(makeBottle({ endConsume: 2028, cost: 169 }), context)
     expect(r).not.toBeNull()
+    expect(r!.recommendedBin).toBe('Köket')
   })
 
   it('does NOT catch expensive peak wine (cost >= 350)', () => {
@@ -35,8 +36,8 @@ describe('kitchenRule', () => {
     expect(r).toBeNull()
   })
 
-  it('does NOT catch wine with end > currentYear+1', () => {
-    const r = kitchenRule.evaluate(makeBottle({ endConsume: 2028, cost: 139 }), context)
+  it('does NOT catch wine with end > currentYear+2', () => {
+    const r = kitchenRule.evaluate(makeBottle({ endConsume: 2029, cost: 139 }), context)
     expect(r).toBeNull()
   })
 
