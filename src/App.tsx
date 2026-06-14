@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { useBottles, groupByShelf } from './hooks/useBottles'
 import { useMoveActions } from './hooks/useMoveActions'
 import { useToast } from './hooks/useToast'
@@ -14,22 +14,60 @@ import './App.css'
 
 type View = 'overview' | 'source' | 'home'
 
+interface NavState { view: View; source: string | null }
+
+function viewToHash(view: View, source: string | null): string {
+  if (view === 'home') return '#cellar'
+  if (view === 'source' && source) return `#source/${encodeURIComponent(source)}`
+  return '#tasks'
+}
+
+function hashToNav(): NavState {
+  const hash = window.location.hash
+  if (hash === '#cellar') return { view: 'home', source: null }
+  if (hash.startsWith('#source/')) return { view: 'source', source: decodeURIComponent(hash.slice(8)) }
+  return { view: 'overview', source: null }
+}
+
 function dedupeBottles(primary: DbBottle[], secondary: DbBottle[]): DbBottle[] {
   const seen = new Set(primary.map(b => b.barcode))
   return [...primary, ...secondary.filter(b => !seen.has(b.barcode))]
 }
 
 export default function App() {
-  const [view, setView] = useState<View>('overview')
-  const [selectedSource, setSelectedSource] = useState<string | null>(null)
+  const initial = useRef(hashToNav())
+  const [view, setView] = useState<View>(initial.current.view)
+  const [selectedSource, setSelectedSource] = useState<string | null>(initial.current.source)
   const [overrideBottle, setOverrideBottle] = useState<DbBottle | null>(null)
   const scrollPositions = useRef<Record<string, number>>({})
+  const skipNextPush = useRef(false)
 
-  const navigateTo = (nextView: View, source?: string | null) => {
+  const navigateTo = useCallback((nextView: View, source?: string | null) => {
     scrollPositions.current[view] = window.scrollY
     setView(nextView)
     if (source !== undefined) setSelectedSource(source)
-  }
+    const effectiveSource = source !== undefined ? source : selectedSource
+    const hash = viewToHash(nextView, effectiveSource)
+    window.history.pushState({ view: nextView, source: effectiveSource }, '', hash)
+  }, [view, selectedSource])
+
+  useEffect(() => {
+    const onPopState = () => {
+      scrollPositions.current[view] = window.scrollY
+      const nav = hashToNav()
+      skipNextPush.current = true
+      setView(nav.view)
+      setSelectedSource(nav.source)
+    }
+    window.addEventListener('popstate', onPopState)
+    return () => window.removeEventListener('popstate', onPopState)
+  }, [view])
+
+  useEffect(() => {
+    if (!window.location.hash) {
+      window.history.replaceState({ view: 'overview', source: null }, '', '#tasks')
+    }
+  }, [])
 
   useEffect(() => {
     const saved = scrollPositions.current[view]
