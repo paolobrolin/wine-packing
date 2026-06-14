@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useBottles, groupByShelf } from './hooks/useBottles'
 import { useMoveActions } from './hooks/useMoveActions'
 import { useToast } from './hooks/useToast'
@@ -23,6 +23,22 @@ export default function App() {
   const [view, setView] = useState<View>('overview')
   const [selectedSource, setSelectedSource] = useState<string | null>(null)
   const [overrideBottle, setOverrideBottle] = useState<DbBottle | null>(null)
+  const scrollPositions = useRef<Record<string, number>>({})
+
+  const navigateTo = (nextView: View, source?: string | null) => {
+    scrollPositions.current[view] = window.scrollY
+    setView(nextView)
+    if (source !== undefined) setSelectedSource(source)
+  }
+
+  useEffect(() => {
+    const saved = scrollPositions.current[view]
+    if (saved != null) {
+      requestAnimationFrame(() => window.scrollTo(0, saved))
+    } else {
+      window.scrollTo(0, 0)
+    }
+  }, [view])
 
   const { bottles: moveBottles, loading: moveLoading, error: moveError, updateBottleLocally } = useBottles({ type: 'needs-move' })
   const { bottles: homeBottles, loading: homeLoading, error: homeError } = useBottles({ type: 'home' })
@@ -97,8 +113,7 @@ export default function App() {
   }
 
   const handleSelectSource = (source: string) => {
-    setSelectedSource(source)
-    setView('source')
+    navigateTo('source', source)
   }
 
   const filteredBottles = selectedSource
@@ -113,10 +128,10 @@ export default function App() {
       <header className="app__header">
         <h1 className="app__title">Vinflytt</h1>
         <nav className="app__nav">
-          <button className={view === 'overview' || view === 'source' ? 'active' : ''} onClick={() => { setView('overview'); setSelectedSource(null) }}>
+          <button className={view === 'overview' || view === 'source' ? 'active' : ''} onClick={() => navigateTo('overview', null)}>
             Tasks
           </button>
-          <button className={view === 'home' ? 'active' : ''} onClick={() => setView('home')}>
+          <button className={view === 'home' ? 'active' : ''} onClick={() => navigateTo('home')}>
             Cellar
           </button>
         </nav>
@@ -138,7 +153,7 @@ export default function App() {
       {!loading && view === 'source' && (
         <>
           <div className="app__source-header">
-            <button className="app__back" onClick={() => { setView('overview'); setSelectedSource(null) }}>← Back</button>
+            <button className="app__back" onClick={() => navigateTo('overview', null)}>← Back</button>
             <h2>{selectedSource}</h2>
           </div>
           {[...shelves.entries()]
