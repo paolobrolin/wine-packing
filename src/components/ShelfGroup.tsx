@@ -10,9 +10,10 @@ interface Props {
   capacity?: { current: number; max: number }
   onDone: (barcode: string) => void
   onBatchDone: (barcodes: string[]) => void
+  onUndo?: (barcode: string) => void
 }
 
-export function ShelfGroup({ shelfName, bottles, capacity, onDone, onBatchDone }: Props) {
+export function ShelfGroup({ shelfName, bottles, capacity, onDone, onBatchDone, onUndo }: Props) {
   const { owc, loose } = groupByOwc(bottles)
   const total = bottles.length
   const done = bottles.filter((b) => b.state === 'shelved' || b.state === 'synced').length
@@ -70,7 +71,7 @@ export function ShelfGroup({ shelfName, bottles, capacity, onDone, onBatchDone }
           />
         ))}
         {loose.map((b) => (
-          <BottleCard key={b.barcode} bottle={b} onDone={onDone} />
+          <BottleCard key={b.barcode} bottle={b} onDone={onDone} onUndo={onUndo} />
         ))}
       </div>
     </section>

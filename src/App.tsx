@@ -136,6 +136,7 @@ export default function App() {
                 bottles={shelfBottles}
                 onDone={handleDone}
                 onBatchDone={handleBatchDone}
+                onUndo={handleUndo}
               />
             ))}
         </>

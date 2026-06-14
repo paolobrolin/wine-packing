@@ -5,6 +5,7 @@ import { displayVintage, displayCost } from '../data/format'
 interface Props {
   bottle: DbBottle
   onDone: (barcode: string) => void
+  onUndo?: (barcode: string) => void
 }
 
 const STATE_STYLES: Record<string, string> = {
@@ -25,7 +26,7 @@ function stateExplanation(state: string): string | null {
   return null
 }
 
-export function BottleCard({ bottle, onDone }: Props) {
+export function BottleCard({ bottle, onDone, onUndo }: Props) {
   const moves = needsMove(bottle)
 
   const canAct = moves && (
@@ -83,11 +84,18 @@ export function BottleCard({ bottle, onDone }: Props) {
           <div className="bottle-card__explanation">{explanation}</div>
         )}
       </div>
-      {canAct && (
-        <button className="bottle-card__done-btn" onClick={(e) => { e.stopPropagation(); onDone(bottle.barcode) }}>
-          {actionLabel(bottle)}
-        </button>
-      )}
+      <div className="bottle-card__actions">
+        {canAct && (
+          <button className="bottle-card__done-btn" onClick={(e) => { e.stopPropagation(); onDone(bottle.barcode) }}>
+            {actionLabel(bottle)}
+          </button>
+        )}
+        {(bottle.state === 'packed' || bottle.state === 'in_transit') && onUndo && (
+          <button className="bottle-card__undo-btn" onClick={(e) => { e.stopPropagation(); onUndo(bottle.barcode) }}>
+            Undo
+          </button>
+        )}
+      </div>
     </div>
   )
 }

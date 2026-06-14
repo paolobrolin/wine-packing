@@ -102,4 +102,21 @@ describe('BottleCard', () => {
     render(<BottleCard bottle={bottle} onDone={() => {}} />)
     expect(screen.queryByText('Pack')).not.toBeInTheDocument()
   })
+
+  it('shows Undo button for packed bottles when onUndo provided', () => {
+    render(<BottleCard bottle={makeDbBottle({ state: 'packed' })} onDone={() => {}} onUndo={() => {}} />)
+    expect(screen.getByText('Undo')).toBeInTheDocument()
+  })
+
+  it('calls onUndo when Undo clicked on packed bottle', async () => {
+    const onUndo = vi.fn()
+    render(<BottleCard bottle={makeDbBottle({ state: 'packed' })} onDone={() => {}} onUndo={onUndo} />)
+    await userEvent.click(screen.getByText('Undo'))
+    expect(onUndo).toHaveBeenCalledWith('0207097736')
+  })
+
+  it('does not show Undo for pending bottles', () => {
+    render(<BottleCard bottle={makeDbBottle({ state: 'pending' })} onDone={() => {}} onUndo={() => {}} />)
+    expect(screen.queryByText('Undo')).not.toBeInTheDocument()
+  })
 })

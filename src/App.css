@@ -135,7 +135,9 @@ body {
 .bottle-card__dest { color: var(--yellow); }
 .bottle-card__reason { font-size: 11px; color: var(--text-dim); margin-top: 2px; font-style: italic; }
 .bottle-card__explanation { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
-.bottle-card__done-btn { background: var(--accent); color: white; border: none; border-radius: 6px; padding: 6px 14px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; align-self: center; margin-left: auto; }
+.bottle-card__actions { display: flex; gap: 6px; align-items: center; margin-left: auto; }
+.bottle-card__done-btn { background: var(--accent); color: white; border: none; border-radius: 6px; padding: 6px 14px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+.bottle-card__undo-btn { background: transparent; border: 1px solid var(--text-dim); color: var(--text-dim); border-radius: 6px; padding: 5px 10px; font-size: 12px; cursor: pointer; white-space: nowrap; }
 .search-card__current { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
 .search-panel__toast--success { background: #1a3a1a; border-color: #2a6a2a; }
 .search-panel__toast--info { background: #1a3a4a; border-color: #4a9aba; }
