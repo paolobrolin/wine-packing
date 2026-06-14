@@ -27,10 +27,11 @@ export const SearchResultCard = memo(function SearchResultCard({ result, mode, o
     : bottle.recommended_bin ? 'search-card--home-placed'
     : 'search-card--home'
 
-  const verdictText = mt === 'cross-location' ? `MOVE → ${bottle.recommended_bin ?? 'TBD'}`
+  const locationPrefix = bottle.recommended_location === 'REMOTE' ? 'REMOTE ' : ''
+  const verdictText = mt === 'cross-location' ? `MOVE → ${locationPrefix}${bottle.recommended_bin ?? 'TBD'}`
     : mt === 'within-location' ? `REBIN → ${bottle.recommended_bin ?? 'TBD'}`
-    : bottle.recommended_bin ? `HOME → ${bottle.recommended_bin}`
-    : 'STAYS HOME'
+    : bottle.recommended_bin ? `${bottle.recommended_bin}`
+    : 'HOME'
 
   const handleAction = (e: React.MouseEvent) => {
     e.stopPropagation()

@@ -75,13 +75,13 @@ describe('SearchPanel', () => {
   it('shows verdict banner MOVE for bottles that need to move', async () => {
     render(<SearchPanel bottles={bottles} mode="packing" onPack={() => {}} />)
     await userEvent.type(screen.getByPlaceholderText('Search wines...'), 'oddero')
-    expect(screen.getByText(/MOVE → 3.3 BAROLO CLASSIC/)).toBeInTheDocument()
+    expect(screen.getByText(/MOVE → REMOTE 3.3 BAROLO CLASSIC/)).toBeInTheDocument()
   })
 
   it('shows verdict banner STAYS HOME for home bottles', async () => {
     render(<SearchPanel bottles={bottles} mode="packing" onPack={() => {}} />)
     await userEvent.type(screen.getByPlaceholderText('Search wines...'), 'kongs')
-    expect(screen.getByText(/STAYS HOME/)).toBeInTheDocument()
+    expect(screen.getByText(/HOME/)).toBeInTheDocument()
   })
 
   it('calls onPack when Pack button is clicked', async () => {

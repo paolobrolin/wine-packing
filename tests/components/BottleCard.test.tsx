@@ -38,7 +38,7 @@ describe('BottleCard', () => {
 
   it('shows destination bin', () => {
     render(<BottleCard bottle={makeDbBottle()} mode="packing" onAction={() => {}} />)
-    expect(screen.getByText('→ 1.5 COLGIN')).toBeInTheDocument()
+    expect(screen.getByText('→ REMOTE 1.5 COLGIN')).toBeInTheDocument()
   })
 
   it('shows move reason', () => {

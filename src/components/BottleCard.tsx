@@ -70,7 +70,7 @@ export function BottleCard({ bottle, mode, onAction }: Props) {
             <span className="bottle-card__window">{bottle.begin_consume}–{bottle.end_consume}</span>
           )}
           {bottle.recommended_bin && (
-            <span className="bottle-card__dest">→ {bottle.recommended_bin}</span>
+            <span className="bottle-card__dest">→ {bottle.recommended_location === 'REMOTE' ? 'REMOTE ' : ''}{bottle.recommended_bin}</span>
           )}
         </div>
         {bottle.move_reason && (
