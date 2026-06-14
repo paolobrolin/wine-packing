@@ -54,7 +54,7 @@ export function OverrideSheet({ bottle, onConfirm, onKeep, onCancel }: Props) {
         <div className="override-sheet__actions">
           <button
             className="override-sheet__confirm"
-            onClick={() => onConfirm(bottle.barcode, selectedBin !== bottle.recommended_bin ? selectedBin : null)}
+            onClick={() => onConfirm(bottle.barcode, selectedBin || null)}
             data-testid="override-confirm"
           >
             Confirm

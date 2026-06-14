@@ -59,7 +59,11 @@ export async function fetchTrips(): Promise<DbTrip[]> {
   return data ?? []
 }
 
-export async function transitionBottle(barcode: string, to: BottleState): Promise<DbBottle> {
+export async function transitionBottle(
+  barcode: string,
+  to: BottleState,
+  extra?: { current_location?: string; current_bin?: string | null },
+): Promise<DbBottle> {
   const { data: current, error: fetchError } = await getSupabase()
     .from('bottles')
     .select('state')
@@ -77,6 +81,8 @@ export async function transitionBottle(barcode: string, to: BottleState): Promis
     updated_at: new Date().toISOString(),
   }
   if (tsField) updates[tsField] = new Date().toISOString()
+  if (extra?.current_location !== undefined) updates.current_location = extra.current_location
+  if (extra?.current_bin !== undefined) updates.current_bin = extra.current_bin
 
   const { data, error } = await getSupabase()
     .from('bottles')

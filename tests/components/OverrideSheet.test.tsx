@@ -52,11 +52,11 @@ describe('OverrideSheet', () => {
     expect(select).toContainHTML('Cooler')
   })
 
-  it('calls onConfirm with null overrideBin when keeping recommendation', async () => {
+  it('calls onConfirm with recommended bin when keeping recommendation', async () => {
     const onConfirm = vi.fn()
     render(<OverrideSheet bottle={makeDbBottle()} onConfirm={onConfirm} onKeep={() => {}} onCancel={() => {}} />)
     await userEvent.click(screen.getByTestId('override-confirm'))
-    expect(onConfirm).toHaveBeenCalledWith('0001', null)
+    expect(onConfirm).toHaveBeenCalledWith('0001', '2.1 BDX LB')
   })
 
   it('calls onConfirm with new bin when overriding', async () => {
@@ -94,5 +94,33 @@ describe('OverrideSheet', () => {
     render(<OverrideSheet bottle={makeDbBottle()} onConfirm={() => {}} onKeep={() => {}} onCancel={onCancel} />)
     await userEvent.click(screen.getByText(/2020.*Test Wine/).closest('.override-sheet__backdrop')!)
     expect(onCancel).toHaveBeenCalled()
+  })
+
+  it('pre-selects HOME bin when recommended_bin is a HOME bin', () => {
+    const bottle = makeDbBottle({
+      recommended_location: 'HOME',
+      recommended_bin: 'Lgh 7. SOTA + STARKVIN',
+    })
+    render(<OverrideSheet bottle={bottle} onConfirm={() => {}} onKeep={() => {}} onCancel={() => {}} />)
+    const select = screen.getByTestId('override-select') as HTMLSelectElement
+    expect(select.value).toBe('Lgh 7. SOTA + STARKVIN')
+  })
+
+  it('falls back to first bin when recommended_bin is null', () => {
+    const bottle = makeDbBottle({ recommended_bin: null })
+    render(<OverrideSheet bottle={bottle} onConfirm={() => {}} onKeep={() => {}} onCancel={() => {}} />)
+    const select = screen.getByTestId('override-select') as HTMLSelectElement
+    expect(select.value).toBe('1.1 OWC')
+  })
+
+  it('calls onConfirm with recommended bin when user does not change dropdown', async () => {
+    const onConfirm = vi.fn()
+    const bottle = makeDbBottle({
+      recommended_location: 'HOME',
+      recommended_bin: 'Lgh 7. SOTA + STARKVIN',
+    })
+    render(<OverrideSheet bottle={bottle} onConfirm={onConfirm} onKeep={() => {}} onCancel={() => {}} />)
+    await userEvent.click(screen.getByTestId('override-confirm'))
+    expect(onConfirm).toHaveBeenCalledWith('0001', 'Lgh 7. SOTA + STARKVIN')
   })
 })

@@ -70,6 +70,14 @@ describe('inferTransition', () => {
     expect(inferTransition(b)).toBe('synced')
   })
 
+  it('within-location must transition to synced, NOT shelved (pending → shelved is invalid)', () => {
+    const b = makeDbBottle({ state: 'pending', current_location: null, recommended_location: 'HOME', current_bin: 'Kall 6', recommended_bin: 'Lgh 7. SOTA + STARKVIN' })
+    const next = inferTransition(b)
+    expect(next).toBe('synced')
+    expect(canTransition('pending', 'shelved')).toBe(false)
+    expect(canTransition('pending', next)).toBe(true)
+  })
+
   it('packed → shelved', () => {
     const b = makeDbBottle({ state: 'packed' })
     expect(inferTransition(b)).toBe('shelved')

@@ -1,11 +1,14 @@
 import { useCallback } from 'react'
 import { transitionBottle, transitionBatch, assignToTrip, createTrip, completeTrip } from '../data/queries'
 
+type ExtraFields = { current_location?: string; current_bin?: string | null }
+
 export function useMoveActions() {
-  const pack = useCallback((barcode: string) => transitionBottle(barcode, 'packed'), [])
-  const unpack = useCallback((barcode: string) => transitionBottle(barcode, 'pending'), [])
-  const startTransit = useCallback((barcode: string) => transitionBottle(barcode, 'in_transit'), [])
-  const shelve = useCallback((barcode: string) => transitionBottle(barcode, 'shelved'), [])
+  const pack = useCallback((barcode: string, extra?: ExtraFields) => transitionBottle(barcode, 'packed', extra), [])
+  const unpack = useCallback((barcode: string, extra?: ExtraFields) => transitionBottle(barcode, 'pending', extra), [])
+  const startTransit = useCallback((barcode: string, extra?: ExtraFields) => transitionBottle(barcode, 'in_transit', extra), [])
+  const shelve = useCallback((barcode: string, extra?: ExtraFields) => transitionBottle(barcode, 'shelved', extra), [])
+  const sync = useCallback((barcode: string, extra?: ExtraFields) => transitionBottle(barcode, 'synced', extra), [])
 
   const packBatch = useCallback((barcodes: string[]) => transitionBatch(barcodes, 'packed'), [])
   const shelveBatch = useCallback((barcodes: string[]) => transitionBatch(barcodes, 'shelved'), [])
@@ -19,5 +22,5 @@ export function useMoveActions() {
 
   const finishTrip = useCallback((tripId: string) => completeTrip(tripId), [])
 
-  return { pack, unpack, startTransit, shelve, packBatch, shelveBatch, transitBatch, planTrip, finishTrip }
+  return { pack, unpack, startTransit, shelve, sync, packBatch, shelveBatch, transitBatch, planTrip, finishTrip }
 }

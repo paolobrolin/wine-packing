@@ -42,7 +42,7 @@ export default function App() {
 
   const { bottles: moveBottles, loading: moveLoading, error: moveError, updateBottleLocally } = useBottles({ type: 'needs-move' })
   const { bottles: homeBottles, loading: homeLoading, error: homeError } = useBottles({ type: 'home' })
-  const { pack, unpack, shelve } = useMoveActions()
+  const { pack, unpack, shelve, sync } = useMoveActions()
   const { toast, show: showToast, dismiss: dismissToast } = useToast()
   const error = moveError || homeError
 
@@ -53,14 +53,11 @@ export default function App() {
     setOverrideBottle(bottle)
   }
 
-  const handleConfirmDone = (barcode: string, overrideBin: string | null) => {
+  const handleConfirmDone = (barcode: string, destBin: string | null) => {
     const bottle = [...moveBottles, ...homeBottles].find((b) => b.barcode === barcode)
     if (!bottle) { setOverrideBottle(null); return }
 
-    if (overrideBin) {
-      updateBottleLocally(barcode, { recommended_bin: overrideBin } as Partial<typeof bottle>)
-    }
-
+    const effectiveBin = destBin ?? bottle.recommended_bin
     const label = actionLabel(bottle)
     const nextState = inferTransition(bottle)
     const tsField = nextState === 'packed' ? 'packed_at'
@@ -69,22 +66,25 @@ export default function App() {
 
     updateBottleLocally(barcode, {
       state: nextState,
+      recommended_bin: effectiveBin,
       ...(tsField ? { [tsField]: new Date().toISOString() } : {}),
     } as Partial<typeof bottle>)
 
-    if (nextState === 'packed') pack(barcode)
-    else if (nextState === 'shelved') shelve(barcode)
-    else if (nextState === 'synced') shelve(barcode)
+    const extra = effectiveBin ? { current_bin: effectiveBin } : undefined
+    if (nextState === 'packed') pack(barcode, extra)
+    else if (nextState === 'shelved') shelve(barcode, extra)
+    else if (nextState === 'synced') sync(barcode, extra)
 
     const v = bottle.vintage === '1001' ? 'NV' : bottle.vintage
-    const dest = bottle.recommended_bin ?? ''
     const prevState = bottle.state
+    const prevBin = bottle.current_bin
     showToast(
-      `${v} ${bottle.wine} — ${label.toLowerCase()}ed → ${dest}`,
+      `${v} ${bottle.wine} — ${label === 'Move' ? 'moved' : label === 'Place' ? 'placed' : 'packed'} → ${effectiveBin ?? ''}`,
       'success',
       () => {
         updateBottleLocally(barcode, {
           state: prevState,
+          current_bin: prevBin,
           packed_at: prevState === 'pending' ? null : bottle.packed_at,
           shelved_at: prevState === 'pending' || prevState === 'packed' ? null : bottle.shelved_at,
         } as Partial<typeof bottle>)
