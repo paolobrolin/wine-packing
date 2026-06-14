@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { useBottles, groupByShelf } from './hooks/useBottles'
 import { useMoveActions } from './hooks/useMoveActions'
+import { useToast } from './hooks/useToast'
 import { Overview } from './components/Overview'
 import { ShelfGroup } from './components/ShelfGroup'
 import { HomeView } from './components/HomeView'
 import { SearchPanel } from './components/SearchPanel'
 import { inferTransition, reverseTransition } from './rules/state-machine'
+import { actionLabel } from './data/models'
 import type { DbBottle } from './data/models'
 import './App.css'
 
@@ -23,12 +25,14 @@ export default function App() {
   const { bottles: moveBottles, loading: moveLoading, error: moveError, updateBottleLocally } = useBottles({ type: 'needs-move' })
   const { bottles: homeBottles, loading: homeLoading, error: homeError } = useBottles({ type: 'home' })
   const { pack, unpack, shelve } = useMoveActions()
+  const { toast, show: showToast, dismiss: dismissToast } = useToast()
   const error = moveError || homeError
 
   const handleDone = (barcode: string) => {
     const bottle = [...moveBottles, ...homeBottles].find((b) => b.barcode === barcode)
     if (!bottle) return
 
+    const label = actionLabel(bottle)
     const nextState = inferTransition(bottle)
     const tsField = nextState === 'packed' ? 'packed_at'
       : nextState === 'shelved' ? 'shelved_at'
@@ -42,6 +46,14 @@ export default function App() {
     if (nextState === 'packed') pack(barcode)
     else if (nextState === 'shelved') shelve(barcode)
     else if (nextState === 'synced') shelve(barcode)
+
+    const v = bottle.vintage === '1001' ? 'NV' : bottle.vintage
+    const dest = bottle.recommended_bin ?? ''
+    showToast(
+      `${v} ${bottle.wine} — ${label.toLowerCase()}ed → ${dest}`,
+      'success',
+      () => handleUndo(barcode),
+    )
   }
 
   const handleUndo = (barcode: string) => {
@@ -54,6 +66,9 @@ export default function App() {
       packed_at: prevState === 'pending' ? null : bottle.packed_at,
     } as Partial<typeof bottle>)
     unpack(barcode)
+
+    const v = bottle.vintage === '1001' ? 'NV' : bottle.vintage
+    showToast(`${v} ${bottle.wine} — undone`, 'info')
   }
 
   const handleBatchDone = (barcodes: string[]) => {
@@ -122,6 +137,17 @@ export default function App() {
       )}
 
       {!loading && view === 'home' && <HomeView bottles={homeBottles} />}
+
+      {toast && (
+        <div className={`app__toast app__toast--${toast.type}`} role="status">
+          <span>{toast.message}</span>
+          {toast.undoAction && (
+            <button className="app__toast-undo" onClick={() => { toast.undoAction!(); dismissToast() }}>
+              Undo
+            </button>
+          )}
+        </div>
+      )}
     </div>
   )
 }

@@ -216,6 +216,19 @@ body {
   font-size: 13px; z-index: 100; animation: fadeIn 0.2s;
 }
 
+/* App-level toast */
+.app__toast {
+  position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+  color: var(--text); padding: 10px 20px; border-radius: 8px;
+  font-size: 13px; z-index: 100; animation: fadeIn 0.2s;
+  display: flex; align-items: center; gap: 8px; max-width: 90vw;
+  border: 1px solid;
+}
+.app__toast--success { background: #1a3a1a; border-color: #2a6a2a; }
+.app__toast--info { background: #1a3a4a; border-color: #4a9aba; }
+.app__toast--error { background: #4a1a1a; border-color: #aa3333; }
+.app__toast-undo { background: transparent; border: 1px solid currentColor; color: inherit; border-radius: 4px; padding: 2px 8px; cursor: pointer; font-size: 12px; white-space: nowrap; }
+
 /* Search Result Card */
 .search-card { margin: 4px 0; border-radius: 8px; overflow: hidden; }
 .search-card--move { border-left: 4px solid var(--packed-border); background: var(--surface); }

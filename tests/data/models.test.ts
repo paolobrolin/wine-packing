@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { needsMove, isOverdue, normalizeLocation, moveType, type DbBottle } from '../../src/data/models'
+import { needsMove, isOverdue, normalizeLocation, moveType, actionLabel, type DbBottle } from '../../src/data/models'
 
 function makeDbBottle(overrides: Partial<DbBottle> = {}): DbBottle {
   return {
@@ -106,6 +106,27 @@ describe('moveType', () => {
       current_location: null, recommended_location: 'REMOTE',
       recommended_bin: '3.4 BARBARESCO',
     }))).toBe('cross-location')
+  })
+})
+
+describe('actionLabel', () => {
+  it('returns Pack for pending cross-location', () => {
+    expect(actionLabel(makeDbBottle({ state: 'pending', current_location: 'Cellar', recommended_location: 'REMOTE' }))).toBe('Pack')
+  })
+
+  it('returns Place for packed bottles', () => {
+    expect(actionLabel(makeDbBottle({ state: 'packed' }))).toBe('Place')
+  })
+
+  it('returns Place for in_transit bottles', () => {
+    expect(actionLabel(makeDbBottle({ state: 'in_transit' }))).toBe('Place')
+  })
+
+  it('returns Move for pending within-location', () => {
+    expect(actionLabel(makeDbBottle({
+      state: 'pending', current_location: null, recommended_location: 'HOME',
+      current_bin: 'Kall 2', recommended_bin: 'Lgh 2',
+    }))).toBe('Move')
   })
 })
 

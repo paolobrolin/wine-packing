@@ -1,5 +1,5 @@
 import type { DbBottle } from '../data/models'
-import { needsMove } from '../data/models'
+import { needsMove, actionLabel } from '../data/models'
 import { displayVintage, displayCost } from '../data/format'
 
 interface Props {
@@ -85,7 +85,7 @@ export function BottleCard({ bottle, onDone }: Props) {
       </div>
       {canAct && (
         <button className="bottle-card__done-btn" onClick={(e) => { e.stopPropagation(); onDone(bottle.barcode) }}>
-          Done
+          {actionLabel(bottle)}
         </button>
       )}
     </div>

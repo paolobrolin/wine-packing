@@ -68,6 +68,13 @@ export function moveType(bottle: DbBottle): MoveType {
   return 'none'
 }
 
+export function actionLabel(bottle: DbBottle): string {
+  if (bottle.state === 'packed' || bottle.state === 'in_transit') return 'Place'
+  const mt = moveType(bottle)
+  if (mt === 'within-location') return 'Move'
+  return 'Pack'
+}
+
 export function needsMove(bottle: DbBottle): boolean {
   if (bottle.recommended_location == null) return false
   if (bottle.current_location !== bottle.recommended_location) return true

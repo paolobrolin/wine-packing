@@ -88,7 +88,7 @@ describe('SearchPanel', () => {
     const onDone = vi.fn()
     render(<SearchPanel bottles={bottles} onDone={onDone} />)
     await userEvent.type(screen.getByPlaceholderText('Search wines...'), 'oddero')
-    await userEvent.click(screen.getByText('Done'))
+    await userEvent.click(screen.getByText('Pack'))
     expect(onDone).toHaveBeenCalledWith('B01')
   })
 
@@ -96,7 +96,7 @@ describe('SearchPanel', () => {
     render(<SearchPanel bottles={bottles} onDone={() => {}} />)
     const input = screen.getByPlaceholderText('Search wines...')
     await userEvent.type(input, 'oddero')
-    await userEvent.click(screen.getByText('Done'))
+    await userEvent.click(screen.getByText('Pack'))
     await new Promise(r => setTimeout(r, 400))
     expect(input).toHaveValue('oddero')
   })
@@ -105,7 +105,7 @@ describe('SearchPanel', () => {
     const onDone = vi.fn()
     render(<SearchPanel bottles={bottles} onDone={onDone} />)
     await userEvent.type(screen.getByPlaceholderText('Search wines...'), 'barolo')
-    const doneButtons = screen.getAllByText('Done')
+    const doneButtons = screen.getAllByText('Pack')
     await userEvent.click(doneButtons[0])
     expect(onDone).toHaveBeenCalledTimes(1)
     // Search still shows results — can mark another

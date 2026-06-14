@@ -1,6 +1,6 @@
 import { memo } from 'react'
 import type { ScoredBottle } from '../search/types'
-import { moveType } from '../data/models'
+import { moveType, actionLabel } from '../data/models'
 import { displayVintage, displayCost } from '../data/format'
 
 interface Props {
@@ -72,7 +72,7 @@ export const SearchResultCard = memo(function SearchResultCard({ result, onDone,
         </div>
         {canAct && (
           <button className="search-card__action" onClick={handleDone}>
-            Done
+            {actionLabel(bottle)}
           </button>
         )}
         {!canAct && (bottle.state === 'packed' || bottle.state === 'in_transit') && onUndo && (

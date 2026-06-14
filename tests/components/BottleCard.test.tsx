@@ -84,12 +84,12 @@ describe('BottleCard', () => {
 
   it('shows Done button for pending bottles that need to move', () => {
     render(<BottleCard bottle={makeDbBottle()} onDone={() => {}} />)
-    expect(screen.getByText('Done')).toBeInTheDocument()
+    expect(screen.getByText('Pack')).toBeInTheDocument()
   })
 
   it('does not show Done button for shelved bottles', () => {
     render(<BottleCard bottle={makeDbBottle({ state: 'shelved' })} onDone={() => {}} />)
-    expect(screen.queryByText('Done')).not.toBeInTheDocument()
+    expect(screen.queryByText('Pack')).not.toBeInTheDocument()
   })
 
   it('does not show Done button for synced bottles', () => {
@@ -100,6 +100,6 @@ describe('BottleCard', () => {
       recommended_bin: 'Lgh 2. FRANKRIKE',
     })
     render(<BottleCard bottle={bottle} onDone={() => {}} />)
-    expect(screen.queryByText('Done')).not.toBeInTheDocument()
+    expect(screen.queryByText('Pack')).not.toBeInTheDocument()
   })
 })
