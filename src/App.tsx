@@ -49,26 +49,31 @@ export default function App() {
 
     const v = bottle.vintage === '1001' ? 'NV' : bottle.vintage
     const dest = bottle.recommended_bin ?? ''
+    const prevState = bottle.state
     showToast(
       `${v} ${bottle.wine} — ${label.toLowerCase()}ed → ${dest}`,
       'success',
-      () => handleUndo(barcode),
+      () => {
+        updateBottleLocally(barcode, {
+          state: prevState,
+          packed_at: prevState === 'pending' ? null : bottle.packed_at,
+          shelved_at: prevState === 'pending' || prevState === 'packed' ? null : bottle.shelved_at,
+        } as Partial<typeof bottle>)
+        unpack(barcode)
+        showToast(`${v} ${bottle.wine} — undone`, 'info')
+      },
     )
   }
 
   const handleUndo = (barcode: string) => {
     const bottle = [...moveBottles, ...homeBottles].find((b) => b.barcode === barcode)
     if (!bottle) return
-
     const prevState = reverseTransition(bottle.state)
     updateBottleLocally(barcode, {
       state: prevState,
       packed_at: prevState === 'pending' ? null : bottle.packed_at,
     } as Partial<typeof bottle>)
     unpack(barcode)
-
-    const v = bottle.vintage === '1001' ? 'NV' : bottle.vintage
-    showToast(`${v} ${bottle.wine} — undone`, 'info')
   }
 
   const handleBatchDone = (barcodes: string[]) => {
