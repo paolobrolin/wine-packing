@@ -1,4 +1,4 @@
-import { memo } from 'react'
+import { memo, useState } from 'react'
 import type { ScoredBottle } from '../search/types'
 import { moveType, actionLabel } from '../data/models'
 import { displayVintage, displayCost } from '../data/format'
@@ -7,16 +7,19 @@ interface Props {
   result: ScoredBottle
   onDone: (barcode: string) => void
   onUndo?: (barcode: string) => void
+  onReset?: (barcode: string) => void
 }
 
 function ctUrl(iwine: number): string {
   return `https://www.cellartracker.com/wine.asp?iWine=${iwine}`
 }
 
-export const SearchResultCard = memo(function SearchResultCard({ result, onDone, onUndo }: Props) {
+export const SearchResultCard = memo(function SearchResultCard({ result, onDone, onUndo, onReset }: Props) {
   const { bottle, tier } = result
   const mt = moveType(bottle)
   const canAct = tier === 'needs-action'
+  const [confirmingReset, setConfirmingReset] = useState(false)
+  const canReset = onReset && (bottle.state === 'packed' || bottle.state === 'in_transit' || bottle.state === 'shelved')
 
   const verdictClass = mt === 'cross-location' ? 'search-card--move'
     : mt === 'within-location' ? 'search-card--rebin'
@@ -78,6 +81,19 @@ export const SearchResultCard = memo(function SearchResultCard({ result, onDone,
         {!canAct && (bottle.state === 'packed' || bottle.state === 'in_transit') && onUndo && (
           <button className="search-card__action search-card__action--undo" onClick={handleUndo}>
             Undo
+          </button>
+        )}
+        {canReset && (
+          <button
+            className={`search-card__action search-card__action--reset${confirmingReset ? ' search-card__action--confirming' : ''}`}
+            onClick={(e) => {
+              e.stopPropagation()
+              if (confirmingReset) { onReset!(bottle.barcode); setConfirmingReset(false) }
+              else setConfirmingReset(true)
+            }}
+            onBlur={() => setConfirmingReset(false)}
+          >
+            {confirmingReset ? 'Confirm reset?' : 'Reset'}
           </button>
         )}
       </div>

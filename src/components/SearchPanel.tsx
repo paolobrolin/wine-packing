@@ -8,11 +8,12 @@ interface Props {
   bottles: DbBottle[]
   onDone: (barcode: string) => void
   onUndo?: (barcode: string) => void
+  onReset?: (barcode: string) => void
 }
 
 const TIER3_CAP = 5
 
-export function SearchPanel({ bottles, onDone, onUndo }: Props) {
+export function SearchPanel({ bottles, onDone, onUndo, onReset }: Props) {
   const [query, setQuery] = useState('')
   const [showAllNoMove, setShowAllNoMove] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -47,6 +48,16 @@ export function SearchPanel({ bottles, onDone, onUndo }: Props) {
       showToast(`${v} ${bottle.wine} — undone`, 'info')
     }
   }, [bottles, onUndo, showToast])
+
+  const handleReset = useCallback((barcode: string) => {
+    const bottle = bottles.find(b => b.barcode === barcode)
+    if (onReset) onReset(barcode)
+
+    if (bottle) {
+      const v = bottle.vintage === '1001' ? 'NV' : bottle.vintage
+      showToast(`${v} ${bottle.wine} — reset to pending`, 'info')
+    }
+  }, [bottles, onReset, showToast])
 
   const noMoveVisible = showAllNoMove ? results.noMove : results.noMove.slice(0, TIER3_CAP)
   const noMoveHidden = results.noMove.length - noMoveVisible.length
@@ -83,7 +94,7 @@ export function SearchPanel({ bottles, onDone, onUndo }: Props) {
             <div className="search-panel__tier">
               <div className="search-panel__tier-header">NEEDS ACTION ({results.needsAction.length})</div>
               {results.needsAction.map((r) => (
-                <SearchResultCard key={r.bottle.barcode} result={r} onDone={handleDone} onUndo={handleUndo} />
+                <SearchResultCard key={r.bottle.barcode} result={r} onDone={handleDone} onUndo={handleUndo} onReset={handleReset} />
               ))}
             </div>
           )}
@@ -92,7 +103,7 @@ export function SearchPanel({ bottles, onDone, onUndo }: Props) {
             <div className="search-panel__tier search-panel__tier--muted">
               <div className="search-panel__tier-header">IN PROGRESS ({results.inProgress.length})</div>
               {results.inProgress.map((r) => (
-                <SearchResultCard key={r.bottle.barcode} result={r} onDone={handleDone} onUndo={handleUndo} />
+                <SearchResultCard key={r.bottle.barcode} result={r} onDone={handleDone} onUndo={handleUndo} onReset={handleReset} />
               ))}
             </div>
           )}
@@ -101,7 +112,7 @@ export function SearchPanel({ bottles, onDone, onUndo }: Props) {
             <div className="search-panel__tier search-panel__tier--dim">
               <div className="search-panel__tier-header">NO MOVE NEEDED ({results.noMove.length})</div>
               {noMoveVisible.map((r) => (
-                <SearchResultCard key={r.bottle.barcode} result={r} onDone={handleDone} onUndo={handleUndo} />
+                <SearchResultCard key={r.bottle.barcode} result={r} onDone={handleDone} onUndo={handleUndo} onReset={handleReset} />
               ))}
               {noMoveHidden > 0 && (
                 <button className="search-panel__show-more" onClick={() => setShowAllNoMove(true)}>

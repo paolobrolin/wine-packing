@@ -145,6 +145,18 @@ export default function App() {
     unpack(barcode)
   }
 
+  const handleReset = (barcode: string) => {
+    const bottle = [...moveBottles, ...homeBottles].find((b) => b.barcode === barcode)
+    if (!bottle) return
+    updateBottleLocally(barcode, {
+      state: 'pending',
+      packed_at: null,
+      in_transit_at: null,
+      shelved_at: null,
+    } as Partial<typeof bottle>)
+    unpack(barcode)
+  }
+
   const handleBatchDone = (barcodes: string[]) => {
     for (const bc of barcodes) {
       handleDone(bc)
@@ -180,6 +192,7 @@ export default function App() {
         bottles={dedupeBottles(moveBottles, homeBottles)}
         onDone={handleDone}
         onUndo={handleUndo}
+        onReset={handleReset}
       />
 
       {error && <div className="app__error" role="alert">Error: {error.message}</div>}
