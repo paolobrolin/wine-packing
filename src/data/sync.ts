@@ -73,6 +73,8 @@ export function buildSyncRows(
     owcGroups,
   }
 
+  const KEEP_LOCATIONS = new Set(['Ekholmen', 'Lugnet', 'Lotten i CA'])
+
   let alreadyAtDestination = 0
   let needsMoveCount = 0
   let homeCount = 0
@@ -81,6 +83,10 @@ export function buildSyncRows(
   // Pass 1: evaluate placement (location only)
   const placements = ctBottles.map((_ct, i) => {
     const bottle = bottles[i]
+    if (bottle.currentLocation && KEEP_LOCATIONS.has(bottle.currentLocation)) {
+      alreadyAtDestination++
+      return null
+    }
     const placement = evaluatePlacement(bottle, defaultRules, context)
     if (placement != null && bottle.currentLocation === placement.recommendedLocation) {
       alreadyAtDestination++
