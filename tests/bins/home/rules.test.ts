@@ -55,22 +55,22 @@ describe('HOME bin rules — category assignment', () => {
   })
 
   it('German white (Riesling) → 6. VITA (style beats region)', () => {
-    const r = resolveHome(makeBottle({ country: 'Germany', region: 'Mosel', wine: 'Loosen Riesling' }))
+    const r = resolveHome(makeBottle({ country: 'Germany', region: 'Mosel', wine: 'Loosen Riesling', wineType: 'White' }))
     expect(r!.category).toBe('6. VITA')
   })
 
   it('German red → 3. SPANIEN + OVRIGT', () => {
-    const r = resolveHome(makeBottle({ country: 'Germany', region: 'Baden', wine: 'Ziereisen Spätburgunder' }))
+    const r = resolveHome(makeBottle({ country: 'Germany', region: 'Baden', wine: 'Ziereisen Spätburgunder', wineType: 'Red' }))
     expect(r!.category).toBe('3. SPANIEN + OVRIGT')
   })
 
   it('Greek white (Assyrtiko) → 6. VITA', () => {
-    const r = resolveHome(makeBottle({ country: 'Greece', region: 'Thessaly', wine: 'Dougos Assyrtiko' }))
+    const r = resolveHome(makeBottle({ country: 'Greece', region: 'Thessaly', wine: 'Dougos Assyrtiko', wineType: 'White' }))
     expect(r!.category).toBe('6. VITA')
   })
 
   it('Greek red → 3. SPANIEN + OVRIGT', () => {
-    const r = resolveHome(makeBottle({ country: 'Greece', region: 'Macedonia', wine: 'Dougos Xinomavro' }))
+    const r = resolveHome(makeBottle({ country: 'Greece', region: 'Macedonia', wine: 'Dougos Xinomavro', wineType: 'Red' }))
     expect(r!.category).toBe('3. SPANIEN + OVRIGT')
   })
 
@@ -82,23 +82,38 @@ describe('HOME bin rules — category assignment', () => {
 
 describe('HOME bin rules — style overrides region', () => {
   it('Champagne → 5. BUBBEL (beats France)', () => {
-    const r = resolveHome(makeBottle({ country: 'France', region: 'Champagne', wine: 'Gosset Champagne Zero' }))
+    const r = resolveHome(makeBottle({ country: 'France', region: 'Champagne', wine: 'Gosset Champagne Zero', wineType: 'White - Sparkling' }))
     expect(r!.category).toBe('5. BUBBEL')
   })
 
   it('Crémant → 5. BUBBEL', () => {
-    const r = resolveHome(makeBottle({ country: 'France', region: 'Burgundy', wine: 'Clotilde Davenne Crémant de Bourgogne' }))
+    const r = resolveHome(makeBottle({ country: 'France', region: 'Burgundy', wine: 'Clotilde Davenne Crémant de Bourgogne', wineType: 'White - Sparkling' }))
+    expect(r!.category).toBe('5. BUBBEL')
+  })
+
+  it('Rosé Sparkling → 5. BUBBEL', () => {
+    const r = resolveHome(makeBottle({ country: 'France', region: 'Champagne', wine: 'Roederer Rosé', wineType: 'Rosé - Sparkling' }))
     expect(r!.category).toBe('5. BUBBEL')
   })
 
   it('White Riesling → 6. VITA', () => {
-    const r = resolveHome(makeBottle({ country: 'Germany', region: 'Mosel', wine: 'Loosen Riesling Spätlese' }))
+    const r = resolveHome(makeBottle({ country: 'Germany', region: 'Mosel', wine: 'Loosen Riesling Spätlese', wineType: 'White' }))
+    expect(r!.category).toBe('6. VITA')
+  })
+
+  it('White Off-dry → 6. VITA (not sweet)', () => {
+    const r = resolveHome(makeBottle({ country: 'Germany', region: 'Mosel', wine: 'Kuntz Feinherb', wineType: 'White - Off-dry' }))
     expect(r!.category).toBe('6. VITA')
   })
 
   it('Chablis → 6. VITA', () => {
-    const r = resolveHome(makeBottle({ country: 'France', region: 'Burgundy', wine: 'Fevre Chablis GC Les Clos' }))
+    const r = resolveHome(makeBottle({ country: 'France', region: 'Burgundy', wine: 'Fevre Chablis GC Les Clos', wineType: 'White' }))
     expect(r!.category).toBe('6. VITA')
+  })
+
+  it('Cabernet Sauvignon (Red) does NOT match VITA', () => {
+    const r = resolveHome(makeBottle({ country: 'Bolivia', wine: 'Kohlberg Cabernet Sauvignon Icono', wineType: 'Red' }))
+    expect(r!.category).toBe('3. SPANIEN + OVRIGT')
   })
 })
 
