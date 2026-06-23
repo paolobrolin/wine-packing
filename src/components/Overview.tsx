@@ -6,9 +6,10 @@ import { groupBySource } from '../hooks/useBottles'
 interface Props {
   bottles: DbBottle[]
   onSelectSource: (source: string) => void
+  onShowPacked?: () => void
 }
 
-export function Overview({ bottles, onSelectSource }: Props) {
+export function Overview({ bottles, onSelectSource, onShowPacked }: Props) {
   const total = bottles.length
   const done = bottles.filter((b) => b.state === 'shelved' || b.state === 'synced').length
   const packed = bottles.filter((b) => b.state === 'packed').length
@@ -22,7 +23,11 @@ export function Overview({ bottles, onSelectSource }: Props) {
       <div className="overview__summary">
         <h2 className="overview__title">{total - done} bottles to move</h2>
         <ProgressBar current={done} total={total} />
-        {packed > 0 && <div className="overview__stat">{packed} packed, awaiting transport</div>}
+        {packed > 0 && (
+          <button className="overview__stat overview__stat--link" onClick={onShowPacked}>
+            📦 {packed} packed, awaiting transport →
+          </button>
+        )}
         {inTransit > 0 && <div className="overview__stat">{inTransit} in transit</div>}
       </div>
 

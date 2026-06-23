@@ -12,12 +12,13 @@ import { actionLabel } from './data/models'
 import type { DbBottle } from './data/models'
 import './App.css'
 
-type View = 'overview' | 'source' | 'home'
+type View = 'overview' | 'source' | 'home' | 'packed'
 
 interface NavState { view: View; source: string | null }
 
 function viewToHash(view: View, source: string | null): string {
   if (view === 'home') return '#cellar'
+  if (view === 'packed') return '#packed'
   if (view === 'source' && source) return `#source/${encodeURIComponent(source)}`
   return '#tasks'
 }
@@ -25,6 +26,7 @@ function viewToHash(view: View, source: string | null): string {
 function hashToNav(): NavState {
   const hash = window.location.hash
   if (hash === '#cellar') return { view: 'home', source: null }
+  if (hash === '#packed') return { view: 'packed', source: null }
   if (hash.startsWith('#source/')) return { view: 'source', source: decodeURIComponent(hash.slice(8)) }
   return { view: 'overview', source: null }
 }
@@ -199,7 +201,7 @@ export default function App() {
       {loading && !error && <div className="app__loading">Loading...</div>}
 
       {!loading && view === 'overview' && (
-        <Overview bottles={moveBottles} onSelectSource={handleSelectSource} />
+        <Overview bottles={moveBottles} onSelectSource={handleSelectSource} onShowPacked={() => navigateTo('packed')} />
       )}
 
       {!loading && view === 'source' && (
@@ -220,6 +222,31 @@ export default function App() {
                 onUndo={handleUndo}
               />
             ))}
+        </>
+      )}
+
+      {!loading && view === 'packed' && (
+        <>
+          <div className="app__source-header">
+            <button className="app__back" onClick={() => navigateTo('overview', null)}>← Back</button>
+            <h2>Packed bottles</h2>
+          </div>
+          {(() => {
+            const packedBottles = moveBottles.filter(b => b.state === 'packed' || b.state === 'in_transit')
+            const byDest = groupByShelf(packedBottles)
+            return [...byDest.entries()]
+              .sort(([a], [b]) => a.localeCompare(b))
+              .map(([shelfName, shelfBottles]) => (
+                <ShelfGroup
+                  key={shelfName}
+                  shelfName={shelfName}
+                  bottles={shelfBottles}
+                  onDone={handleDone}
+                  onBatchDone={handleBatchDone}
+                  onUndo={handleUndo}
+                />
+              ))
+          })()}
         </>
       )}
 
