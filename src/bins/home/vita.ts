@@ -9,6 +9,7 @@ export const homeVitaRule: BinRule = {
   overflowBinId: null,
   match: (b) => {
     const wt = (b as { wineType?: string | null }).wineType ?? ''
+    if (wt === 'Orange' || wt === 'White - Off-dry') return true
     return wt.startsWith('White') && !wt.includes('Sparkling') && !wt.includes('Sweet') && !wt.includes('Dessert') && !wt.includes('Fortified')
   },
 }
