@@ -162,6 +162,21 @@ export async function fetchHomeBottles(): Promise<DbBottle[]> {
   return data ?? []
 }
 
+export async function rebinBottle(barcode: string, bin: string): Promise<void> {
+  const { error } = await getSupabase()
+    .from('bottles')
+    .update({
+      current_bin: bin,
+      recommended_bin: bin,
+      state: 'synced',
+      synced_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq('barcode', barcode)
+
+  if (error) throw error
+}
+
 export async function dismissRecommendation(barcode: string): Promise<void> {
   const { error } = await getSupabase()
     .from('bottles')
