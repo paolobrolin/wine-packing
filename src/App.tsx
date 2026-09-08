@@ -9,6 +9,8 @@ import { SearchPanel } from './components/SearchPanel'
 import { OverrideSheet } from './components/OverrideSheet'
 import { inferTransition, reverseTransition } from './rules/state-machine'
 import { actionLabel } from './data/models'
+import { planBatch, batchSummary } from './data/batch'
+import { rebinBottle, dismissRecommendation } from './data/queries'
 import type { DbBottle } from './data/models'
 import './App.css'
 
@@ -106,7 +108,7 @@ export default function App() {
         current_bin: effectiveBin,
         synced_at: new Date().toISOString(),
       } as Partial<typeof bottle>)
-      import('./data/queries').then(m => m.rebinBottle(barcode, effectiveBin ?? ''))
+      rebinBottle(barcode, effectiveBin ?? '')
     } else {
       const nextState = inferTransition(bottle)
       const tsField = nextState === 'packed' ? 'packed_at'
@@ -170,10 +172,62 @@ export default function App() {
     unpack(barcode)
   }
 
+  /**
+   * "Done All" / "Done Case": applies every bottle's own recommended bin
+   * straight away — no per-bottle override sheet — and leaves one toast whose
+   * Undo reverts the whole group. Previous state is captured in the plan, so
+   * the undo closure does not depend on the bottle list still being current.
+   */
   const handleBatchDone = (barcodes: string[]) => {
-    for (const bc of barcodes) {
-      handleDone(bc)
+    const all = [...moveBottles, ...homeBottles]
+    const bottles = barcodes
+      .map((bc) => all.find((b) => b.barcode === bc))
+      .filter((b): b is DbBottle => b != null)
+
+    const plan = planBatch(bottles)
+    if (plan.steps.length === 0) {
+      showToast('Nothing to move', 'info')
+      return
     }
+
+    for (const s of plan.steps) {
+      updateBottleLocally(s.barcode, {
+        state: s.nextState,
+        current_bin: s.bin,
+        recommended_bin: s.bin,
+        ...(s.tsField ? { [s.tsField]: new Date().toISOString() } : {}),
+      } as Partial<DbBottle>)
+
+      const extra = s.bin ? { current_bin: s.bin } : undefined
+      if (s.prevState === 'synced' || s.prevState === 'shelved') {
+        rebinBottle(s.barcode, s.bin ?? '')
+      } else if (s.nextState === 'packed') pack(s.barcode, extra)
+      else if (s.nextState === 'shelved') shelve(s.barcode, extra)
+      else if (s.nextState === 'synced') sync(s.barcode, extra)
+    }
+
+    const skippedNote = plan.skipped.length > 0 ? ` (${plan.skipped.length} skipped)` : ''
+    showToast(
+      `${batchSummary(plan)}${skippedNote}`,
+      'success',
+      () => {
+        for (const s of plan.steps) {
+          updateBottleLocally(s.barcode, {
+            state: s.prevState,
+            current_bin: s.prevBin,
+            packed_at: s.prevPackedAt,
+            shelved_at: s.prevShelvedAt,
+            synced_at: s.prevSyncedAt,
+          } as Partial<DbBottle>)
+          if (s.prevState === 'synced' || s.prevState === 'shelved') {
+            rebinBottle(s.barcode, s.prevBin ?? '')
+          } else {
+            unpack(s.barcode)
+          }
+        }
+        showToast(`${plan.steps.length} reverted`, 'info')
+      },
+    )
   }
 
   const handleSelectSource = (source: string) => {
@@ -273,7 +327,6 @@ export default function App() {
               recommended_location: null,
               recommended_bin: null,
             } as Partial<DbBottle>)
-            const { dismissRecommendation } = await import('./data/queries')
             dismissRecommendation(barcode)
             const b = overrideBottle
             const v = b.vintage === '1001' ? 'NV' : b.vintage

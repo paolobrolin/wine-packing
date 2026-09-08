@@ -237,3 +237,47 @@ describe('buildSyncRows', () => {
     expect(rows[0].recommended_bin).toMatch(/^(Lgh|Kall) 7\. SOTA \+ STARKVIN$/)
   })
 })
+
+describe('buildSyncRows — keep-locations', () => {
+  it('leaves Ekholmen bottles without any recommendation', () => {
+    const ct = makeCtBottle({ location: 'Ekholmen', begin_consume: 2025, end_consume: 2045 })
+    const { rows } = buildSyncRows([ct], new Map(), 2026)
+
+    expect(rows[0].recommended_location).toBeNull()
+    expect(rows[0].recommended_bin).toBeNull()
+  })
+
+  it('leaves Lugnet bottles alone even when Lugnet is in the bin field', () => {
+    // CT encodes Lugnet as location=Cellar + bin=Lugnet for 58 bottles
+    const ct = makeCtBottle({ location: 'Cellar', bin: 'Lugnet', begin_consume: 2025, end_consume: 2045 })
+    const { rows } = buildSyncRows([ct], new Map(), 2026)
+
+    expect(rows[0].recommended_location).toBeNull()
+    expect(rows[0].recommended_bin).toBeNull()
+  })
+
+  it('leaves Lotten i CA bottles without a home bin', () => {
+    const ct = makeCtBottle({ location: 'Lotten i CA', country: 'USA' } as Partial<CtBottle>)
+    const { rows } = buildSyncRows([ct], new Map(), 2026)
+
+    expect(rows[0].recommended_bin).toBeNull()
+  })
+
+  it('leaves GSN | Wine Storage bottles alone (commercial storage in Napa)', () => {
+    const ct = makeCtBottle({
+      location: 'GSN | Wine Storage',
+      extra: { Vintage: '2023', Wine: 'Kistler Chardonnay Trenton Roadhouse', Producer: 'Kistler', Country: 'USA', Region: 'California', Type: 'White' },
+    })
+    const { rows } = buildSyncRows([ct], new Map(), 2026)
+
+    expect(rows[0].recommended_location).toBeNull()
+    expect(rows[0].recommended_bin).toBeNull()
+  })
+
+  it('still places ordinary Cellar bottles', () => {
+    const ct = makeCtBottle({ location: 'Cellar', bin: null, begin_consume: 2025, end_consume: 2045 })
+    const { rows } = buildSyncRows([ct], new Map(), 2026)
+
+    expect(rows[0].recommended_location).not.toBeNull()
+  })
+})

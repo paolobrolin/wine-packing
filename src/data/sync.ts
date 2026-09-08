@@ -73,7 +73,20 @@ export function buildSyncRows(
     owcGroups,
   }
 
-  const KEEP_LOCATIONS = new Set(['Ekholmen', 'Lugnet', 'Lotten i CA'])
+  // Bottles parked at these places stay put: they are deliberate placements,
+  // not candidates for the placement rules. CT encodes most of them in the
+  // Location field, but Lugnet lives in Bin (location stays "Cellar"), so both
+  // fields have to be checked.
+  const KEEP_LOCATIONS = new Set(['Ekholmen', 'Lugnet', 'Lotten i CA', 'GSN | Wine Storage'])
+
+  const isKeepPlace = (bottle: Bottle): boolean =>
+    (bottle.currentLocation != null && KEEP_LOCATIONS.has(bottle.currentLocation)) ||
+    (bottle.currentBin != null && KEEP_LOCATIONS.has(bottle.currentBin))
+
+  // Excluded from BOTH passes. Pass 1 alone is not enough: Pass 1.5 picks up
+  // every bottle with a null placement and hands it a home bin, which is how
+  // Ekholmen bottles kept reappearing after being cleared by hand.
+  const keepIndices = new Set(bottles.flatMap((b, i) => (isKeepPlace(b) ? [i] : [])))
 
   let alreadyAtDestination = 0
   let needsMoveCount = 0
@@ -83,7 +96,7 @@ export function buildSyncRows(
   // Pass 1: evaluate placement (location only)
   const placements = ctBottles.map((_ct, i) => {
     const bottle = bottles[i]
-    if (bottle.currentLocation && KEEP_LOCATIONS.has(bottle.currentLocation)) {
+    if (keepIndices.has(i)) {
       alreadyAtDestination++
       return null
     }
@@ -107,6 +120,7 @@ export function buildSyncRows(
   const homeIndices = bottles
     .map((_, i) => i)
     .filter((i) => {
+      if (keepIndices.has(i)) return false
       if (remoteAtDest.has(i)) return false
       if (placements[i] == null) return true
       const p = placements[i]!
