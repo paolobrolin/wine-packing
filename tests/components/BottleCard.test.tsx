@@ -13,7 +13,7 @@ function makeDbBottle(overrides: Partial<DbBottle> = {}): DbBottle {
     recommended_location: 'REMOTE', recommended_bin: '1.5 COLGIN',
     move_reason: 'midpoint 2034 (8y away)', rule_id: 'midpoint',
     state: 'pending', packed_at: null, in_transit_at: null, shelved_at: null, synced_at: null,
-    trip_id: null, owc_group: null,
+    trip_id: null, owc_group: null, estimated_value: null, value_source: null, label_uuid: null,
     ct_location_at_sync: null, ct_bin_at_sync: null,
     created_at: '', updated_at: '',
     ...overrides,
@@ -118,5 +118,27 @@ describe('BottleCard', () => {
   it('does not show Undo for pending bottles', () => {
     render(<BottleCard bottle={makeDbBottle({ state: 'pending' })} onDone={() => {}} onUndo={() => {}} />)
     expect(screen.queryByText('Undo')).not.toBeInTheDocument()
+  })
+})
+
+describe('BottleCard label thumbnail', () => {
+  const UUID = '530f1583-0277-46b1-acb5-78c51590a265'
+
+  it('shows the thumbnail when the wine has a label', () => {
+    render(<BottleCard bottle={makeDbBottle({ label_uuid: UUID })} onDone={() => {}} />)
+    const img = screen.getByRole('img') as HTMLImageElement
+    expect(img.src).toBe(`https://cdn.ct-static.com/labels/${UUID}_100x.jpg`)
+  })
+
+  it('renders no image without a label', () => {
+    render(<BottleCard bottle={makeDbBottle({ label_uuid: null })} onDone={() => {}} />)
+    expect(screen.queryByRole('img')).not.toBeInTheDocument()
+  })
+
+  it('does not trigger the card action when the thumbnail is clicked', async () => {
+    const onDone = vi.fn()
+    render(<BottleCard bottle={makeDbBottle({ label_uuid: UUID })} onDone={onDone} />)
+    await userEvent.click(screen.getByRole('img'))
+    expect(onDone).not.toHaveBeenCalled()
   })
 })

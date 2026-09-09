@@ -1,6 +1,7 @@
 import type { DbBottle } from '../data/models'
 import { needsMove, actionLabel } from '../data/models'
 import { displayVintage, displayCost } from '../data/format'
+import { labelThumbUrl, labelFullUrl } from '../data/labels'
 
 interface Props {
   bottle: DbBottle
@@ -38,6 +39,7 @@ export function BottleCard({ bottle, onDone, onUndo }: Props) {
   const stateClass = STATE_STYLES[bottle.state] ?? ''
   const sizeLabel = bottle.size !== '750ml' ? bottle.size : null
   const explanation = !canAct ? stateExplanation(bottle.state) : null
+  const thumb = labelThumbUrl(bottle.label_uuid)
 
   const handleClick = () => {
     if (canAct) onDone(bottle.barcode)
@@ -58,6 +60,17 @@ export function BottleCard({ bottle, onDone, onUndo }: Props) {
         {(bottle.state === 'packed' || bottle.state === 'in_transit') && '◐'}
         {(bottle.state === 'shelved' || bottle.state === 'synced') && '✓'}
       </div>
+      {thumb && (
+        <a
+          href={labelFullUrl(bottle.label_uuid) ?? undefined}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={handleCtLink}
+          className="bottle-card__label"
+        >
+          <img src={thumb} alt={`${displayVintage(bottle.vintage)} ${bottle.wine}`} loading="lazy" />
+        </a>
+      )}
       <div className="bottle-card__info">
         <div className="bottle-card__name">
           <a

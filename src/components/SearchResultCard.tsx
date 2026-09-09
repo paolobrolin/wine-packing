@@ -2,6 +2,7 @@ import { memo, useState } from 'react'
 import type { ScoredBottle } from '../search/types'
 import { moveType, actionLabel } from '../data/models'
 import { displayVintage, displayCost } from '../data/format'
+import { labelThumbUrl, labelFullUrl } from '../data/labels'
 
 interface Props {
   result: ScoredBottle
@@ -33,6 +34,7 @@ export const SearchResultCard = memo(function SearchResultCard({ result, onDone,
     : 'HOME'
 
   const currentBin = bottle.current_bin ?? bottle.current_location ?? 'Unknown'
+  const thumb = labelThumbUrl(bottle.label_uuid)
 
   const handleDone = (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -52,6 +54,17 @@ export const SearchResultCard = memo(function SearchResultCard({ result, onDone,
     <div className={`search-card ${verdictClass}`} data-testid={`search-${bottle.barcode}`}>
       <div className="search-card__verdict">{verdictText}</div>
       <div className="search-card__body">
+        {thumb && (
+          <a
+            href={labelFullUrl(bottle.label_uuid) ?? undefined}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={handleCtLink}
+            className="search-card__label"
+          >
+            <img src={thumb} alt={`${displayVintage(bottle.vintage)} ${bottle.wine}`} loading="lazy" />
+          </a>
+        )}
         <div className="search-card__info">
           <a
             href={ctUrl(bottle.iwine)}
@@ -102,5 +115,6 @@ export const SearchResultCard = memo(function SearchResultCard({ result, onDone,
 }, (prev, next) =>
   prev.result.bottle.barcode === next.result.bottle.barcode &&
   prev.result.bottle.state === next.result.bottle.state &&
+  prev.result.bottle.label_uuid === next.result.bottle.label_uuid &&
   prev.result.tier === next.result.tier
 )

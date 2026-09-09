@@ -281,3 +281,43 @@ describe('buildSyncRows — keep-locations', () => {
     expect(rows[0].recommended_location).not.toBeNull()
   })
 })
+
+describe('buildSyncRows — label_uuid', () => {
+  it('writes label_uuid from the per-wine lookup', () => {
+    const ct = makeCtBottle({ iwine: 4822336 })
+    const labels = new Map([[4822336, '530f1583-0277-46b1-acb5-78c51590a265']])
+    const { rows } = buildSyncRows([ct], new Map(), 2026, undefined, labels)
+
+    expect(rows[0].label_uuid).toBe('530f1583-0277-46b1-acb5-78c51590a265')
+  })
+
+  it('leaves label_uuid null when the wine has no label', () => {
+    const { rows } = buildSyncRows([makeCtBottle({ iwine: 999 })], new Map(), 2026, undefined, new Map())
+    expect(rows[0].label_uuid).toBeNull()
+  })
+
+  it('preserves an existing label_uuid when no lookup is supplied', () => {
+    const ct = makeCtBottle({ iwine: 4822336 })
+    const existing = new Map([[ct.barcode, {
+      state: 'pending' as const, packed_at: null, in_transit_at: null, shelved_at: null,
+      synced_at: null, trip_id: null, owc_group: null, estimated_value: null, value_source: null,
+      label_uuid: '530f1583-0277-46b1-acb5-78c51590a265',
+    }]])
+    const { rows } = buildSyncRows([ct], existing, 2026)
+
+    expect(rows[0].label_uuid).toBe('530f1583-0277-46b1-acb5-78c51590a265')
+  })
+
+  it('lets a fresh lookup override a stale stored value', () => {
+    const ct = makeCtBottle({ iwine: 4822336 })
+    const existing = new Map([[ct.barcode, {
+      state: 'pending' as const, packed_at: null, in_transit_at: null, shelved_at: null,
+      synced_at: null, trip_id: null, owc_group: null, estimated_value: null, value_source: null,
+      label_uuid: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+    }]])
+    const labels = new Map([[4822336, 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb']])
+    const { rows } = buildSyncRows([ct], existing, 2026, undefined, labels)
+
+    expect(rows[0].label_uuid).toBe('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb')
+  })
+})

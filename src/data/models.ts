@@ -29,6 +29,12 @@ export interface DbBottle {
   owc_group: string | null
   estimated_value: number | null
   value_source: string | null
+  /**
+   * CT label image id. Build a URL as
+   * `https://cdn.ct-static.com/labels/{label_uuid}.jpg` (full) or
+   * `..._100x.jpg` (thumbnail). The CDN needs no authentication.
+   */
+  label_uuid: string | null
   ct_location_at_sync: string | null
   ct_bin_at_sync: string | null
   created_at: string

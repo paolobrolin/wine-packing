@@ -42,9 +42,11 @@ export interface SyncResult {
 
 export function buildSyncRows(
   ctBottles: CtBottle[],
-  existingByBarcode: Map<string, Pick<DbBottle, 'state' | 'packed_at' | 'in_transit_at' | 'shelved_at' | 'synced_at' | 'trip_id' | 'owc_group' | 'estimated_value' | 'value_source'>>,
+  existingByBarcode: Map<string, Pick<DbBottle, 'state' | 'packed_at' | 'in_transit_at' | 'shelved_at' | 'synced_at' | 'trip_id' | 'owc_group' | 'estimated_value' | 'value_source' | 'label_uuid'>>,
   currentYear: number,
   costOverrides?: Map<number, number>,
+  /** iwine → CT label image id, from the wine_labels table. */
+  labelUuids?: Map<number, string>,
 ): { rows: Partial<DbBottle>[]; stats: SyncResult } {
   const valuations = new Map<string, { value: number; source: string }>()
   for (const ct of ctBottles) {
@@ -256,6 +258,7 @@ export function buildSyncRows(
       trip_id: existing?.trip_id ?? null,
       owc_group: existing?.owc_group ?? null,
       estimated_value: valuations.get(ct.barcode)?.value ?? existing?.estimated_value ?? null,
+      label_uuid: labelUuids?.get(ct.iwine) ?? existing?.label_uuid ?? null,
       value_source: valuations.get(ct.barcode)?.source ?? existing?.value_source ?? null,
       ct_location_at_sync: ct.location,
       ct_bin_at_sync: ct.bin,
