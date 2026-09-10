@@ -32,26 +32,30 @@ const ctBottles: CtBottle[] = raw.map((b: Record<string, unknown>) => ({
   extra: b.extra,
 })) as CtBottle[]
 
-type ExistingRow = Pick<DbBottle, 'barcode' | 'state' | 'packed_at' | 'in_transit_at' | 'shelved_at' | 'synced_at' | 'trip_id' | 'owc_group' | 'estimated_value' | 'value_source' | 'label_uuid'>
+type ExistingRow = Pick<DbBottle, 'barcode' | 'state' | 'packed_at' | 'in_transit_at' | 'shelved_at' | 'synced_at' | 'trip_id' | 'owc_group' | 'estimated_value' | 'value_source' | 'label_ref'>
 
-// iwine → CT label image id. Harvested from CT in the browser (the UUID is not
-// in any export), stored per wine so it survives bottles being drunk and rebought.
-const labelUuids = new Map<number, string>()
+// iwine → CT bottle image ref. Harvested by scripts/harvest-labels.mts (no CT
+// export carries it), stored per wine so it survives bottles being drunk and
+// rebought. A null ref means "checked, CT has no image" — skip those so they
+// never overwrite anything.
+const labelRefs = new Map<number, string>()
 for (let from = 0; ; from += 1000) {
   const { data, error } = await sb.from('wine_labels')
-    .select('iwine, label_uuid').order('iwine').range(from, from + 999)
+    .select('iwine, label_ref').order('iwine').range(from, from + 999)
   if (error) { console.error('wine_labels:', error); break }
-  for (const r of data ?? []) labelUuids.set(r.iwine as number, r.label_uuid as string)
+  for (const r of data ?? []) {
+    if (r.label_ref != null) labelRefs.set(r.iwine as number, r.label_ref as string)
+  }
   if (!data || data.length < 1000) break
 }
-console.log(`Etiketter: ${labelUuids.size} viner`)
+console.log(`Etikettbilder: ${labelRefs.size} viner`)
 
 // PostgREST caps responses at 1000 rows — paginate to get everything.
 const PAGE = 1000
 const existingMap = new Map<string, ExistingRow>()
 for (let from = 0; ; from += PAGE) {
   const { data, error } = await sb.from('bottles')
-    .select('barcode, state, packed_at, in_transit_at, shelved_at, synced_at, trip_id, owc_group, estimated_value, value_source, label_uuid')
+    .select('barcode, state, packed_at, in_transit_at, shelved_at, synced_at, trip_id, owc_group, estimated_value, value_source, label_ref')
     .order('barcode')
     .range(from, from + PAGE - 1)
   if (error) { console.error(error); process.exit(1) }
@@ -64,7 +68,7 @@ if (existingMap.size > 0 && existingMap.size % PAGE === 0) {
   console.warn('WARNING: existing row count is a multiple of page size — verify pagination fetched everything')
 }
 
-const { rows, stats } = buildSyncRows(ctBottles, existingMap, new Date().getFullYear(), undefined, labelUuids)
+const { rows, stats } = buildSyncRows(ctBottles, existingMap, new Date().getFullYear(), undefined, labelRefs)
 console.log('Stats:', JSON.stringify(stats, null, 2))
 
 if (stats.orphanedBarcodes.length > 0) {

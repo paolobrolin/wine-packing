@@ -15,7 +15,7 @@ function makeDbBottle(overrides: Partial<DbBottle> = {}): DbBottle {
     recommended_location: 'REMOTE', recommended_bin: '2.1 BDX LB',
     move_reason: 'midpoint', rule_id: 'midpoint',
     state: 'pending', packed_at: null, in_transit_at: null, shelved_at: null, synced_at: null,
-    trip_id: null, owc_group: null, estimated_value: null, value_source: null, label_uuid: null,
+    trip_id: null, owc_group: null, estimated_value: null, value_source: null, label_ref: null,
     ct_location_at_sync: null, ct_bin_at_sync: null,
     created_at: '', updated_at: '',
     ...overrides,
@@ -72,39 +72,47 @@ describe('SearchResultCard reset', () => {
 })
 
 describe('SearchResultCard label thumbnail', () => {
-  const UUID = '530f1583-0277-46b1-acb5-78c51590a265'
+  const UUID = 'labels/530f1583-0277-46b1-acb5-78c51590a265'
 
   it('shows the label thumbnail when the wine has one', () => {
-    const bottle = makeDbBottle({ label_uuid: UUID })
+    const bottle = makeDbBottle({ label_ref: UUID })
     render(<SearchResultCard result={scored(bottle)} onDone={() => {}} />)
 
     const img = screen.getByRole('img') as HTMLImageElement
-    expect(img.src).toBe(`https://cdn.ct-static.com/labels/${UUID}_100x.jpg`)
+    expect(img.src).toBe(`https://cdn.ct-static.com/${UUID}_100x.jpg`)
+  })
+
+  it('renders an app capture photo for wines with no curated label', () => {
+    const ref = 'captures/291f2e0d-a3ff-4513-84f4-7288ab63e1e0'
+    render(<SearchResultCard result={scored(makeDbBottle({ label_ref: ref }))} onDone={() => {}} />)
+
+    const img = screen.getByRole('img') as HTMLImageElement
+    expect(img.src).toBe(`https://cdn.ct-static.com/${ref}_100x.jpg`)
   })
 
   it('renders no image when the wine has no label', () => {
-    render(<SearchResultCard result={scored(makeDbBottle({ label_uuid: null }))} onDone={() => {}} />)
+    render(<SearchResultCard result={scored(makeDbBottle({ label_ref: null }))} onDone={() => {}} />)
     expect(screen.queryByRole('img')).not.toBeInTheDocument()
   })
 
   it('labels the thumbnail with the wine name for screen readers', () => {
-    const bottle = makeDbBottle({ label_uuid: UUID, wine: 'Oddero Barolo Brunate', vintage: '2021' })
+    const bottle = makeDbBottle({ label_ref: UUID, wine: 'Oddero Barolo Brunate', vintage: '2021' })
     render(<SearchResultCard result={scored(bottle)} onDone={() => {}} />)
 
     expect(screen.getByRole('img')).toHaveAttribute('alt', expect.stringContaining('Oddero Barolo Brunate'))
   })
 
   it('links the thumbnail to the full-size image', () => {
-    const bottle = makeDbBottle({ label_uuid: UUID })
+    const bottle = makeDbBottle({ label_ref: UUID })
     render(<SearchResultCard result={scored(bottle)} onDone={() => {}} />)
 
     const link = screen.getByRole('img').closest('a')
-    expect(link).toHaveAttribute('href', `https://cdn.ct-static.com/labels/${UUID}.jpg`)
+    expect(link).toHaveAttribute('href', `https://cdn.ct-static.com/${UUID}.jpg`)
   })
 
   it('does not fire the row action when the thumbnail is clicked', async () => {
     const onDone = vi.fn()
-    const bottle = makeDbBottle({ label_uuid: UUID })
+    const bottle = makeDbBottle({ label_ref: UUID })
     render(<SearchResultCard result={scored(bottle)} onDone={onDone} />)
 
     await userEvent.click(screen.getByRole('img'))

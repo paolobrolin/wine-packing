@@ -282,30 +282,30 @@ describe('buildSyncRows — keep-locations', () => {
   })
 })
 
-describe('buildSyncRows — label_uuid', () => {
-  it('writes label_uuid from the per-wine lookup', () => {
+describe('buildSyncRows — label_ref', () => {
+  it('writes label_ref from the per-wine lookup', () => {
     const ct = makeCtBottle({ iwine: 4822336 })
-    const labels = new Map([[4822336, '530f1583-0277-46b1-acb5-78c51590a265']])
+    const labels = new Map([[4822336, 'labels/530f1583-0277-46b1-acb5-78c51590a265']])
     const { rows } = buildSyncRows([ct], new Map(), 2026, undefined, labels)
 
-    expect(rows[0].label_uuid).toBe('530f1583-0277-46b1-acb5-78c51590a265')
+    expect(rows[0].label_ref).toBe('labels/530f1583-0277-46b1-acb5-78c51590a265')
   })
 
-  it('leaves label_uuid null when the wine has no label', () => {
+  it('leaves label_ref null when the wine has no label', () => {
     const { rows } = buildSyncRows([makeCtBottle({ iwine: 999 })], new Map(), 2026, undefined, new Map())
-    expect(rows[0].label_uuid).toBeNull()
+    expect(rows[0].label_ref).toBeNull()
   })
 
-  it('preserves an existing label_uuid when no lookup is supplied', () => {
+  it('preserves an existing label_ref when no lookup is supplied', () => {
     const ct = makeCtBottle({ iwine: 4822336 })
     const existing = new Map([[ct.barcode, {
       state: 'pending' as const, packed_at: null, in_transit_at: null, shelved_at: null,
       synced_at: null, trip_id: null, owc_group: null, estimated_value: null, value_source: null,
-      label_uuid: '530f1583-0277-46b1-acb5-78c51590a265',
+      label_ref: 'labels/530f1583-0277-46b1-acb5-78c51590a265',
     }]])
     const { rows } = buildSyncRows([ct], existing, 2026)
 
-    expect(rows[0].label_uuid).toBe('530f1583-0277-46b1-acb5-78c51590a265')
+    expect(rows[0].label_ref).toBe('labels/530f1583-0277-46b1-acb5-78c51590a265')
   })
 
   it('lets a fresh lookup override a stale stored value', () => {
@@ -313,11 +313,11 @@ describe('buildSyncRows — label_uuid', () => {
     const existing = new Map([[ct.barcode, {
       state: 'pending' as const, packed_at: null, in_transit_at: null, shelved_at: null,
       synced_at: null, trip_id: null, owc_group: null, estimated_value: null, value_source: null,
-      label_uuid: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+      label_ref: 'labels/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
     }]])
-    const labels = new Map([[4822336, 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb']])
+    const labels = new Map([[4822336, 'labels/bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb']])
     const { rows } = buildSyncRows([ct], existing, 2026, undefined, labels)
 
-    expect(rows[0].label_uuid).toBe('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb')
+    expect(rows[0].label_ref).toBe('labels/bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb')
   })
 })

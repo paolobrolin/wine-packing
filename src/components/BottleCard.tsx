@@ -39,7 +39,7 @@ export function BottleCard({ bottle, onDone, onUndo }: Props) {
   const stateClass = STATE_STYLES[bottle.state] ?? ''
   const sizeLabel = bottle.size !== '750ml' ? bottle.size : null
   const explanation = !canAct ? stateExplanation(bottle.state) : null
-  const thumb = labelThumbUrl(bottle.label_uuid)
+  const thumb = labelThumbUrl(bottle.label_ref)
 
   const handleClick = () => {
     if (canAct) onDone(bottle.barcode)
@@ -62,7 +62,7 @@ export function BottleCard({ bottle, onDone, onUndo }: Props) {
       </div>
       {thumb && (
         <a
-          href={labelFullUrl(bottle.label_uuid) ?? undefined}
+          href={labelFullUrl(bottle.label_ref) ?? undefined}
           target="_blank"
           rel="noopener noreferrer"
           onClick={handleCtLink}

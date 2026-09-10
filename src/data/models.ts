@@ -30,11 +30,11 @@ export interface DbBottle {
   estimated_value: number | null
   value_source: string | null
   /**
-   * CT label image id. Build a URL as
-   * `https://cdn.ct-static.com/labels/{label_uuid}.jpg` (full) or
-   * `..._100x.jpg` (thumbnail). The CDN needs no authentication.
+   * CT bottle image ref, `labels/<uuid>` or `captures/<uuid>` — see
+   * `data/labels.ts`. Build URLs with labelThumbUrl/labelFullUrl; the CDN needs
+   * no authentication.
    */
-  label_uuid: string | null
+  label_ref: string | null
   ct_location_at_sync: string | null
   ct_bin_at_sync: string | null
   created_at: string

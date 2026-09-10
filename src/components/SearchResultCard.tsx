@@ -34,7 +34,7 @@ export const SearchResultCard = memo(function SearchResultCard({ result, onDone,
     : 'HOME'
 
   const currentBin = bottle.current_bin ?? bottle.current_location ?? 'Unknown'
-  const thumb = labelThumbUrl(bottle.label_uuid)
+  const thumb = labelThumbUrl(bottle.label_ref)
 
   const handleDone = (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -56,7 +56,7 @@ export const SearchResultCard = memo(function SearchResultCard({ result, onDone,
       <div className="search-card__body">
         {thumb && (
           <a
-            href={labelFullUrl(bottle.label_uuid) ?? undefined}
+            href={labelFullUrl(bottle.label_ref) ?? undefined}
             target="_blank"
             rel="noopener noreferrer"
             onClick={handleCtLink}
@@ -115,6 +115,6 @@ export const SearchResultCard = memo(function SearchResultCard({ result, onDone,
 }, (prev, next) =>
   prev.result.bottle.barcode === next.result.bottle.barcode &&
   prev.result.bottle.state === next.result.bottle.state &&
-  prev.result.bottle.label_uuid === next.result.bottle.label_uuid &&
+  prev.result.bottle.label_ref === next.result.bottle.label_ref &&
   prev.result.tier === next.result.tier
 )
