@@ -33,8 +33,16 @@ CREATE TABLE bottles (
   country TEXT,
   region TEXT,
   size TEXT DEFAULT '750ml',
+  wine_type TEXT,
   cost NUMERIC,
   cost_currency TEXT DEFAULT 'SEK',
+  -- Fallback price for wines CT records at 0 kr; value_source names the origin
+  -- (ct_community, ct_auction, web). Type inferred from the live column.
+  estimated_value NUMERIC,
+  value_source TEXT,
+  -- CT bottle image: 'labels/<uuid>' or 'captures/<uuid>'. Written by sync from
+  -- the wine_labels table so it survives bottles being drunk and rebought.
+  label_ref TEXT,
   begin_consume INTEGER,
   end_consume INTEGER,
 
@@ -62,6 +70,15 @@ CREATE TABLE bottles (
   updated_at TIMESTAMPTZ DEFAULT now()
 );
 
+-- Wine labels: iwine -> CT bottle image, kept per WINE rather than per bottle.
+-- A row with label_ref NULL means "checked, CT has no image", which is why
+-- harvest-labels skips re-fetching it.
+CREATE TABLE wine_labels (
+  iwine INTEGER PRIMARY KEY,
+  label_ref TEXT,
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
 -- Indexes
 CREATE INDEX idx_bottles_needs_move ON bottles (current_location, recommended_location)
   WHERE current_location IS DISTINCT FROM recommended_location;
@@ -72,10 +89,12 @@ CREATE INDEX idx_bottles_trip ON bottles (trip_id) WHERE trip_id IS NOT NULL;
 ALTER TABLE bins ENABLE ROW LEVEL SECURITY;
 ALTER TABLE trips ENABLE ROW LEVEL SECURITY;
 ALTER TABLE bottles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE wine_labels ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Allow all for anon" ON bins FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Allow all for anon" ON trips FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Allow all for anon" ON bottles FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow all for anon" ON wine_labels FOR ALL USING (true) WITH CHECK (true);
 
 -- Enable realtime for bottles
 ALTER PUBLICATION supabase_realtime ADD TABLE bottles;
