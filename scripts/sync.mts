@@ -19,7 +19,10 @@ import { join } from 'path'
 
 const credDir = join(homedir(), '.claude-private', 'supabase')
 const url = readFileSync(join(credDir, 'project-url'), 'utf8').trim()
-const key = readFileSync(join(credDir, 'anon-jwt'), 'utf8').trim()
+// The secret key, not the publishable one: these run locally and do the bulk
+// writes and the orphan deletes that the app itself never performs, so they
+// bypass RLS instead of holding a session.
+const key = readFileSync(join(credDir, 'secret-key'), 'utf8').trim()
 const sb = createClient(url, key)
 
 const raw = JSON.parse(readFileSync('/tmp/ct_bottles.json', 'utf8'))

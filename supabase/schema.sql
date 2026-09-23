@@ -85,16 +85,35 @@ CREATE INDEX idx_bottles_needs_move ON bottles (current_location, recommended_lo
 CREATE INDEX idx_bottles_state ON bottles (state);
 CREATE INDEX idx_bottles_trip ON bottles (trip_id) WHERE trip_id IS NOT NULL;
 
--- Row Level Security: allow all for anon (single-user app)
+-- Row Level Security.
+--
+-- Until 2026-09-23 every policy read "FOR ALL USING (true)" with no role, which
+-- included anon. The anon key ships inside the published bundle at
+-- paolobrolin.github.io/wine-packing, so the whole cellar — 1264 bottles with
+-- purchase prices and storage locations — could be read, changed and deleted by
+-- anyone who opened the page source. Supabase's advisor reported it on 15 and
+-- 22 September.
+--
+-- Access now requires a signed-in session. Local scripts use the secret key,
+-- which bypasses RLS, so sync and label harvesting are unaffected.
+--
+-- This is only worth anything while SIGNUPS ARE DISABLED. With open signup,
+-- anyone can request their own magic link, arrive as `authenticated`, and these
+-- policies hand them everything. Authentication -> Sign In / Up -> "Allow new
+-- users to sign up" must stay off, with the one account created by hand.
 ALTER TABLE bins ENABLE ROW LEVEL SECURITY;
 ALTER TABLE trips ENABLE ROW LEVEL SECURITY;
 ALTER TABLE bottles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE wine_labels ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Allow all for anon" ON bins FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Allow all for anon" ON trips FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Allow all for anon" ON bottles FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Allow all for anon" ON wine_labels FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Authenticated full access" ON bins FOR ALL
+  TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Authenticated full access" ON trips FOR ALL
+  TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Authenticated full access" ON bottles FOR ALL
+  TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Authenticated full access" ON wine_labels FOR ALL
+  TO authenticated USING (true) WITH CHECK (true);
 
 -- Enable realtime for bottles
 ALTER PUBLICATION supabase_realtime ADD TABLE bottles;

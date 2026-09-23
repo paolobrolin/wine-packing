@@ -38,7 +38,8 @@ const ABORT_AFTER = 3
 const credDir = join(homedir(), '.claude-private', 'supabase')
 const sb = createClient(
   readFileSync(join(credDir, 'project-url'), 'utf8').trim(),
-  readFileSync(join(credDir, 'anon-jwt'), 'utf8').trim(),
+  // Secret key: this writes wine_labels, which the app never does.
+  readFileSync(join(credDir, 'secret-key'), 'utf8').trim(),
 )
 
 type Cookie = { name: string; value: string }
