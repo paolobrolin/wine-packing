@@ -46,12 +46,26 @@ describe('kitchenRule', () => {
     expect(r).toBeNull()
   })
 
-  it('catches 0 kr wine (null cost treated as 0)', () => {
-    const r = kitchenRule.evaluate(makeBottle({ endConsume: 2025, cost: null }), context)
-    expect(r).not.toBeNull()
-  })
-
   it('has priority 36 (beats sweetWines at 35)', () => {
     expect(kitchenRule.priority).toBe(36)
+  })
+})
+
+describe('kitchenRule — okänt värde är inte samma sak som billigt', () => {
+  it('avstår när värdet är okänt (cost null)', () => {
+    // Synken sätter cost=null för en 0-kr-flaska utan estimated_value:
+    // "värdet är okänt". Ett gåvovin är inte ett kökvin.
+    const r = kitchenRule.evaluate(makeBottle({ endConsume: 2026, cost: null }), context)
+    expect(r).toBeNull()
+  })
+
+  it('avstår när CT-priset är 0 och inget värde kunnat sättas', () => {
+    const r = kitchenRule.evaluate(makeBottle({ endConsume: 2026, cost: 0 }), context)
+    expect(r).toBeNull()
+  })
+
+  it('tar fortfarande vinet när ett lågt värde är känt', () => {
+    const r = kitchenRule.evaluate(makeBottle({ endConsume: 2026, cost: 120 }), context)
+    expect(r?.recommendedBin).toBe('Köket')
   })
 })

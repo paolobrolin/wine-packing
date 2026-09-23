@@ -178,21 +178,26 @@ describe('buildSyncRows', () => {
   })
 
   it('uses costOverrides for 0-cost bottles (kitchen rule respects enriched price)', () => {
-    // Without override: cost=0, end=2027 → kitchen (HOME, Köket)
     const ct = makeCtBottle({
       bottle_cost: 0,
       begin_consume: 2024,
       end_consume: 2027,
       extra: { Vintage: '2013', Wine: 'Voerzio Barolo La Serra', Producer: 'Voerzio Martini', Country: 'Italy', Region: 'Piedmont', Type: null },
     })
+
+    // No override: värdet är okänt, inte lågt → köket avstår
     const withoutOverride = buildSyncRows([ct], new Map(), 2026)
     expect(withoutOverride.rows[0].cost).toBe(0)
     expect(withoutOverride.rows[0].estimated_value).toBeNull()
-    expect(withoutOverride.rows[0].recommended_bin).toBe('Köket')
+    expect(withoutOverride.rows[0].recommended_bin).not.toBe('Köket')
 
-    // With override: cost stays 0 but estimated_value=603 → too expensive for kitchen
-    const overrides = new Map([[ct.iwine, 603]])
-    const withOverride = buildSyncRows([ct], new Map(), 2026, overrides)
+    // Lågt värde hämtat → nu är det positivt känt att vinet är billigt
+    const cheap = buildSyncRows([ct], new Map(), 2026, new Map([[ct.iwine, 150]]))
+    expect(cheap.rows[0].estimated_value).toBe(150)
+    expect(cheap.rows[0].recommended_bin).toBe('Köket')
+
+    // Högt värde hämtat → för dyrt för köket
+    const withOverride = buildSyncRows([ct], new Map(), 2026, new Map([[ct.iwine, 603]]))
     expect(withOverride.rows[0].cost).toBe(0)
     expect(withOverride.rows[0].estimated_value).toBe(603)
     expect(withOverride.rows[0].value_source).toBe('ct_auction')
