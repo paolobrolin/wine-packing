@@ -311,9 +311,10 @@ export function buildSyncRows(
       // (A packed or in-transit bottle is in a box: CT's bin is where it came
       // from, so matching it says nothing about the move being done.)
       state = 'synced'
-    } else if (preservedState === 'shelved' && appPositions[i] == null && (existing?.current_bin || null) === (ct.bin || null)) {
-      // Shelved in the app (possibly on another shelf than recommended, e.g.
-      // the neighbour of a full one) and CT now has that shelf: done. As
+    } else if (preservedState === 'shelved' && appPositions[i] == null && !!existing?.current_bin && existing.current_bin === ct.bin) {
+      // Shelved in the app on a shelf (possibly another than recommended, e.g.
+      // the neighbour of a full one) and CT now has that shelf: done. No bin
+      // on either side says nothing about where it is, so that is not done. As
       // 'synced' it can reopen later if the rules change.
       state = 'synced'
     } else if (preservedState === 'synced' && appPositions[i] == null && recommendationChanged(existing, recLoc, recBin, bottle)) {

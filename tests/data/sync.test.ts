@@ -592,5 +592,12 @@ describe('buildSyncRows — done bottles get a new recommendation', () => {
     expect(stats.needsMove).toBe(1)
     expect(stats.home).toBe(2)
   })
+
+  it('a bottle shelved without a bin is not marked done just because CT has no bin either', () => {
+    const existing = atRemoteRow({ state: 'shelved', current_location: 'Cellar', current_bin: null, ct_location_at_sync: 'Cellar', ct_bin_at_sync: null })
+    const ctHome = makeCtBottle({ location: 'Cellar', bin: null, begin_consume: 2035, end_consume: 2070 })
+    const { rows } = buildSyncRows([ctHome], new Map([['0001', existing]]), 2026)
+    expect(rows[0].state).toBe('shelved')
+  })
 })
 
