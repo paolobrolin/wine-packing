@@ -90,8 +90,8 @@ export default function App() {
 
   const { toast, show: showToast, dismiss: dismissToast } = useToast()
   // A failed save names its bottle and offers the Undo of its own action only.
-  const afterPending = useOrderedWrites(({ label, undo }) =>
-    showToast(`Could not save ${label} — reload and check it`, 'error', undo))
+  const afterPending = useOrderedWrites((label) =>
+    showToast(`Could not save ${label} — reload and check it`, 'error'))
   const error = moveError || homeError
 
   const handleDone = (barcode: string) => {
@@ -110,10 +110,10 @@ export default function App() {
     const undo = () => {
       const fields = undoFields(bottle)
       updateBottleLocally(barcode, fields as Partial<typeof bottle>)
-      afterPending(barcode, () => restoreBottle(barcode, fields), { label: `the undo of ${v} ${bottle.wine}` })
+      afterPending(barcode, () => restoreBottle(barcode, fields), `the undo of ${v} ${bottle.wine}`)
       showToast(`${v} ${bottle.wine} — undone`, 'info')
     }
-    const ctx = { label: `${v} ${bottle.wine}`, undo }
+    const ctx = `${v} ${bottle.wine}`
 
     if (bottle.state === 'synced' || bottle.state === 'shelved') {
       updateBottleLocally(barcode, {
@@ -152,7 +152,7 @@ export default function App() {
     if (!bottle) return
     const fields = stepBackFields(bottle)
     updateBottleLocally(barcode, fields as Partial<typeof bottle>)
-    afterPending(barcode, () => restoreBottle(barcode, fields))
+    afterPending(barcode, () => restoreBottle(barcode, fields), `${bottle.vintage === '1001' ? 'NV' : bottle.vintage} ${bottle.wine}`)
   }
 
   const handleReset = (barcode: string) => {
@@ -160,7 +160,7 @@ export default function App() {
     if (!bottle) return
     const fields = resetFields(bottle)
     updateBottleLocally(barcode, fields as Partial<typeof bottle>)
-    afterPending(barcode, () => restoreBottle(barcode, fields))
+    afterPending(barcode, () => restoreBottle(barcode, fields), `${bottle.vintage === '1001' ? 'NV' : bottle.vintage} ${bottle.wine}`)
   }
 
   /**
@@ -187,11 +187,11 @@ export default function App() {
         const fields = snapshots.get(s.barcode)
         if (!fields) continue
         updateBottleLocally(s.barcode, fields as Partial<DbBottle>)
-        afterPending(s.barcode, () => restoreBottle(s.barcode, fields), { label: 'part of the batch undo' })
+        afterPending(s.barcode, () => restoreBottle(s.barcode, fields), 'part of the batch undo')
       }
       showToast(`${plan.steps.length} reverted`, 'info')
     }
-    const ctx = { label: `a bottle in "${batchSummary(plan)}"`, undo: undoAll }
+    const ctx = `a bottle in "${batchSummary(plan)}"`
 
     for (const s of plan.steps) {
       updateBottleLocally(s.barcode, {
@@ -311,7 +311,7 @@ export default function App() {
               recommended_location: null,
               recommended_bin: null,
             } as Partial<DbBottle>)
-            afterPending(barcode, () => restoreBottle(barcode, position).then(() => dismissRecommendation(barcode)))
+            afterPending(barcode, () => restoreBottle(barcode, position).then(() => dismissRecommendation(barcode)), `${overrideBottle.vintage === '1001' ? 'NV' : overrideBottle.vintage} ${overrideBottle.wine}`)
             const b = overrideBottle
             const v = b.vintage === '1001' ? 'NV' : b.vintage
             showToast(`${v} ${b.wine} — kept in place`, 'info')

@@ -20,17 +20,16 @@ describe('useOrderedWrites', () => {
     expect(order).toEqual(['forward', 'undo'])
   })
 
-  it('reports a failure with the undo that belongs to that write, not another one', async () => {
+  it('reports a failure with the label of that write only (no Undo: a stale snapshot could revert a newer move)', async () => {
     const onError = vi.fn()
-    const undoA = vi.fn()
     const { result } = renderHook(() => useOrderedWrites(onError))
     act(() => {
-      result.current('A', () => Promise.reject(new Error('net')), { label: 'A', undo: undoA })
-      result.current('B', async () => {}, { label: 'B', undo: vi.fn() })
+      result.current('A', () => Promise.reject(new Error('net')), 'A')
+      result.current('B', async () => {}, 'B')
     })
     await tick(); await tick()
     expect(onError).toHaveBeenCalledTimes(1)
-    expect(onError).toHaveBeenCalledWith({ label: 'A', undo: undoA })
+    expect(onError).toHaveBeenCalledWith('A')
   })
 
   it('keeps running later writes after an earlier one failed', async () => {
