@@ -1,6 +1,6 @@
 import { memo, useState } from 'react'
 import type { ScoredBottle } from '../search/types'
-import { moveType, actionLabel } from '../data/models'
+import { moveType, actionLabel, type DbBottle } from '../data/models'
 import { displayVintage, displayCost } from '../data/format'
 import { labelThumbUrl, labelFullUrl } from '../data/labels'
 
@@ -13,6 +13,12 @@ interface Props {
 
 function ctUrl(iwine: number): string {
   return `https://www.cellartracker.com/wine.asp?iWine=${iwine}`
+}
+
+function currentPlace(bottle: DbBottle): string {
+  const place = bottle.current_bin
+    ?? (bottle.current_location && bottle.current_location !== 'Cellar' ? bottle.current_location : null)
+  return place ? place.toUpperCase() : 'HOME'
 }
 
 export const SearchResultCard = memo(function SearchResultCard({ result, onDone, onUndo, onReset }: Props) {
@@ -31,6 +37,8 @@ export const SearchResultCard = memo(function SearchResultCard({ result, onDone,
   const verdictText = (mt === 'cross-location' || mt === 'within-location')
     ? `MOVE TO ${locationPrefix}${bottle.recommended_bin ?? 'TBD'}`
     : bottle.recommended_bin ? `IN PLACE ${bottle.recommended_bin}`
+    // No recommendation (Lugnet, Ekholmen, GSN, …): say where it is instead.
+    : bottle.recommended_location == null ? currentPlace(bottle)
     : 'HOME'
 
   const currentBin = bottle.current_bin ?? bottle.current_location ?? 'Unknown'

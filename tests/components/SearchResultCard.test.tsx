@@ -119,3 +119,24 @@ describe('SearchResultCard label thumbnail', () => {
     expect(onDone).not.toHaveBeenCalled()
   })
 })
+
+describe('SearchResultCard verdict without recommendation', () => {
+  it('shows the current bin (e.g. Lugnet) instead of HOME', () => {
+    const bottle = makeDbBottle({ current_bin: 'Lugnet', recommended_location: null, recommended_bin: null })
+    render(<SearchResultCard result={scored(bottle, 'no-move')} onDone={() => {}} />)
+    expect(screen.getByText('LUGNET')).toBeInTheDocument()
+    expect(screen.queryByText('HOME')).not.toBeInTheDocument()
+  })
+
+  it('falls back to the location when there is no bin (Ekholmen)', () => {
+    const bottle = makeDbBottle({ current_location: 'Ekholmen', current_bin: null, recommended_location: null, recommended_bin: null })
+    render(<SearchResultCard result={scored(bottle, 'no-move')} onDone={() => {}} />)
+    expect(screen.getByText('EKHOLMEN')).toBeInTheDocument()
+  })
+
+  it('still shows HOME for a home bottle with no bin', () => {
+    const bottle = makeDbBottle({ current_location: 'Cellar', current_bin: null, recommended_location: null, recommended_bin: null })
+    render(<SearchResultCard result={scored(bottle, 'no-move')} onDone={() => {}} />)
+    expect(screen.getByText('HOME')).toBeInTheDocument()
+  })
+})

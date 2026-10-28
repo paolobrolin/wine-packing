@@ -28,7 +28,7 @@ function mb(overrides: Partial<DbBottle>): DbBottle {
 const bottles: DbBottle[] = [
   mb({ barcode: 'B01', iwine: 1, producer: 'Oddero', wine: 'Oddero Barolo Brunate', vintage: '2021', recommended_bin: '3.3 BAROLO CLASSIC' }),
   mb({ barcode: 'B02', iwine: 2, producer: 'Au Bon Climat', wine: 'Au Bon Climat Chardonnay Santa Barbara County', vintage: '2023', recommended_bin: '1.8 NEW WORLD OTHER' }),
-  mb({ barcode: 'B03', iwine: 3, producer: 'Kongsgaard', wine: 'Kongsgaard Chardonnay', vintage: '2019', recommended_location: null, recommended_bin: null }),
+  mb({ barcode: 'B03', iwine: 3, producer: 'Kongsgaard', wine: 'Kongsgaard Chardonnay', vintage: '2019', current_bin: null, recommended_location: null, recommended_bin: null }),
   mb({ barcode: 'B04', iwine: 4, producer: 'Massolino', wine: 'Massolino Barolo Parafada', vintage: '2021', recommended_bin: '3.3 BAROLO CLASSIC' }),
   mb({ barcode: 'B05', iwine: 5, producer: 'Cavallotto', wine: 'Cavallotto Barolo Riserva Vignolo', vintage: '2018', recommended_bin: '3.2 BAROLO MODERN' }),
   mb({ barcode: 'B06', iwine: 6, producer: 'Castello Banfi', wine: 'Castello Banfi Brunello di Montalcino', vintage: '2013', recommended_bin: '3.5 TOSCANA' }),
