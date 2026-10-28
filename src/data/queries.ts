@@ -1,3 +1,4 @@
+import type { RestoreFields } from '../rules/undo'
 import { getSupabase } from './supabase'
 import { needsMove, type DbBottle, type DbBin, type DbTrip } from './models'
 import type { BottleState } from '../rules/state-machine'
@@ -160,6 +161,16 @@ export async function fetchHomeBottles(): Promise<DbBottle[]> {
 
   if (error) throw error
   return data ?? []
+}
+
+/** Write undo/reset fields directly; see src/rules/undo.ts for why. */
+export async function restoreBottle(barcode: string, fields: RestoreFields): Promise<void> {
+  const { error } = await getSupabase()
+    .from('bottles')
+    .update({ ...fields, updated_at: new Date().toISOString() })
+    .eq('barcode', barcode)
+
+  if (error) throw error
 }
 
 export async function rebinBottle(barcode: string, bin: string): Promise<void> {

@@ -10,7 +10,7 @@
  * Fetches ALL existing rows (paginated — PostgREST caps at 1000/request),
  * runs buildSyncRows, upserts in batches, deletes orphans (consumed bottles).
  */
-import { buildSyncRows, type CtBottle } from '../src/data/sync.js'
+import { buildSyncRows, type CtBottle, type ExistingSyncRow } from '../src/data/sync.js'
 import type { DbBottle } from '../src/data/models.js'
 import { createClient } from '@supabase/supabase-js'
 import { readFileSync } from 'fs'
@@ -35,7 +35,7 @@ const ctBottles: CtBottle[] = raw.map((b: Record<string, unknown>) => ({
   extra: b.extra,
 })) as CtBottle[]
 
-type ExistingRow = Pick<DbBottle, 'barcode' | 'state' | 'packed_at' | 'in_transit_at' | 'shelved_at' | 'synced_at' | 'trip_id' | 'owc_group' | 'estimated_value' | 'value_source' | 'label_ref'>
+type ExistingRow = ExistingSyncRow & Pick<DbBottle, 'barcode'>
 
 // iwine → CT bottle image ref. Harvested by scripts/harvest-labels.mts (no CT
 // export carries it), stored per wine so it survives bottles being drunk and
@@ -58,7 +58,7 @@ const PAGE = 1000
 const existingMap = new Map<string, ExistingRow>()
 for (let from = 0; ; from += PAGE) {
   const { data, error } = await sb.from('bottles')
-    .select('barcode, state, packed_at, in_transit_at, shelved_at, synced_at, trip_id, owc_group, estimated_value, value_source, label_ref')
+    .select('barcode, state, packed_at, in_transit_at, shelved_at, synced_at, trip_id, owc_group, estimated_value, value_source, label_ref, current_location, current_bin, ct_location_at_sync, ct_bin_at_sync')
     .order('barcode')
     .range(from, from + PAGE - 1)
   if (error) { console.error(error); process.exit(1) }

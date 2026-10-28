@@ -326,3 +326,111 @@ describe('buildSyncRows — label_ref', () => {
     expect(rows[0].label_ref).toBe('labels/bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb')
   })
 })
+
+describe('buildSyncRows — app placements not yet in CT', () => {
+  // A row as the app leaves it after a placement: current_* says where the
+  // bottle is, ct_*_at_sync says what CT had at the last sync.
+  function existingRow(overrides: Record<string, unknown> = {}) {
+    return {
+      state: 'synced', packed_at: null, in_transit_at: null, shelved_at: null,
+      synced_at: '2026-10-28T08:00:00Z', trip_id: null, owc_group: null,
+      estimated_value: null, value_source: null, label_ref: null,
+      current_location: 'Cellar', current_bin: 'Lgh 5. BUBBEL',
+      ct_location_at_sync: 'Cellar', ct_bin_at_sync: null,
+      ...overrides,
+    } as never
+  }
+
+  it('keeps the bin set in the app while CT still has the old value', () => {
+    const ct = makeCtBottle({ location: 'Cellar', bin: null })
+    const { rows } = buildSyncRows([ct], new Map([['0001', existingRow()]]), 2026)
+    expect(rows[0].current_bin).toBe('Lgh 5. BUBBEL')
+    expect(rows[0].current_location).toBe('Cellar')
+    expect(rows[0].ct_bin_at_sync).toBeNull()
+  })
+
+  it('lets CT win once CT itself has changed since the last sync', () => {
+    const ct = makeCtBottle({ location: 'Cellar', bin: 'Köket' })
+    const { rows } = buildSyncRows([ct], new Map([['0001', existingRow()]]), 2026)
+    expect(rows[0].current_bin).toBe('Köket')
+    expect(rows[0].ct_bin_at_sync).toBe('Köket')
+  })
+
+  it('derives REMOTE from a remote bin when the app only changed the bin (real app write)', () => {
+    const ct = makeCtBottle({ location: 'Cellar', bin: 'Lagringsskåp: 3. Saxum / Andremily' })
+    const existing = existingRow({
+      state: 'shelved', current_location: 'Cellar', current_bin: '2.6 FR OTHER',
+      ct_location_at_sync: 'Cellar', ct_bin_at_sync: 'Lagringsskåp: 3. Saxum / Andremily',
+    })
+    const { rows } = buildSyncRows([ct], new Map([['0001', existing]]), 2026)
+    expect(rows[0].current_location).toBe('REMOTE')
+    expect(rows[0].current_bin).toBe('2.6 FR OTHER')
+  })
+
+  it('derives Cellar from a home bin for a bottle shelved home from REMOTE, so it shows at home', () => {
+    // Drinking window open now → recommended HOME; the app shelved it in Lgh 2.
+    const ct = makeCtBottle({ location: 'REMOTE', bin: '2.6 FR OTHER', begin_consume: 2020, end_consume: 2027,
+      extra: { Vintage: '2018', Wine: 'Test Bourgogne', Producer: 'Test', Country: 'France', Region: 'Burgundy', Type: 'Red' } })
+    const existing = existingRow({
+      state: 'shelved', current_location: 'REMOTE', current_bin: 'Lgh 2. FRANKRIKE',
+      ct_location_at_sync: 'REMOTE', ct_bin_at_sync: '2.6 FR OTHER',
+    })
+    const { rows } = buildSyncRows([ct], new Map([['0001', existing]]), 2026)
+    expect(rows[0].current_location).toBe('Cellar')
+    expect(rows[0].current_bin).toBe('Lgh 2. FRANKRIKE')
+  })
+
+  it('derives Cellar for any non-remote bin, incl. Källaren overflow names not in HOME_BINS', () => {
+    const ct = makeCtBottle({ location: 'REMOTE', bin: '2.7 DE MOSEL' })
+    const existing = existingRow({
+      state: 'shelved', current_location: 'REMOTE', current_bin: 'Kall 6. VITA',
+      ct_location_at_sync: 'REMOTE', ct_bin_at_sync: '2.7 DE MOSEL',
+    })
+    const { rows } = buildSyncRows([ct], new Map([['0001', existing]]), 2026)
+    expect(rows[0].current_location).toBe('Cellar')
+    expect(rows[0].current_bin).toBe('Kall 6. VITA')
+  })
+
+  it('feeds the kept position to the rules (a bottle shelved at REMOTE is no longer a move)', () => {
+    const ct = makeCtBottle({ location: 'Cellar', bin: null, begin_consume: 2030, end_consume: 2045 })
+    const withoutApp = buildSyncRows([ct], new Map(), 2026).rows[0]
+    expect(withoutApp.recommended_location).toBe('REMOTE')
+    const existing = existingRow({ state: 'shelved', current_location: 'Cellar', current_bin: '2.6 FR OTHER', ct_bin_at_sync: null })
+    const { rows } = buildSyncRows([ct], new Map([['0001', existing]]), 2026)
+    expect(rows[0].recommended_location).toBeNull()
+  })
+
+  it('treats an empty-string bin like no bin (no spurious app move)', () => {
+    const ct = makeCtBottle({ location: 'Cellar', bin: 'Köket' })
+    const existing = existingRow({ current_bin: '', ct_bin_at_sync: 'Köket' })
+    const { rows } = buildSyncRows([ct], new Map([['0001', existing]]), 2026)
+    expect(rows[0].current_bin).toBe('Köket')
+  })
+
+  it('keeps a shelved move to REMOTE, location included', () => {
+    const ct = makeCtBottle({ location: 'Cellar', bin: 'Lagringsskåp: 3. Saxum / Andremily' })
+    const existing = existingRow({
+      state: 'shelved', current_location: 'REMOTE', current_bin: '1.6 CALIFORNIA OTHER',
+      ct_location_at_sync: 'Cellar', ct_bin_at_sync: 'Lagringsskåp: 3. Saxum / Andremily',
+    })
+    const { rows } = buildSyncRows([ct], new Map([['0001', existing]]), 2026)
+    expect(rows[0].current_location).toBe('REMOTE')
+    expect(rows[0].current_bin).toBe('1.6 CALIFORNIA OTHER')
+    expect(rows[0].ct_location_at_sync).toBe('Cellar')
+  })
+
+  it('does not keep the bin of a packed bottle (it is in a box, not on the shelf)', () => {
+    const ct = makeCtBottle({ location: 'Cellar', bin: null })
+    const existing = existingRow({ state: 'packed', current_bin: '3.3 BAROLO CLASSIC' })
+    const { rows } = buildSyncRows([ct], new Map([['0001', existing]]), 2026)
+    expect(rows[0].current_bin).toBeNull()
+    expect(rows[0].state).toBe('packed')
+  })
+
+  it('falls back to CT when the row has no record of what CT had', () => {
+    const ct = makeCtBottle({ location: 'Cellar', bin: null })
+    const existing = existingRow({ ct_location_at_sync: undefined, ct_bin_at_sync: undefined })
+    const { rows } = buildSyncRows([ct], new Map([['0001', existing]]), 2026)
+    expect(rows[0].current_bin).toBeNull()
+  })
+})

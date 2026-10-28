@@ -7,10 +7,11 @@ import { ShelfGroup } from './components/ShelfGroup'
 import { HomeView } from './components/HomeView'
 import { SearchPanel } from './components/SearchPanel'
 import { OverrideSheet } from './components/OverrideSheet'
-import { inferTransition, reverseTransition } from './rules/state-machine'
+import { inferTransition } from './rules/state-machine'
+import { undoFields, stepBackFields, resetFields, keepHereFields } from './rules/undo'
 import { actionLabel } from './data/models'
 import { planBatch, batchSummary } from './data/batch'
-import { rebinBottle, dismissRecommendation } from './data/queries'
+import { rebinBottle, dismissRecommendation, restoreBottle } from './data/queries'
 import type { DbBottle } from './data/models'
 import './App.css'
 
@@ -84,7 +85,17 @@ export default function App() {
 
   const { bottles: moveBottles, loading: moveLoading, error: moveError, updateBottleLocally } = useBottles({ type: 'needs-move' })
   const { bottles: homeBottles, loading: homeLoading, error: homeError } = useBottles({ type: 'home' })
-  const { pack, unpack, shelve, sync } = useMoveActions()
+  const { pack, shelve, sync } = useMoveActions()
+
+  // Writes for one bottle run in order, so an Undo can never land before the
+  // write it undoes. A failed write is reported instead of being swallowed.
+  const writeChain = useRef(new Map<string, Promise<unknown>>())
+  const afterPending = (barcode: string, write: () => Promise<unknown>) => {
+    const prev = writeChain.current.get(barcode) ?? Promise.resolve()
+    const next = prev.catch(() => {}).then(write)
+    writeChain.current.set(barcode, next)
+    next.catch(() => showToast('Could not save the change — reload and check the bottle', 'error'))
+  }
   const { toast, show: showToast, dismiss: dismissToast } = useToast()
   const error = moveError || homeError
 
@@ -108,7 +119,7 @@ export default function App() {
         current_bin: effectiveBin,
         synced_at: new Date().toISOString(),
       } as Partial<typeof bottle>)
-      rebinBottle(barcode, effectiveBin ?? '')
+      afterPending(barcode, () => rebinBottle(barcode, effectiveBin ?? ''))
     } else {
       const nextState = inferTransition(bottle)
       const tsField = nextState === 'packed' ? 'packed_at'
@@ -123,26 +134,20 @@ export default function App() {
       } as Partial<typeof bottle>)
 
       const extra = effectiveBin ? { current_bin: effectiveBin } : undefined
-      if (nextState === 'packed') pack(barcode, extra)
-      else if (nextState === 'shelved') shelve(barcode, extra)
-      else if (nextState === 'synced') sync(barcode, extra)
+      if (nextState === 'packed') afterPending(barcode, () => pack(barcode, extra))
+      else if (nextState === 'shelved') afterPending(barcode, () => shelve(barcode, extra))
+      else if (nextState === 'synced') afterPending(barcode, () => sync(barcode, extra))
     }
 
     const v = bottle.vintage === '1001' ? 'NV' : bottle.vintage
-    const prevState = bottle.state
-    const prevBin = bottle.current_bin
     const actionWord = actionLabel(bottle) === 'Move' ? 'moved' : actionLabel(bottle) === 'Place' ? 'placed' : 'packed'
     showToast(
       `${v} ${bottle.wine} — ${actionWord} → ${effectiveBin ?? ''}`,
       'success',
       () => {
-        updateBottleLocally(barcode, {
-          state: prevState,
-          current_bin: prevBin,
-          packed_at: prevState === 'pending' ? null : bottle.packed_at,
-          shelved_at: prevState === 'pending' || prevState === 'packed' ? null : bottle.shelved_at,
-        } as Partial<typeof bottle>)
-        unpack(barcode)
+        const fields = undoFields(bottle)
+        updateBottleLocally(barcode, fields as Partial<typeof bottle>)
+        afterPending(barcode, () => restoreBottle(barcode, fields))
         showToast(`${v} ${bottle.wine} — undone`, 'info')
       },
     )
@@ -152,24 +157,17 @@ export default function App() {
   const handleUndo = (barcode: string) => {
     const bottle = [...moveBottles, ...homeBottles].find((b) => b.barcode === barcode)
     if (!bottle) return
-    const prevState = reverseTransition(bottle.state)
-    updateBottleLocally(barcode, {
-      state: prevState,
-      packed_at: prevState === 'pending' ? null : bottle.packed_at,
-    } as Partial<typeof bottle>)
-    unpack(barcode)
+    const fields = stepBackFields(bottle)
+    updateBottleLocally(barcode, fields as Partial<typeof bottle>)
+    afterPending(barcode, () => restoreBottle(barcode, fields))
   }
 
   const handleReset = (barcode: string) => {
     const bottle = [...moveBottles, ...homeBottles].find((b) => b.barcode === barcode)
     if (!bottle) return
-    updateBottleLocally(barcode, {
-      state: 'pending',
-      packed_at: null,
-      in_transit_at: null,
-      shelved_at: null,
-    } as Partial<typeof bottle>)
-    unpack(barcode)
+    const fields = resetFields(bottle)
+    updateBottleLocally(barcode, fields as Partial<typeof bottle>)
+    afterPending(barcode, () => restoreBottle(barcode, fields))
   }
 
   /**
@@ -185,6 +183,7 @@ export default function App() {
       .filter((b): b is DbBottle => b != null)
 
     const plan = planBatch(bottles)
+    const snapshots = new Map(bottles.map((b) => [b.barcode, undoFields(b)]))
     if (plan.steps.length === 0) {
       showToast('Nothing to move', 'info')
       return
@@ -200,10 +199,10 @@ export default function App() {
 
       const extra = s.bin ? { current_bin: s.bin } : undefined
       if (s.prevState === 'synced' || s.prevState === 'shelved') {
-        rebinBottle(s.barcode, s.bin ?? '')
-      } else if (s.nextState === 'packed') pack(s.barcode, extra)
-      else if (s.nextState === 'shelved') shelve(s.barcode, extra)
-      else if (s.nextState === 'synced') sync(s.barcode, extra)
+        afterPending(s.barcode, () => rebinBottle(s.barcode, s.bin ?? ''))
+      } else if (s.nextState === 'packed') afterPending(s.barcode, () => pack(s.barcode, extra))
+      else if (s.nextState === 'shelved') afterPending(s.barcode, () => shelve(s.barcode, extra))
+      else if (s.nextState === 'synced') afterPending(s.barcode, () => sync(s.barcode, extra))
     }
 
     const skippedNote = plan.skipped.length > 0 ? ` (${plan.skipped.length} skipped)` : ''
@@ -212,18 +211,10 @@ export default function App() {
       'success',
       () => {
         for (const s of plan.steps) {
-          updateBottleLocally(s.barcode, {
-            state: s.prevState,
-            current_bin: s.prevBin,
-            packed_at: s.prevPackedAt,
-            shelved_at: s.prevShelvedAt,
-            synced_at: s.prevSyncedAt,
-          } as Partial<DbBottle>)
-          if (s.prevState === 'synced' || s.prevState === 'shelved') {
-            rebinBottle(s.barcode, s.prevBin ?? '')
-          } else {
-            unpack(s.barcode)
-          }
+          const fields = snapshots.get(s.barcode)
+          if (!fields) continue
+          updateBottleLocally(s.barcode, fields as Partial<DbBottle>)
+          afterPending(s.barcode, () => restoreBottle(s.barcode, fields))
         }
         showToast(`${plan.steps.length} reverted`, 'info')
       },
@@ -322,12 +313,13 @@ export default function App() {
           bottle={overrideBottle}
           onConfirm={handleConfirmDone}
           onKeep={async (barcode) => {
+            const position = keepHereFields(overrideBottle)
             updateBottleLocally(barcode, {
-              state: 'synced',
+              ...position,
               recommended_location: null,
               recommended_bin: null,
             } as Partial<DbBottle>)
-            dismissRecommendation(barcode)
+            afterPending(barcode, () => restoreBottle(barcode, position).then(() => dismissRecommendation(barcode)))
             const b = overrideBottle
             const v = b.vintage === '1001' ? 'NV' : b.vintage
             showToast(`${v} ${b.wine} — kept in place`, 'info')

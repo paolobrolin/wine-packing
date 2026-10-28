@@ -92,6 +92,14 @@ describe('SearchPanel', () => {
     expect(onDone).toHaveBeenCalledWith('B01')
   })
 
+  it('does not offer Undo on Done: the confirm step (App) owns the toast', async () => {
+    const onUndo = vi.fn()
+    render(<SearchPanel bottles={bottles} onDone={() => {}} onUndo={onUndo} />)
+    await userEvent.type(screen.getByPlaceholderText('Search wines...'), 'oddero')
+    await userEvent.click(screen.getByText('Pack'))
+    expect(screen.queryByText('Undo')).not.toBeInTheDocument()
+  })
+
   it('keeps search query after Done (user clears manually)', async () => {
     render(<SearchPanel bottles={bottles} onDone={() => {}} />)
     const input = screen.getByPlaceholderText('Search wines...')

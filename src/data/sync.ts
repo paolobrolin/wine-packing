@@ -8,6 +8,7 @@ import { createCapacityTracker } from '../bins/capacity'
 import { remoteBinRules } from '../bins/remote'
 import { homeBinRules } from '../bins/home'
 import { determineHomeSubLocation, buildHomeBinId } from '../bins/home-sub-location'
+import { REMOTE_BINS } from '../bins/all-bins'
 
 export interface CtBottle {
   barcode: string
@@ -41,9 +42,40 @@ export interface SyncResult {
   home: number
 }
 
+export type ExistingSyncRow = Pick<DbBottle, 'state' | 'packed_at' | 'in_transit_at' | 'shelved_at' | 'synced_at' | 'trip_id' | 'owc_group' | 'estimated_value' | 'value_source' | 'label_ref'>
+  & Partial<Pick<DbBottle, 'current_location' | 'current_bin' | 'ct_location_at_sync' | 'ct_bin_at_sync'>>
+
+// A bottle placed in the app (shelved or done) whose new position CT does not
+// have yet. Until CT changes, the app's position is the true one; once CT
+// changes in any way, CT wins again. Packed and in-transit bottles are left
+// out: their current_bin is the destination, not where they physically are.
+function appPositionPendingInCt(ct: CtBottle, existing: ExistingSyncRow | undefined): { location: string | null; bin: string | null } | null {
+  if (existing == null) return null
+  if (existing.state !== 'synced' && existing.state !== 'shelved') return null
+  if (existing.ct_location_at_sync === undefined || existing.ct_bin_at_sync === undefined) return null
+  const same = (a: string | null | undefined, b: string | null | undefined) => (a || null) === (b || null)
+  const ctUnchanged = same(ct.location, existing.ct_location_at_sync) && same(ct.bin, existing.ct_bin_at_sync)
+  const appMoved = !same(existing.current_location, existing.ct_location_at_sync) || !same(existing.current_bin, existing.ct_bin_at_sync)
+  if (!ctUnchanged || !appMoved) return null
+  // A Done without a bin writes '': that is not a placement.
+  const bin = existing.current_bin || null
+  if (bin == null) return null
+  return { location: locationForBin(bin, existing.current_location ?? null), bin }
+}
+
+// The app only ever writes current_bin, so a cross-location shelve leaves the
+// old location behind. The bin says where the bottle is: a remote bin means
+// REMOTE; any other bin cannot be at REMOTE, so a stale REMOTE becomes home.
+// (Generated home bins such as 'Kall 6. VITA' are not all in HOME_BINS, so the
+// home side is defined as "not remote" rather than by that list.)
+function locationForBin(bin: string, location: string | null): string | null {
+  if ((REMOTE_BINS as readonly string[]).includes(bin)) return 'REMOTE'
+  return location === 'REMOTE' || location == null ? 'Cellar' : location
+}
+
 export function buildSyncRows(
   ctBottles: CtBottle[],
-  existingByBarcode: Map<string, Pick<DbBottle, 'state' | 'packed_at' | 'in_transit_at' | 'shelved_at' | 'synced_at' | 'trip_id' | 'owc_group' | 'estimated_value' | 'value_source' | 'label_ref'>>,
+  existingByBarcode: Map<string, ExistingSyncRow>,
   currentYear: number,
   costOverrides?: Map<number, number>,
   /** iwine → CT bottle image ref, from the wine_labels table. */
@@ -61,10 +93,15 @@ export function buildSyncRows(
     }
   }
 
-  const bottles: Bottle[] = ctBottles.map(ct => {
+  const appPositions = ctBottles.map(ct => appPositionPendingInCt(ct, existingByBarcode.get(ct.barcode)))
+
+  // The rules see the effective position, so a bottle placed in the app is
+  // judged where it actually is, not where CT still thinks it is.
+  const bottles: Bottle[] = ctBottles.map((ct, i) => {
     const valuation = valuations.get(ct.barcode)
     const effectiveCost = (ct.bottle_cost ?? 0) !== 0 ? ct.bottle_cost : valuation?.value ?? null
-    return toRuleBottle({ ...ct, bottle_cost: effectiveCost })
+    const pos = appPositions[i]
+    return toRuleBottle({ ...ct, bottle_cost: effectiveCost, ...(pos ?? {}) })
   })
 
   const verticals = buildVerticals(bottles)
@@ -245,8 +282,8 @@ export function buildSyncRows(
       wine_type: ct.extra.Type ?? null,
       begin_consume: sanitizeDrinkWindow(ct.begin_consume),
       end_consume: sanitizeDrinkWindow(ct.end_consume),
-      current_location: ct.location,
-      current_bin: ct.bin,
+      current_location: appPositions[i]?.location ?? ct.location,
+      current_bin: appPositions[i] ? appPositions[i]!.bin : ct.bin,
       recommended_location: recLoc,
       recommended_bin: recBin,
       move_reason: reason,

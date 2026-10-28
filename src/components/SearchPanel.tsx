@@ -24,20 +24,12 @@ export function SearchPanel({ bottles, onDone, onUndo, onReset }: Props) {
 
   useEffect(() => { setShowAllNoMove(false) }, [query])
 
+  // Done only opens the confirm sheet; the App shows the toast (with Undo)
+  // once the move is confirmed. A toast here offered Undo for a change that
+  // had not happened yet.
   const handleDone = useCallback((barcode: string) => {
-    const bottle = bottles.find(b => b.barcode === barcode)
     onDone(barcode)
-
-    if (bottle) {
-      const v = bottle.vintage === '1001' ? 'NV' : bottle.vintage
-      const dest = bottle.recommended_bin ?? 'destination'
-      showToast(
-        `${v} ${bottle.wine} → ${dest}`,
-        'success',
-        () => { if (onUndo) onUndo(barcode) },
-      )
-    }
-  }, [bottles, onDone, onUndo, showToast])
+  }, [onDone])
 
   const handleUndo = useCallback((barcode: string) => {
     const bottle = bottles.find(b => b.barcode === barcode)
