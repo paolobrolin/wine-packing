@@ -580,5 +580,17 @@ describe('buildSyncRows — done bottles get a new recommendation', () => {
     expect(rows[0].state).toBe('packed')
     expect(rows[0].trip_id).toBe('trip1')
   })
+
+  it('stats count every bottle exactly once: in place, moves to REMOTE, moves at home', () => {
+    const kitchen = makeCtBottle({ barcode: 'k', location: 'Cellar', bin: null, bottle_cost: 200, begin_consume: 2020, end_consume: 2027 })
+    const kitchenDone = makeCtBottle({ barcode: 'kd', location: 'Cellar', bin: 'Köket', bottle_cost: 200, begin_consume: 2020, end_consume: 2027 })
+    const sweet = makeCtBottle({ barcode: 's', location: 'Cellar', bin: null, extra: { Vintage: '2015', Wine: 'Sauternes', Producer: 'X', Country: 'France', Region: 'Bordeaux', Type: 'White - Sweet/Dessert' } })
+    const toRemote = makeCtBottle({ barcode: 'r', location: 'Cellar', bin: null, begin_consume: 2030, end_consume: 2045 })
+    const atRemote = makeCtBottle({ barcode: 'a', location: 'REMOTE', bin: '3.8 FR OTHER', begin_consume: 2030, end_consume: 2045 })
+    const { stats } = buildSyncRows([kitchen, kitchenDone, sweet, toRemote, atRemote], new Map(), 2026)
+    expect(stats.alreadyAtDestination).toBe(2)
+    expect(stats.needsMove).toBe(1)
+    expect(stats.home).toBe(2)
+  })
 })
 

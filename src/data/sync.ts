@@ -152,26 +152,20 @@ export function buildSyncRows(
   // Ekholmen bottles kept reappearing after being cleared by hand.
   const keepIndices = new Set(bottles.flatMap((b, i) => (isKeepPlace(b) ? [i] : [])))
 
-  let alreadyAtDestination = 0
-  let needsMoveCount = 0
-  let homeCount = 0
   const remoteAtDest = new Set<number>()
 
   // Pass 1: evaluate placement (location only)
   const placements = ctBottles.map((_ct, i) => {
     const bottle = bottles[i]
     if (keepIndices.has(i)) {
-      alreadyAtDestination++
       return null
     }
     const placement = evaluatePlacement(bottle, defaultRules, context)
     if (placement != null && bottle.currentLocation === placement.recommendedLocation) {
-      alreadyAtDestination++
       remoteAtDest.add(i)
       return null
     }
     if (placement != null) {
-      needsMoveCount++
       return placement
     }
     return null
@@ -238,13 +232,6 @@ export function buildSyncRows(
     homePlacements[i] = { recommendedLocation: 'HOME', recommendedBin: target.bin, reason: 'home: Källaren', ruleId: `home/${c.toLowerCase()}` }
   }
 
-  for (let i = 0; i < bottles.length; i++) {
-    const hp = homePlacements[i]
-    if (hp == null) continue
-    if (bottles[i].currentLocation !== 'REMOTE' && bottles[i].currentBin === hp.recommendedBin) alreadyAtDestination++
-    else homeCount++
-  }
-
   // Pass 2: resolve bins for bottles that need to move
   const binInput = bottles
     .map((bottle, i) => {
@@ -296,8 +283,6 @@ export function buildSyncRows(
       recBin = binRes?.binId ?? null
       reason = 'remote: at destination'
       ruleId = binRes?.binRuleId ?? null
-      // On another shelf than its rule's: a move within REMOTE, not "in place".
-      if (recBin != null && bottle.currentBin !== recBin) { alreadyAtDestination--; needsMoveCount++ }
     }
 
     if (homeOverflow.has(i)) {
@@ -306,11 +291,6 @@ export function buildSyncRows(
       recBin = binRes?.binId ?? null
       reason = 'home full: REMOTE'
       ruleId = binRes?.binRuleId ?? null
-      // Not counted yet (Pass 1 counted only bottles with a rule placement).
-      const atShelf = bottle.currentLocation === 'REMOTE' && recBin != null && bottle.currentBin === recBin
-      if (placement != null) { if (atShelf) { needsMoveCount--; alreadyAtDestination++ } }
-      else if (atShelf) alreadyAtDestination++
-      else needsMoveCount++
     }
 
     const homePlacement = homePlacements[i]
@@ -388,6 +368,20 @@ export function buildSyncRows(
 
   const ctBarcodes = new Set(ctBottles.map((ct) => ct.barcode))
   const orphanedBarcodes = [...existingByBarcode.keys()].filter((bc) => !ctBarcodes.has(bc)).sort()
+
+  // Counted once per bottle from the finished rows: in place, a move to (or
+  // within) REMOTE, or a move at home.
+  let alreadyAtDestination = 0
+  let needsMoveCount = 0
+  let homeCount = 0
+  for (const r of rows) {
+    const atLocation = r.recommended_location == null
+      || (r.recommended_location === 'REMOTE') === (r.current_location === 'REMOTE')
+    const inPlace = r.recommended_location == null || (atLocation && (r.recommended_bin == null || r.current_bin === r.recommended_bin))
+    if (inPlace) alreadyAtDestination++
+    else if (r.recommended_location === 'REMOTE') needsMoveCount++
+    else homeCount++
+  }
 
   return {
     rows,
