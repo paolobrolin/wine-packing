@@ -87,13 +87,11 @@ describe('useToast', () => {
     expect(() => { vi.advanceTimersByTime(5000) }).not.toThrow()
   })
 
-  it('an error without its own undo keeps the Undo of the toast it replaces', () => {
-    const undo = vi.fn()
+  it('a toast without its own undo never inherits the previous Undo', () => {
     const { result } = renderHook(() => useToast())
-    act(() => result.current.show('3 bottles → 2.6', 'success', undo))
-    act(() => result.current.show('Could not save', 'error'))
-    expect(result.current.toast!.type).toBe('error')
-    expect(result.current.toast!.undoAction).toBe(undo)
+    act(() => result.current.show('B moved', 'success', vi.fn()))
+    act(() => result.current.show('Could not save A', 'error'))
+    expect(result.current.toast!.undoAction).toBeNull()
   })
 
   it('an info toast without undo still clears the previous Undo', () => {
