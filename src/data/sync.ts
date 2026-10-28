@@ -6,9 +6,9 @@ import { evaluatePlacement } from '../rules/evaluate'
 import { resolveAllBins } from '../bins/resolve'
 import { createCapacityTracker } from '../bins/capacity'
 import { remoteBinRules } from '../bins/remote'
-import { CABINET, CELLAR_SHELVES, HOME_MARGIN, homeCategory, isOnCabinetShelf, placesFor, type HomeCategory } from '../bins/home/layout'
+import { CABINET, CELLAR_SHELVES, HOME_LAYOUT_BINS, HOME_MARGIN, homeCategory, isOnCabinetShelf, placesFor, type HomeCategory } from '../bins/home/layout'
 import { determineHomeSubLocation } from '../bins/home-sub-location'
-import { isRemoteBin } from '../bins/all-bins'
+import { isRemoteBin, REMOTE_BINS } from '../bins/all-bins'
 
 export interface CtBottle {
   barcode: string
@@ -65,6 +65,14 @@ function appPositionPendingInCt(ct: CtBottle, existing: ExistingSyncRow | undefi
 }
 
 const KEEP_LOCATIONS = new Set(['Ekholmen', 'Lugnet', 'Lotten i CA', 'GSN | Wine Storage'])
+
+/** A bin that no layout has any more: not a current shelf, the Cooler, Köket or a keep place. */
+function isObsoleteBin(bin: string | null): boolean {
+  if (bin == null || bin === '') return false
+  if ((REMOTE_BINS as readonly string[]).includes(bin) || HOME_LAYOUT_BINS.includes(bin)) return false
+  if (bin === 'Cooler' || bin === 'Köket' || KEEP_LOCATIONS.has(bin)) return false
+  return true
+}
 
 function isKeepPosition(location: string | null | undefined, bin: string | null | undefined): boolean {
   return (location != null && KEEP_LOCATIONS.has(location)) || (bin != null && KEEP_LOCATIONS.has(bin))
@@ -317,6 +325,10 @@ export function buildSyncRows(
       // on either side says nothing about where it is, so that is not done. As
       // 'synced' it can reopen later if the rules change.
       state = 'synced'
+    } else if (preservedState === 'synced' && appPositions[i] == null && isObsoleteBin(bottle.currentBin)) {
+      // Done on a bin that is no longer part of any layout (e.g. a shelf that
+      // was renumbered): it has to go somewhere current.
+      state = 'pending'
     } else if (preservedState === 'synced' && appPositions[i] == null && recommendationChanged(existing, recLoc, recBin, bottle)) {
       // Done against an older recommendation; the rules now want it elsewhere
       // (e.g. its drinking window changed). An unchanged recommendation means

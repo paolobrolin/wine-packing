@@ -444,14 +444,14 @@ describe('buildSyncRows — done bottles get a new recommendation', () => {
       state: 'synced', packed_at: null, in_transit_at: null, shelved_at: null,
       synced_at: '2026-06-24T10:00:00Z', trip_id: null, owc_group: null,
       estimated_value: null, value_source: null, label_ref: null,
-      current_location: 'Cellar', current_bin: 'Källaren',
-      ct_location_at_sync: 'Cellar', ct_bin_at_sync: 'Källaren',
+      current_location: 'Cellar', current_bin: 'Kall 3. FRANKRIKE',
+      ct_location_at_sync: 'Cellar', ct_bin_at_sync: 'Kall 3. FRANKRIKE',
       recommended_location: null, recommended_bin: null,
       ...overrides,
     } as never
   }
   // Window 2030–2045 at year 2026 → the rules say REMOTE.
-  const ct = () => makeCtBottle({ location: 'Cellar', bin: 'Källaren', begin_consume: 2030, end_consume: 2045 })
+  const ct = () => makeCtBottle({ location: 'Cellar', bin: 'Kall 3. FRANKRIKE', begin_consume: 2030, end_consume: 2045 })
 
   it('goes back to pending when the recommendation changed since it was marked done', () => {
     const { rows } = buildSyncRows([ct()], new Map([['0001', doneRow()]]), 2026)
@@ -531,7 +531,7 @@ describe('buildSyncRows — done bottles get a new recommendation', () => {
 
   it('same for Lugnet, which lives in the bin field', () => {
     const existing = doneRow({ current_bin: 'Lugnet', ct_location_at_sync: 'Cellar', ct_bin_at_sync: 'Lugnet', recommended_location: null, recommended_bin: null })
-    const ctBack = makeCtBottle({ location: 'Cellar', bin: 'Källaren', begin_consume: 2020, end_consume: 2027 })
+    const ctBack = makeCtBottle({ location: 'Cellar', bin: 'Kall 3. FRANKRIKE', begin_consume: 2020, end_consume: 2027 })
     const { rows } = buildSyncRows([ctBack], new Map([['0001', existing]]), 2026)
     expect(rows[0].state).toBe('pending')
   })
@@ -598,6 +598,24 @@ describe('buildSyncRows — done bottles get a new recommendation', () => {
     const ctHome = makeCtBottle({ location: 'Cellar', bin: null, begin_consume: 2035, end_consume: 2070 })
     const { rows } = buildSyncRows([ctHome], new Map([['0001', existing]]), 2026)
     expect(rows[0].state).toBe('shelved')
+  })
+
+  it('a done bottle on a bin that no longer exists becomes a move to its recommendation', () => {
+    const existing = doneRow({ current_bin: 'Lgh 5. BUBBEL', ct_bin_at_sync: 'Lgh 5. BUBBEL', recommended_location: 'HOME', recommended_bin: 'Cooler' })
+    const ctOld = makeCtBottle({ location: 'Cellar', bin: 'Lgh 5. BUBBEL', bottle_cost: 1700, begin_consume: 2005, end_consume: 2020,
+      extra: { Vintage: '1998', Wine: 'Gosset Champagne Célebris', Producer: 'Gosset', Country: 'France', Region: 'Champagne', Type: 'White - Sparkling' } })
+    const { rows } = buildSyncRows([ctOld], new Map([['0001', existing]]), 2026)
+    expect(rows[0].recommended_bin).toBe('Cooler')
+    expect(rows[0].state).toBe('pending')
+  })
+
+  it('a done bottle on a current shelf, the Cooler or Köket stays done when placed there by hand', () => {
+    for (const bin of ['Cooler', 'Köket', 'Lgh 5. VITA']) {
+      const existing = doneRow({ current_bin: bin, ct_bin_at_sync: bin, recommended_location: 'REMOTE', recommended_bin: '3.8 FR OTHER' })
+      const c = makeCtBottle({ location: 'Cellar', bin, begin_consume: 2030, end_consume: 2045 })
+      const { rows } = buildSyncRows([c], new Map([['0001', existing]]), 2026)
+      expect(rows[0].state).toBe('synced')
+    }
   })
 })
 
