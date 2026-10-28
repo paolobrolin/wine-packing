@@ -171,3 +171,14 @@ describe('SearchResultCard verdict for done bottles', () => {
     expect(screen.queryByText(/IN PLACE/)).not.toBeInTheDocument()
   })
 })
+
+describe('SearchResultCard — moving a done bottle', () => {
+  it('a done bottle has a Move button that opens the move dialog (onDone)', async () => {
+    const onDone = vi.fn()
+    const bottle = makeDbBottle({ state: 'synced', current_location: 'Cellar', current_bin: 'Lgh 5. BUBBEL', recommended_location: 'HOME', recommended_bin: 'Cooler' })
+    render(<SearchResultCard result={scored(bottle, 'no-move')} onDone={onDone} />)
+    await userEvent.click(screen.getByText('Move'))
+    expect(onDone).toHaveBeenCalledWith('0001')
+  })
+})
+

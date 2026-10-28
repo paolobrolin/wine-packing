@@ -106,6 +106,12 @@ export const SearchResultCard = memo(function SearchResultCard({ result, onDone,
             {actionLabel(bottle)}
           </button>
         )}
+        {/* A done bottle can still be moved by hand (e.g. after re-arranging shelves). */}
+        {!canAct && bottle.state === 'synced' && (
+          <button className="search-card__action search-card__action--secondary" onClick={handleDone}>
+            Move
+          </button>
+        )}
         {!canAct && (bottle.state === 'packed' || bottle.state === 'in_transit') && onUndo && (
           <button className="search-card__action search-card__action--undo" onClick={handleUndo}>
             Undo

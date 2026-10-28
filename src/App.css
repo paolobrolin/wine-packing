@@ -288,7 +288,8 @@ body {
   border: none; border-radius: 6px; font-size: 14px; font-weight: 500;
   cursor: pointer; min-height: 44px; white-space: nowrap;
 }
-.search-card__action--undo {
+.search-card__action--undo,
+.search-card__action--secondary {
   background: var(--surface); border: 1px solid var(--border); color: var(--text-dim);
 }
 .search-card__action--reset {
