@@ -554,4 +554,22 @@ describe('buildSyncRows — done bottles get a new recommendation', () => {
     expect(rows[0].current_bin).toBe('2.7 BDX LB')
     expect(rows[0].state).toBe('synced')
   })
+
+  it('a bottle shelved at REMOTE on a neighbouring shelf becomes done once CT has that shelf', () => {
+    // Shelved by hand on 2.7 while the rules say 3.8; CT was then written back to 2.7.
+    const existing = atRemoteRow({ state: 'shelved', current_bin: '2.7 BDX LB', ct_bin_at_sync: '2.6 FR OTHER', recommended_location: 'REMOTE', recommended_bin: '3.8 FR OTHER' })
+    const ctWritten = makeCtBottle({ location: 'REMOTE', bin: '2.7 BDX LB', begin_consume: 2030, end_consume: 2045 })
+    const { rows } = buildSyncRows([ctWritten], new Map([['0001', existing]]), 2026)
+    expect(rows[0].state).toBe('synced')
+    expect(rows[0].current_bin).toBe('2.7 BDX LB')
+  })
+
+  it('counts a bottle at REMOTE on the wrong shelf as a move in the stats, not as in place', () => {
+    const existing = atRemoteRow({ current_bin: '2.6 FR OTHER', ct_bin_at_sync: '2.6 FR OTHER' })
+    const ctRemote = makeCtBottle({ location: 'REMOTE', bin: '2.6 FR OTHER', begin_consume: 2030, end_consume: 2045 })
+    const { stats } = buildSyncRows([ctRemote], new Map([['0001', existing]]), 2026)
+    expect(stats.needsMove).toBe(1)
+    expect(stats.alreadyAtDestination).toBe(0)
+  })
 })
+

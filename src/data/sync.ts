@@ -282,6 +282,8 @@ export function buildSyncRows(
       recBin = binRes?.binId ?? null
       reason = 'remote: at destination'
       ruleId = binRes?.binRuleId ?? null
+      // On another shelf than its rule's: a move within REMOTE, not "in place".
+      if (recBin != null && bottle.currentBin !== recBin) { alreadyAtDestination--; needsMoveCount++ }
     }
 
     const homePlacement = homePlacements[i]
@@ -299,6 +301,11 @@ export function buildSyncRows(
     if (recLoc == null) {
       state = bottle.currentLocation != null ? 'synced' : 'pending'
     } else if (recBin != null && bottle.currentBin === recBin && (recLoc === 'HOME' || bottle.currentLocation === 'REMOTE')) {
+      state = 'synced'
+    } else if (preservedState === 'shelved' && appPositions[i] == null && (existing?.current_bin || null) === (ct.bin || null)) {
+      // Shelved in the app (possibly on another shelf than recommended, e.g.
+      // the neighbour of a full one) and CT now has that shelf: done. As
+      // 'synced' it can reopen later if the rules change.
       state = 'synced'
     } else if (preservedState === 'synced' && appPositions[i] == null && recommendationChanged(existing, recLoc, recBin, bottle)) {
       // Done against an older recommendation; the rules now want it elsewhere
