@@ -23,16 +23,16 @@ describe('buildSyncRows with bin resolution', () => {
     })
     const { rows } = buildSyncRows([ct], new Map(), 2026)
     expect(rows[0].recommended_location).toBe('REMOTE')
-    expect(rows[0].recommended_bin).toBe('2.1 BDX LB')
+    expect(rows[0].recommended_bin).toBe('2.7 BDX LB')
   })
 
-  it('assigns REMOTE bin for SQN wine', () => {
+  it('assigns REMOTE bin for SQN Syrah', () => {
     const ct = makeCtBottle({
       extra: { Vintage: '2018', Wine: 'Sine Qua Non Syrah Touché', Producer: 'Sine Qua Non', Country: 'USA', Region: 'California' },
     })
     const { rows } = buildSyncRows([ct], new Map(), 2026)
     expect(rows[0].recommended_location).toBe('REMOTE')
-    expect(rows[0].recommended_bin).toBe('1.3 SQN REGULAR')
+    expect(rows[0].recommended_bin).toBe('1.4 SQN SYRAH')
   })
 
   it('assigns REMOTE bin for Champagne', () => {
@@ -41,7 +41,7 @@ describe('buildSyncRows with bin resolution', () => {
       begin_consume: 2020, end_consume: 2045,
     })
     const { rows } = buildSyncRows([ct], new Map(), 2026)
-    expect(rows[0].recommended_bin).toBe('2.5 CHAMPAGNE')
+    expect(rows[0].recommended_bin).toBe('3.7 SPARKLING L–Z')
   })
 
   it('assigns HOME placement with bin for HOME bottles', () => {
@@ -61,13 +61,13 @@ describe('buildSyncRows with bin resolution', () => {
     expect(rows[0].recommended_bin).toBe('1.1 OWC')
   })
 
-  it('non-OWC bottle from same producer goes to catchall', () => {
+  it('non-OWC bottle from same producer goes to the New World shelf', () => {
     const ct = makeCtBottle({
       extra: { Vintage: '2023', Wine: 'Catena Alta Malbec', Producer: 'Bodega Catena Zapata', Country: 'Argentina', Region: 'Mendoza' },
       bottle_note: null,
     })
     const { rows } = buildSyncRows([ct], new Map(), 2026)
-    expect(rows[0].recommended_bin).toBe('1.7 NW + SP OTHER')
+    expect(rows[0].recommended_bin).toBe('5.8 NEW WORLD')
   })
 
   it('keeps sweet wine home via wineType (no REMOTE recommendation)', () => {
@@ -78,20 +78,20 @@ describe('buildSyncRows with bin resolution', () => {
     expect(rows[0].recommended_location).not.toBe('REMOTE')
   })
 
-  it('routes sparkling to champagne via wineType', () => {
+  it('routes sparkling to the sparkling shelves via wineType', () => {
     const ct = makeCtBottle({
       extra: { Vintage: '2020', Wine: 'Ferrari Perlé', Producer: 'Ferrari', Country: 'Italy', Region: 'Trentino-Alto Adige', Type: 'White - Sparkling' },
     })
     const { rows } = buildSyncRows([ct], new Map(), 2026)
-    expect(rows[0].recommended_bin).toBe('2.5 CHAMPAGNE')
+    expect(rows[0].recommended_bin).toBe('3.6 SPARKLING A–K')
   })
 
-  it('assigns Mediterranean catchall for Lebanon', () => {
+  it('assigns the Mediterranean shelf (with Greece) for Lebanon', () => {
     const ct = makeCtBottle({
       extra: { Vintage: '2020', Wine: 'Chateau Musar', Producer: 'Chateau Musar', Country: 'Lebanon', Region: 'Bekaa' },
     })
     const { rows } = buildSyncRows([ct], new Map(), 2026)
     expect(rows[0].recommended_location).toBe('REMOTE')
-    expect(rows[0].recommended_bin).toBe('1.7 NW + SP OTHER')
+    expect(rows[0].recommended_bin).toBe('4.3 SP DUERO + GREECE')
   })
 })

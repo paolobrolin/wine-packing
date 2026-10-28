@@ -36,18 +36,18 @@ describe('buildSyncRows', () => {
     expect(stats.alreadyAtDestination).toBe(0)
   })
 
-  it('clears recommendation when bottle is already at REMOTE', () => {
+  it('a bottle at REMOTE on its shelf gets that shelf as recommendation and is done', () => {
     const ct = makeCtBottle({
       location: 'REMOTE',
-      bin: '1.7 SPOTS + HIRSCH + RIDGE',
+      bin: '3.8 FR OTHER',
       begin_consume: 2025,
       end_consume: 2045,
     })
     const { rows, stats } = buildSyncRows([ct], new Map(), 2026)
 
-    expect(rows[0].recommended_location).toBeNull()
-    expect(rows[0].recommended_bin).toBeNull()
-    expect(rows[0].move_reason).toBeNull()
+    expect(rows[0].recommended_location).toBe('REMOTE')
+    expect(rows[0].recommended_bin).toBe('3.8 FR OTHER')
+    expect(rows[0].state).toBe('synced')
     expect(stats.alreadyAtDestination).toBe(1)
     expect(stats.needsMove).toBe(0)
   })
@@ -99,7 +99,7 @@ describe('buildSyncRows', () => {
     expect(rows[0].state).toBe('pending')
   })
 
-  it('marks already-at-destination bottles as synced', () => {
+  it('a bottle at REMOTE on another shelf than the rules say is a move within REMOTE', () => {
     const ct = makeCtBottle({
       location: 'REMOTE',
       bin: '2.1 BDX LB',
@@ -108,8 +108,9 @@ describe('buildSyncRows', () => {
     })
     const { rows } = buildSyncRows([ct], new Map(), 2026)
 
-    expect(rows[0].state).toBe('synced')
-    expect(rows[0].recommended_location).toBeNull()
+    expect(rows[0].state).toBe('pending')
+    expect(rows[0].recommended_location).toBe('REMOTE')
+    expect(rows[0].recommended_bin).toBe('3.8 FR OTHER')
   })
 
   it('returns orphaned barcodes for deletion', () => {
@@ -395,9 +396,11 @@ describe('buildSyncRows — app placements not yet in CT', () => {
     const ct = makeCtBottle({ location: 'Cellar', bin: null, begin_consume: 2030, end_consume: 2045 })
     const withoutApp = buildSyncRows([ct], new Map(), 2026).rows[0]
     expect(withoutApp.recommended_location).toBe('REMOTE')
-    const existing = existingRow({ state: 'shelved', current_location: 'Cellar', current_bin: '2.6 FR OTHER', ct_bin_at_sync: null })
+    const existing = existingRow({ state: 'shelved', current_location: 'Cellar', current_bin: '3.8 FR OTHER', ct_bin_at_sync: null })
     const { rows } = buildSyncRows([ct], new Map([['0001', existing]]), 2026)
-    expect(rows[0].recommended_location).toBeNull()
+    expect(rows[0].current_location).toBe('REMOTE')
+    expect(rows[0].recommended_bin).toBe('3.8 FR OTHER')
+    expect(rows[0].state).toBe('synced')
   })
 
   it('treats an empty-string bin like no bin (no spurious app move)', () => {
@@ -531,5 +534,24 @@ describe('buildSyncRows — done bottles get a new recommendation', () => {
     const ctBack = makeCtBottle({ location: 'Cellar', bin: 'Källaren', begin_consume: 2020, end_consume: 2027 })
     const { rows } = buildSyncRows([ctBack], new Map([['0001', existing]]), 2026)
     expect(rows[0].state).toBe('pending')
+  })
+
+  // New shelf layout: done bottles at REMOTE were stored with recommendation
+  // null ("at destination"); the first sync with shelf rules for REMOTE must
+  // turn the ones on an old shelf into moves.
+  it('a done bottle at REMOTE on an old shelf becomes a move once REMOTE has shelf rules', () => {
+    const existing = atRemoteRow({ current_bin: '2.6 FR OTHER', ct_bin_at_sync: '2.6 FR OTHER' })
+    const ctRemote = makeCtBottle({ location: 'REMOTE', bin: '2.6 FR OTHER', begin_consume: 2030, end_consume: 2045 })
+    const { rows } = buildSyncRows([ctRemote], new Map([['0001', existing]]), 2026)
+    expect(rows[0].recommended_bin).toBe('3.8 FR OTHER')
+    expect(rows[0].state).toBe('pending')
+  })
+
+  it('a done bottle moved to another REMOTE shelf in CT stays done (a deliberate move)', () => {
+    const existing = atRemoteRow({ current_bin: '3.8 FR OTHER', ct_bin_at_sync: '3.8 FR OTHER', recommended_location: 'REMOTE', recommended_bin: '3.8 FR OTHER' })
+    const ctMoved = makeCtBottle({ location: 'REMOTE', bin: '2.7 BDX LB', begin_consume: 2030, end_consume: 2045 })
+    const { rows } = buildSyncRows([ctMoved], new Map([['0001', existing]]), 2026)
+    expect(rows[0].current_bin).toBe('2.7 BDX LB')
+    expect(rows[0].state).toBe('synced')
   })
 })

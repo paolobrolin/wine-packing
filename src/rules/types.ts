@@ -8,6 +8,10 @@ export interface Bottle {
   region: string
   // CT SubRegion, e.g. 'Médoc', 'Libournais'. Optional: only some rules use it.
   subRegion?: string | null
+  // CT Appellation, e.g. 'Barolo', 'Ribera del Duero'. Optional like subRegion.
+  appellation?: string | null
+  // CT bottle note (OWC markings such as 'OWC 1x1' for single boxes).
+  bottleNote?: string | null
   size: string
   cost: number | null
   beginConsume: number | null

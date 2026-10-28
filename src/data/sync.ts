@@ -8,7 +8,7 @@ import { createCapacityTracker } from '../bins/capacity'
 import { remoteBinRules } from '../bins/remote'
 import { homeBinRules } from '../bins/home'
 import { determineHomeSubLocation, buildHomeBinId } from '../bins/home-sub-location'
-import { REMOTE_BINS } from '../bins/all-bins'
+import { isRemoteBin } from '../bins/all-bins'
 
 export interface CtBottle {
   barcode: string
@@ -29,6 +29,7 @@ export interface CtBottle {
     Country: string
     Region: string
     SubRegion?: string | null
+    Appellation?: string | null
     Type: string | null
   }
 }
@@ -69,7 +70,7 @@ function isKeepPosition(location: string | null | undefined, bin: string | null 
   return (location != null && KEEP_LOCATIONS.has(location)) || (bin != null && KEEP_LOCATIONS.has(bin))
 }
 
-function recommendationChanged(existing: ExistingSyncRow | undefined, recLoc: string, recBin: string | null): boolean {
+function recommendationChanged(existing: ExistingSyncRow | undefined, recLoc: string, recBin: string | null, bottle: Bottle): boolean {
   if (existing == null || existing.recommended_location === undefined || existing.recommended_bin === undefined) return false
   if (existing.recommended_location == null) {
     // Stored null means "already at its destination" at the last sync, not an
@@ -80,6 +81,11 @@ function recommendationChanged(existing: ExistingSyncRow | undefined, recLoc: st
     // At a keep place the null means "outside the rules": leaving it is a change.
     if (isKeepPosition(existing.ct_location_at_sync, existing.ct_bin_at_sync)) return true
     const lastLocation = existing.ct_location_at_sync === 'REMOTE' ? 'REMOTE' : 'HOME'
+    // Still at REMOTE, which now has shelf rules: a bottle on another shelf
+    // than its rule's is a move within REMOTE (e.g. a new shelf layout).
+    if (lastLocation === 'REMOTE' && recLoc === 'REMOTE') {
+      return bottle.currentLocation === 'REMOTE' && recBin != null && bottle.currentBin !== recBin
+    }
     return lastLocation !== recLoc
   }
   return existing.recommended_location !== recLoc || (existing.recommended_bin ?? null) !== recBin
@@ -91,7 +97,7 @@ function recommendationChanged(existing: ExistingSyncRow | undefined, recLoc: st
 // (Generated home bins such as 'Kall 6. VITA' are not all in HOME_BINS, so the
 // home side is defined as "not remote" rather than by that list.)
 function locationForBin(bin: string, location: string | null): string | null {
-  if ((REMOTE_BINS as readonly string[]).includes(bin)) return 'REMOTE'
+  if (isRemoteBin(bin)) return 'REMOTE'
   return location === 'REMOTE' || location == null ? 'Cellar' : location
 }
 
@@ -229,7 +235,9 @@ export function buildSyncRows(
   const binInput = bottles
     .map((bottle, i) => {
       const placement = placements[i]
-      if (placement == null) return null
+      // Bottles already at REMOTE still get a shelf: the REMOTE layout can
+      // change, and a bottle on the wrong shelf is a move within REMOTE.
+      if (placement == null) return remoteAtDest.has(i) ? { bottle, location: 'REMOTE' as ResolvedLocation } : null
       return { bottle, location: placement.recommendedLocation as ResolvedLocation }
     })
     .filter((x): x is { bottle: Bottle; location: ResolvedLocation } => x != null)
@@ -268,6 +276,14 @@ export function buildSyncRows(
       }
     }
 
+    if (placement == null && remoteAtDest.has(i)) {
+      const binRes = binResolutions.get(bottle.barcode)
+      recLoc = 'REMOTE'
+      recBin = binRes?.binId ?? null
+      reason = 'remote: at destination'
+      ruleId = binRes?.binRuleId ?? null
+    }
+
     const homePlacement = homePlacements[i]
     if (homePlacement != null) {
       recLoc = homePlacement.recommendedLocation
@@ -282,9 +298,9 @@ export function buildSyncRows(
 
     if (recLoc == null) {
       state = bottle.currentLocation != null ? 'synced' : 'pending'
-    } else if (recLoc === 'HOME' && recBin != null && bottle.currentBin === recBin) {
+    } else if (recBin != null && bottle.currentBin === recBin && (recLoc === 'HOME' || bottle.currentLocation === 'REMOTE')) {
       state = 'synced'
-    } else if (preservedState === 'synced' && appPositions[i] == null && recommendationChanged(existing, recLoc, recBin)) {
+    } else if (preservedState === 'synced' && appPositions[i] == null && recommendationChanged(existing, recLoc, recBin, bottle)) {
       // Done against an older recommendation; the rules now want it elsewhere
       // (e.g. its drinking window changed). An unchanged recommendation means
       // the bottle was placed elsewhere on purpose, so that stays done. Not
@@ -372,6 +388,8 @@ function toRuleBottle(ct: CtBottle): Bottle {
     country: ct.extra.Country ?? '',
     region: ct.extra.Region ?? '',
     subRegion: ct.extra.SubRegion ?? null,
+    appellation: ct.extra.Appellation ?? null,
+    bottleNote: ct.bottle_note,
     size: ct.size ?? '750ml',
     cost: ct.bottle_cost,
     beginConsume: sanitizeDrinkWindow(ct.begin_consume),
