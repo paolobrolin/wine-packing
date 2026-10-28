@@ -434,3 +434,102 @@ describe('buildSyncRows — app placements not yet in CT', () => {
     expect(rows[0].current_bin).toBeNull()
   })
 })
+
+describe('buildSyncRows — done bottles get a new recommendation', () => {
+  function doneRow(overrides: Record<string, unknown> = {}) {
+    return {
+      state: 'synced', packed_at: null, in_transit_at: null, shelved_at: null,
+      synced_at: '2026-06-24T10:00:00Z', trip_id: null, owc_group: null,
+      estimated_value: null, value_source: null, label_ref: null,
+      current_location: 'Cellar', current_bin: 'Källaren',
+      ct_location_at_sync: 'Cellar', ct_bin_at_sync: 'Källaren',
+      recommended_location: null, recommended_bin: null,
+      ...overrides,
+    } as never
+  }
+  // Window 2030–2045 at year 2026 → the rules say REMOTE.
+  const ct = () => makeCtBottle({ location: 'Cellar', bin: 'Källaren', begin_consume: 2030, end_consume: 2045 })
+
+  it('goes back to pending when the recommendation changed since it was marked done', () => {
+    const { rows } = buildSyncRows([ct()], new Map([['0001', doneRow()]]), 2026)
+    expect(rows[0].recommended_location).toBe('REMOTE')
+    expect(rows[0].state).toBe('pending')
+  })
+
+  it('stays done when the recommendation is unchanged (a deliberate placement elsewhere)', () => {
+    const first = buildSyncRows([ct()], new Map(), 2026).rows[0]
+    const existing = doneRow({ recommended_location: first.recommended_location, recommended_bin: first.recommended_bin })
+    const { rows } = buildSyncRows([ct()], new Map([['0001', existing]]), 2026)
+    expect(rows[0].state).toBe('synced')
+  })
+
+  it('stays done when the row has no record of its previous recommendation', () => {
+    const existing = doneRow({ recommended_location: undefined, recommended_bin: undefined })
+    const { rows } = buildSyncRows([ct()], new Map([['0001', existing]]), 2026)
+    expect(rows[0].state).toBe('synced')
+  })
+
+  it('does not touch packed bottles', () => {
+    const { rows } = buildSyncRows([ct()], new Map([['0001', doneRow({ state: 'packed' })]]), 2026)
+    expect(rows[0].state).toBe('packed')
+  })
+
+  it('does not reopen while the app position is still waiting for CT (so the next sync keeps it)', () => {
+    // Done in the app at Köket; CT still says Källaren. The rules now want REMOTE.
+    const existing = doneRow({ current_bin: 'Köket', recommended_location: 'HOME', recommended_bin: 'Köket' })
+    const { rows } = buildSyncRows([ct()], new Map([['0001', existing]]), 2026)
+    expect(rows[0].state).toBe('synced')
+    expect(rows[0].current_bin).toBe('Köket')
+  })
+
+  it('keeps the stored recommendation while waiting for CT, then reopens once CT has caught up', () => {
+    // Done in the app at Köket (CT still Källaren); stored recommendation HOME/Köket.
+    const existing = doneRow({ current_bin: 'Köket', recommended_location: 'HOME', recommended_bin: 'Köket' })
+    // Sync 1: CT unchanged in position, the rules now want REMOTE.
+    const s1 = buildSyncRows([ct()], new Map([['0001', existing]]), 2026).rows[0]
+    expect(s1.state).toBe('synced')
+    expect(s1.recommended_location).toBe('HOME')
+    expect(s1.recommended_bin).toBe('Köket')
+    // Sync 2: CT now has Köket (written back). The change is still seen.
+    const ct2 = makeCtBottle({ location: 'Cellar', bin: 'Köket', begin_consume: 2030, end_consume: 2045 })
+    const s2 = buildSyncRows([ct2], new Map([['0001', { ...existing, ...s1 } as never]]), 2026).rows[0]
+    expect(s2.recommended_location).toBe('REMOTE')
+    expect(s2.state).toBe('pending')
+  })
+
+  // A bottle at its REMOTE destination is stored with recommendation null
+  // ("already there"), which is not an older recommendation.
+  function atRemoteRow(overrides: Record<string, unknown> = {}) {
+    return doneRow({ current_location: 'REMOTE', current_bin: '2.1 BDX LB', ct_location_at_sync: 'REMOTE', ct_bin_at_sync: '2.1 BDX LB',
+      recommended_location: null, recommended_bin: null, ...overrides })
+  }
+
+  it('a done bottle taken home from its REMOTE destination is not reopened when the rules still say REMOTE', () => {
+    const ctHome = makeCtBottle({ location: 'Cellar', bin: 'Köket', begin_consume: 2030, end_consume: 2045 })
+    const { rows } = buildSyncRows([ctHome], new Map([['0001', atRemoteRow()]]), 2026)
+    expect(rows[0].recommended_location).toBe('REMOTE')
+    expect(rows[0].state).toBe('synced')
+  })
+
+  it('a done bottle at its REMOTE destination is reopened when the rules now want it HOME', () => {
+    const ctRemote = makeCtBottle({ location: 'REMOTE', bin: '2.1 BDX LB', begin_consume: 2020, end_consume: 2027 })
+    const { rows } = buildSyncRows([ctRemote], new Map([['0001', atRemoteRow()]]), 2026)
+    expect(rows[0].recommended_location).toBe('HOME')
+    expect(rows[0].state).toBe('pending')
+  })
+
+  it('a done bottle that leaves a keep place (Ekholmen) is reopened when the rules now give it a home bin', () => {
+    const existing = doneRow({ current_location: 'Ekholmen', current_bin: null, ct_location_at_sync: 'Ekholmen', ct_bin_at_sync: null, recommended_location: null, recommended_bin: null })
+    const ctBack = makeCtBottle({ location: 'Cellar', bin: null, begin_consume: 2020, end_consume: 2027 })
+    const { rows } = buildSyncRows([ctBack], new Map([['0001', existing]]), 2026)
+    expect(rows[0].recommended_location).toBe('HOME')
+    expect(rows[0].state).toBe('pending')
+  })
+
+  it('same for Lugnet, which lives in the bin field', () => {
+    const existing = doneRow({ current_bin: 'Lugnet', ct_location_at_sync: 'Cellar', ct_bin_at_sync: 'Lugnet', recommended_location: null, recommended_bin: null })
+    const ctBack = makeCtBottle({ location: 'Cellar', bin: 'Källaren', begin_consume: 2020, end_consume: 2027 })
+    const { rows } = buildSyncRows([ctBack], new Map([['0001', existing]]), 2026)
+    expect(rows[0].state).toBe('pending')
+  })
+})

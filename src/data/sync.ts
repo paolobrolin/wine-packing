@@ -43,7 +43,7 @@ export interface SyncResult {
 }
 
 export type ExistingSyncRow = Pick<DbBottle, 'state' | 'packed_at' | 'in_transit_at' | 'shelved_at' | 'synced_at' | 'trip_id' | 'owc_group' | 'estimated_value' | 'value_source' | 'label_ref'>
-  & Partial<Pick<DbBottle, 'current_location' | 'current_bin' | 'ct_location_at_sync' | 'ct_bin_at_sync'>>
+  & Partial<Pick<DbBottle, 'current_location' | 'current_bin' | 'ct_location_at_sync' | 'ct_bin_at_sync' | 'recommended_location' | 'recommended_bin'>>
 
 // A bottle placed in the app (shelved or done) whose new position CT does not
 // have yet. Until CT changes, the app's position is the true one; once CT
@@ -61,6 +61,28 @@ function appPositionPendingInCt(ct: CtBottle, existing: ExistingSyncRow | undefi
   const bin = existing.current_bin || null
   if (bin == null) return null
   return { location: locationForBin(bin, existing.current_location ?? null), bin }
+}
+
+const KEEP_LOCATIONS = new Set(['Ekholmen', 'Lugnet', 'Lotten i CA', 'GSN | Wine Storage'])
+
+function isKeepPosition(location: string | null | undefined, bin: string | null | undefined): boolean {
+  return (location != null && KEEP_LOCATIONS.has(location)) || (bin != null && KEEP_LOCATIONS.has(bin))
+}
+
+function recommendationChanged(existing: ExistingSyncRow | undefined, recLoc: string, recBin: string | null): boolean {
+  if (existing == null || existing.recommended_location === undefined || existing.recommended_bin === undefined) return false
+  if (existing.recommended_location == null) {
+    // Stored null means "already at its destination" at the last sync, not an
+    // older recommendation. Only a change of location counts then: a REMOTE
+    // bottle the rules now want HOME reopens; one taken home by hand while the
+    // rules still say REMOTE stays done.
+    if (existing.ct_location_at_sync === undefined) return false
+    // At a keep place the null means "outside the rules": leaving it is a change.
+    if (isKeepPosition(existing.ct_location_at_sync, existing.ct_bin_at_sync)) return true
+    const lastLocation = existing.ct_location_at_sync === 'REMOTE' ? 'REMOTE' : 'HOME'
+    return lastLocation !== recLoc
+  }
+  return existing.recommended_location !== recLoc || (existing.recommended_bin ?? null) !== recBin
 }
 
 // The app only ever writes current_bin, so a cross-location shelve leaves the
@@ -117,11 +139,7 @@ export function buildSyncRows(
   // not candidates for the placement rules. CT encodes most of them in the
   // Location field, but Lugnet lives in Bin (location stays "Cellar"), so both
   // fields have to be checked.
-  const KEEP_LOCATIONS = new Set(['Ekholmen', 'Lugnet', 'Lotten i CA', 'GSN | Wine Storage'])
-
-  const isKeepPlace = (bottle: Bottle): boolean =>
-    (bottle.currentLocation != null && KEEP_LOCATIONS.has(bottle.currentLocation)) ||
-    (bottle.currentBin != null && KEEP_LOCATIONS.has(bottle.currentBin))
+  const isKeepPlace = (bottle: Bottle): boolean => isKeepPosition(bottle.currentLocation, bottle.currentBin)
 
   // Excluded from BOTH passes. Pass 1 alone is not enough: Pass 1.5 picks up
   // every bottle with a null placement and hands it a home bin, which is how
@@ -266,7 +284,17 @@ export function buildSyncRows(
       state = bottle.currentLocation != null ? 'synced' : 'pending'
     } else if (recLoc === 'HOME' && recBin != null && bottle.currentBin === recBin) {
       state = 'synced'
+    } else if (preservedState === 'synced' && appPositions[i] == null && recommendationChanged(existing, recLoc, recBin)) {
+      // Done against an older recommendation; the rules now want it elsewhere
+      // (e.g. its drinking window changed). An unchanged recommendation means
+      // the bottle was placed elsewhere on purpose, so that stays done. Not
+      // while its app position is still waiting for CT: as pending it would
+      // lose that position on the next sync; it reopens once CT has caught up.
+      state = 'pending'
     }
+
+    const holdRec = state === 'synced' && appPositions[i] != null
+      && existing?.recommended_location !== undefined && existing?.recommended_bin !== undefined
 
     return {
       barcode: ct.barcode,
@@ -284,8 +312,11 @@ export function buildSyncRows(
       end_consume: sanitizeDrinkWindow(ct.end_consume),
       current_location: appPositions[i]?.location ?? ct.location,
       current_bin: appPositions[i] ? appPositions[i]!.bin : ct.bin,
-      recommended_location: recLoc,
-      recommended_bin: recBin,
+      // While a done bottle's app position is waiting for CT, keep the stored
+      // recommendation, so a change in the rules is still seen once CT has
+      // caught up (otherwise it would be absorbed here and never reopen).
+      recommended_location: holdRec ? existing!.recommended_location! : recLoc,
+      recommended_bin: holdRec ? existing!.recommended_bin ?? null : recBin,
       move_reason: reason,
       rule_id: ruleId,
       state: state as DbBottle['state'],

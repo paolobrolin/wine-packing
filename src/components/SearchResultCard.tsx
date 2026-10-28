@@ -28,13 +28,20 @@ export const SearchResultCard = memo(function SearchResultCard({ result, onDone,
   const [confirmingReset, setConfirmingReset] = useState(false)
   const canReset = onReset && (bottle.state === 'packed' || bottle.state === 'in_transit' || bottle.state === 'shelved')
 
-  const verdictClass = mt === 'cross-location' ? 'search-card--move'
+  // A done bottle with a recommendation is where it should be, even when it was
+  // placed elsewhere by hand. (Without one — Lugnet etc. — it says where it is.)
+  const doneInPlace = bottle.state === 'synced' && bottle.recommended_location != null
+
+  const verdictClass = doneInPlace ? 'search-card--home-placed'
+    : mt === 'cross-location' ? 'search-card--move'
     : mt === 'within-location' ? 'search-card--rebin'
     : bottle.recommended_bin ? 'search-card--home-placed'
     : 'search-card--home'
 
   const locationPrefix = bottle.recommended_location === 'REMOTE' ? 'REMOTE ' : ''
-  const verdictText = (mt === 'cross-location' || mt === 'within-location')
+  const verdictText = doneInPlace
+    ? (bottle.current_bin ? `IN PLACE ${bottle.current_bin}` : currentPlace(bottle))
+    : (mt === 'cross-location' || mt === 'within-location')
     ? `MOVE TO ${locationPrefix}${bottle.recommended_bin ?? 'TBD'}`
     : bottle.recommended_bin ? `IN PLACE ${bottle.recommended_bin}`
     // No recommendation (Lugnet, Ekholmen, GSN, …): say where it is instead.

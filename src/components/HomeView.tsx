@@ -20,7 +20,8 @@ function drinkUrgency(bottle: DbBottle, currentYear: number): 'past-peak' | 'app
 function groupByBin(bottles: DbBottle[]): Map<string, DbBottle[]> {
   const groups = new Map<string, DbBottle[]>()
   for (const b of bottles) {
-    const bin = b.recommended_bin ?? b.current_bin ?? 'Unassigned'
+    // A done bottle is listed where it is, not where the rules would put it.
+    const bin = (b.state === 'synced' ? b.current_bin : b.recommended_bin ?? b.current_bin) ?? 'Unassigned'
     const list = groups.get(bin) ?? []
     list.push(b)
     groups.set(bin, list)

@@ -19,7 +19,7 @@ describe('undoFields (toast undo restores the exact snapshot)', () => {
     const before = b({ state: 'packed', shelved_at: null })
     expect(undoFields(before)).toEqual({
       state: 'packed', current_bin: '3.3 BAROLO CLASSIC', current_location: 'Cellar',
-      recommended_bin: '3.3 BAROLO CLASSIC', packed_at: '2026-10-28T08:00:00Z', in_transit_at: null, shelved_at: null, synced_at: null,
+      packed_at: '2026-10-28T08:00:00Z', in_transit_at: null, shelved_at: null, synced_at: null,
     })
   })
 })

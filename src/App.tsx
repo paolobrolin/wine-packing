@@ -118,7 +118,6 @@ export default function App() {
     if (bottle.state === 'synced' || bottle.state === 'shelved') {
       updateBottleLocally(barcode, {
         state: 'synced',
-        recommended_bin: effectiveBin,
         current_bin: effectiveBin,
         synced_at: new Date().toISOString(),
       } as Partial<typeof bottle>)
@@ -131,7 +130,6 @@ export default function App() {
 
       updateBottleLocally(barcode, {
         state: nextState,
-        recommended_bin: effectiveBin,
         current_bin: effectiveBin,
         ...(tsField ? { [tsField]: new Date().toISOString() } : {}),
       } as Partial<typeof bottle>)
@@ -197,7 +195,6 @@ export default function App() {
       updateBottleLocally(s.barcode, {
         state: s.nextState,
         current_bin: s.bin,
-        recommended_bin: s.bin,
         ...(s.tsField ? { [s.tsField]: new Date().toISOString() } : {}),
       } as Partial<DbBottle>)
 
@@ -306,11 +303,7 @@ export default function App() {
           onConfirm={handleConfirmDone}
           onKeep={async (barcode) => {
             const position = keepHereFields(overrideBottle)
-            updateBottleLocally(barcode, {
-              ...position,
-              recommended_location: null,
-              recommended_bin: null,
-            } as Partial<DbBottle>)
+            updateBottleLocally(barcode, position as Partial<DbBottle>)
             afterPending(barcode, () => restoreBottle(barcode, position).then(() => dismissRecommendation(barcode)), `${overrideBottle.vintage === '1001' ? 'NV' : overrideBottle.vintage} ${overrideBottle.wine}`)
             const b = overrideBottle
             const v = b.vintage === '1001' ? 'NV' : b.vintage

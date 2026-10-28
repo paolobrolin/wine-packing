@@ -168,3 +168,17 @@ describe('isOverdue', () => {
     expect(isOverdue(bottle, now, 15 * 60 * 1000)).toBe(true) // 15 min threshold
   })
 })
+
+describe('done bottles have no pending move', () => {
+  it('a synced bottle placed away from its recommendation is not a move', () => {
+    const b = makeDbBottle({ state: 'synced', current_location: 'Cellar', current_bin: 'Lgh 3. SPANIEN + OVRIGT', recommended_location: 'HOME', recommended_bin: 'Kall 3. SPANIEN + OVRIGT' })
+    expect(moveType(b)).toBe('none')
+    expect(needsMove(b)).toBe(false)
+  })
+
+  it('the same bottle in pending is still a move', () => {
+    const b = makeDbBottle({ state: 'pending', current_location: 'Cellar', current_bin: 'Lgh 3. SPANIEN + OVRIGT', recommended_location: 'HOME', recommended_bin: 'Kall 3. SPANIEN + OVRIGT' })
+    expect(moveType(b)).toBe('within-location')
+  })
+})
+

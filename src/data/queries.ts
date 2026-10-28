@@ -177,8 +177,9 @@ export async function rebinBottle(barcode: string, bin: string): Promise<void> {
   const { error } = await getSupabase()
     .from('bottles')
     .update({
+      // Not recommended_bin: that column holds the rules' output, and the sync
+      // reopens a done bottle when it changes. A hand-picked bin is a position.
       current_bin: bin,
-      recommended_bin: bin,
       state: 'synced',
       synced_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
@@ -192,10 +193,8 @@ export async function dismissRecommendation(barcode: string): Promise<void> {
   const { error } = await getSupabase()
     .from('bottles')
     .update({
-      recommended_location: null,
-      recommended_bin: null,
-      move_reason: null,
-      rule_id: null,
+      // Keep here = done where it is. The recommendation stays as the rules'
+      // output so the sync can tell when the rules later want something new.
       state: 'synced',
       synced_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),

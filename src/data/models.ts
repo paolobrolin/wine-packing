@@ -67,7 +67,11 @@ export function normalizeLocation(loc: string | null): 'REMOTE' | 'HOME' {
 
 export type MoveType = 'cross-location' | 'within-location' | 'none'
 
+// A done ('synced') bottle has no pending move, even when it was placed away
+// from its recommendation by hand: the recommendation column holds the rules'
+// output, and the sync reopens the bottle if that output changes.
 export function moveType(bottle: DbBottle): MoveType {
+  if (bottle.state === 'synced') return 'none'
   if (bottle.recommended_location == null) return 'none'
   const currentNorm = normalizeLocation(bottle.current_location)
   if (currentNorm !== bottle.recommended_location) return 'cross-location'
@@ -84,6 +88,7 @@ export function actionLabel(bottle: DbBottle): string {
 }
 
 export function needsMove(bottle: DbBottle): boolean {
+  if (bottle.state === 'synced') return false
   if (bottle.recommended_location == null) return false
   if (bottle.current_location !== bottle.recommended_location) return true
   if (bottle.recommended_bin == null) return false

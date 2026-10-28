@@ -42,16 +42,25 @@ describe('planBatch', () => {
     expect(s.prevPackedAt).toBe('2026-09-01T10:00:00Z')
   })
 
-  it('rebins synced bottles in place instead of throwing', () => {
+  it('skips a done bottle placed away from its recommendation (e.g. by hand in the same case)', () => {
     const plan = planBatch([mb({
       barcode: 'A', state: 'synced', current_location: 'Cellar',
+      current_bin: 'Lgh 1. ITALIA', recommended_location: 'HOME', recommended_bin: 'Lgh 6. VITA',
+    })])
+
+    expect(plan.steps).toHaveLength(0)
+    expect(plan.skipped).toEqual(['A'])
+  })
+
+  it('rebins a shelved bottle in place instead of throwing', () => {
+    const plan = planBatch([mb({
+      barcode: 'A', state: 'shelved', current_location: 'Cellar',
       current_bin: 'Lgh 1. ITALIA', recommended_location: 'HOME', recommended_bin: 'Lgh 6. VITA',
     })])
 
     expect(plan.steps).toHaveLength(1)
     expect(plan.steps[0].nextState).toBe('synced')
     expect(plan.steps[0].bin).toBe('Lgh 6. VITA')
-    expect(plan.steps[0].prevBin).toBe('Lgh 1. ITALIA')
   })
 
   it('skips synced bottles that already sit in their recommended bin', () => {

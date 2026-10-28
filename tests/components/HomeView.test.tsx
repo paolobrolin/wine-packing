@@ -48,4 +48,14 @@ describe('HomeView', () => {
     render(<HomeView bottles={[]} />)
     expect(screen.getByText(/Correctly Stored \(0\)/)).toBeInTheDocument()
   })
+
+  it('a done bottle placed by hand is not flagged for rebinning and is listed where it is', () => {
+    const bottles = [makeDbBottle({ vintage: '1964', wine: 'Ygay Reserva', end_consume: 2020, state: 'synced',
+      current_bin: 'Lgh 3. SPANIEN + OVRIGT', recommended_location: 'HOME', recommended_bin: 'Kall 3. SPANIEN + OVRIGT' })]
+    render(<HomeView bottles={bottles} />)
+    expect(screen.queryByText(/need rebinning/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/rebin →/)).not.toBeInTheDocument()
+    expect(screen.getByText(/Lgh 3. SPANIEN \+ OVRIGT/)).toBeInTheDocument()
+    expect(screen.queryByText(/Kall 3/)).not.toBeInTheDocument()
+  })
 })

@@ -30,9 +30,9 @@ export interface BatchPlan {
 /**
  * Work out what a "Done All" should do, without touching state.
  *
- * Bottles that are already synced or shelved get rebinned in place (state stays
- * synced) — the same carve-out `handleConfirmDone` makes, because
- * `inferTransition` has no forward move for those states.
+ * Synced (done) bottles are skipped. Shelved bottles get rebinned in place
+ * (state becomes synced) — the same carve-out `handleConfirmDone` makes,
+ * because `inferTransition` has no forward move for that state.
  */
 export function planBatch(bottles: DbBottle[]): BatchPlan {
   const steps: BatchStep[] = []
@@ -48,7 +48,14 @@ export function planBatch(bottles: DbBottle[]): BatchPlan {
       prevSyncedAt: b.synced_at,
     }
 
-    if (b.state === 'synced' || b.state === 'shelved') {
+    // Done bottles have no pending move, even when placed away from the
+    // recommendation by hand (e.g. one bottle of an OWC case).
+    if (b.state === 'synced') {
+      skipped.push(b.barcode)
+      continue
+    }
+
+    if (b.state === 'shelved') {
       // Nothing to do when it is already sitting in its recommended bin.
       if (bin == null || b.current_bin === bin) {
         skipped.push(b.barcode)

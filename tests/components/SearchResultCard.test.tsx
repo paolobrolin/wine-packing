@@ -140,3 +140,34 @@ describe('SearchResultCard verdict without recommendation', () => {
     expect(screen.getByText('HOME')).toBeInTheDocument()
   })
 })
+
+describe('SearchResultCard verdict for done bottles', () => {
+  it('a done bottle placed elsewhere by hand reads IN PLACE where it is, not MOVE TO', () => {
+    const bottle = makeDbBottle({
+      state: 'synced', current_location: 'Cellar', current_bin: 'Lgh 3. SPANIEN + OVRIGT',
+      recommended_location: 'HOME', recommended_bin: 'Kall 3. SPANIEN + OVRIGT',
+    })
+    render(<SearchResultCard result={scored(bottle, 'no-move')} onDone={() => {}} />)
+    expect(screen.getByText('IN PLACE Lgh 3. SPANIEN + OVRIGT')).toBeInTheDocument()
+    expect(screen.queryByText(/MOVE TO/)).not.toBeInTheDocument()
+  })
+
+  it('a done Lugnet bottle (no recommendation) still reads LUGNET', () => {
+    const bottle = makeDbBottle({ state: 'synced', current_bin: 'Lugnet', recommended_location: null, recommended_bin: null })
+    render(<SearchResultCard result={scored(bottle, 'no-move')} onDone={() => {}} />)
+    expect(screen.getByText('LUGNET')).toBeInTheDocument()
+  })
+
+  it('a done bottle placed by hand is not styled as a move', () => {
+    const bottle = makeDbBottle({ state: 'synced', current_bin: 'Lgh 3. SPANIEN + OVRIGT', recommended_location: 'HOME', recommended_bin: 'Kall 3. SPANIEN + OVRIGT' })
+    render(<SearchResultCard result={scored(bottle, 'no-move')} onDone={() => {}} />)
+    expect(screen.getByTestId('search-0001').className).not.toMatch(/search-card--(move|rebin)/)
+  })
+
+  it('a done bottle without a bin says where it is, not IN PLACE <recommendation>', () => {
+    const bottle = makeDbBottle({ state: 'synced', current_location: 'Cellar', current_bin: null, recommended_location: 'HOME', recommended_bin: 'Lgh 3. SPANIEN + OVRIGT' })
+    render(<SearchResultCard result={scored(bottle, 'no-move')} onDone={() => {}} />)
+    expect(screen.getByText('HOME')).toBeInTheDocument()
+    expect(screen.queryByText(/IN PLACE/)).not.toBeInTheDocument()
+  })
+})

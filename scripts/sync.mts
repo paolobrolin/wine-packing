@@ -58,7 +58,7 @@ const PAGE = 1000
 const existingMap = new Map<string, ExistingRow>()
 for (let from = 0; ; from += PAGE) {
   const { data, error } = await sb.from('bottles')
-    .select('barcode, state, packed_at, in_transit_at, shelved_at, synced_at, trip_id, owc_group, estimated_value, value_source, label_ref, current_location, current_bin, ct_location_at_sync, ct_bin_at_sync')
+    .select('barcode, state, packed_at, in_transit_at, shelved_at, synced_at, trip_id, owc_group, estimated_value, value_source, label_ref, current_location, current_bin, ct_location_at_sync, ct_bin_at_sync, recommended_location, recommended_bin')
     .order('barcode')
     .range(from, from + PAGE - 1)
   if (error) { console.error(error); process.exit(1) }
