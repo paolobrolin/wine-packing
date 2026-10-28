@@ -109,5 +109,13 @@ describe('home layout — filling the cabinet and Källaren', () => {
     const { rows } = buildSyncRows([ygay, ...fill], new Map(), 2026)
     expect(rows.find((r) => r.barcode === '6000')!.recommended_bin).toBe(CABINET.SPANIEN_USA.bin)
   })
+
+  it('counts bottles that overflow to external storage in the sync stats', () => {
+    const cellarFor = CELLAR_SHELVES.filter((s) => s.categories.includes('ITALIA'))
+    const room = limit + cellarFor.reduce((a, s) => a + s.capacity - HOME_MARGIN, 0)
+    const bottles = Array.from({ length: room + 2 }, (_, i) => ct(String(7000 + i), { end: i < room ? 2026 : 2028 }))
+    const { stats } = buildSyncRows(bottles, new Map(), 2026)
+    expect(stats.alreadyAtDestination + stats.needsMove + stats.home).toBe(bottles.length)
+  })
 })
 

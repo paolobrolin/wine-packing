@@ -571,5 +571,14 @@ describe('buildSyncRows — done bottles get a new recommendation', () => {
     expect(stats.needsMove).toBe(1)
     expect(stats.alreadyAtDestination).toBe(0)
   })
+
+  it('never marks a packed bottle done just because its recommendation equals CT\'s (source) shelf', () => {
+    const existing = atRemoteRow({ state: 'packed', trip_id: 'trip1', packed_at: '2026-10-27T10:00:00Z', current_bin: '3.8 FR OTHER', ct_bin_at_sync: '3.8 FR OTHER', recommended_location: 'HOME', recommended_bin: 'Lgh 5. FRANKRIKE' })
+    const ctRemote = makeCtBottle({ location: 'REMOTE', bin: '3.8 FR OTHER', begin_consume: 2030, end_consume: 2045 })
+    const { rows } = buildSyncRows([ctRemote], new Map([['0001', existing]]), 2026)
+    expect(rows[0].recommended_bin).toBe('3.8 FR OTHER')
+    expect(rows[0].state).toBe('packed')
+    expect(rows[0].trip_id).toBe('trip1')
+  })
 })
 

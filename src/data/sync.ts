@@ -306,6 +306,11 @@ export function buildSyncRows(
       recBin = binRes?.binId ?? null
       reason = 'home full: REMOTE'
       ruleId = binRes?.binRuleId ?? null
+      // Not counted yet (Pass 1 counted only bottles with a rule placement).
+      const atShelf = bottle.currentLocation === 'REMOTE' && recBin != null && bottle.currentBin === recBin
+      if (placement != null) { if (atShelf) { needsMoveCount--; alreadyAtDestination++ } }
+      else if (atShelf) alreadyAtDestination++
+      else needsMoveCount++
     }
 
     const homePlacement = homePlacements[i]
@@ -322,7 +327,9 @@ export function buildSyncRows(
 
     if (recLoc == null) {
       state = bottle.currentLocation != null ? 'synced' : 'pending'
-    } else if (recBin != null && bottle.currentBin === recBin && (recLoc === 'HOME' || bottle.currentLocation === 'REMOTE')) {
+    } else if (preservedState !== 'packed' && preservedState !== 'in_transit' && recBin != null && bottle.currentBin === recBin && (recLoc === 'HOME' || bottle.currentLocation === 'REMOTE')) {
+      // (A packed or in-transit bottle is in a box: CT's bin is where it came
+      // from, so matching it says nothing about the move being done.)
       state = 'synced'
     } else if (preservedState === 'shelved' && appPositions[i] == null && (existing?.current_bin || null) === (ct.bin || null)) {
       // Shelved in the app (possibly on another shelf than recommended, e.g.
