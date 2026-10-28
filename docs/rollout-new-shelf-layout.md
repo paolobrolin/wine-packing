@@ -14,7 +14,7 @@ one old shelf (box) at a time.
 
 ## Before the rollout
 
-1. CT notes (needs Paolo's OK; write with `update_bottle`, read back each one):
+1. ~~CT notes~~ — **done 2026-10-28 20:29**, all 12 verified by read-back:
    - Single boxes → note `Single bottle OWC` (same wording as the PdB 3 L):
      `0183154259` Cheval Blanc 2020, `0222003549` Crichët Pajé 2014 1.5 L,
      `0218819293` Sperss 2021 1.5 L, `0214294589` Comtes 2014,
