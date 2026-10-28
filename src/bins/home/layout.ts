@@ -1,8 +1,8 @@
 import type { Bottle } from '../../rules/types'
 
 // Home layout (2026-11). The cabinet in the flat (Lgh) has seven shelves:
-// six with movable rows of 12 bottles (15 rows in all, at most 4 per shelf,
-// the top one not 3 rows) and a fixed 18 at the bottom. Källaren (Kall) has
+// six with movable rows of 12 bottles (as set up 2026-10-28: 3, 2, 2, 2, 3, 2
+// rows from the top) and a fixed 18 at the bottom. Källaren (Kall) has
 // five shelves of 36 and 20 at the bottom. Every shelf keeps HOME_MARGIN
 // places free. Each category fills its cabinet shelf with the earliest
 // drinking windows first, then its Källaren shelves; what does not fit goes
@@ -14,11 +14,11 @@ export const HOME_MARGIN = 2
 
 // Listed top to bottom; the number in the bin name is the shelf from the top.
 export const CABINET: Record<HomeCategory, { bin: string; capacity: number }> = {
-  SOTA: { bin: 'Lgh 1. SOTA + STARKVIN', capacity: 24 },
-  SQN: { bin: 'Lgh 2. SQN', capacity: 36 },
-  ITALIA: { bin: 'Lgh 3. ITALIA', capacity: 36 },
-  VITA: { bin: 'Lgh 4. VITA', capacity: 36 },
-  FRANKRIKE: { bin: 'Lgh 5. FRANKRIKE', capacity: 24 },
+  SQN: { bin: 'Lgh 1. SQN', capacity: 36 },
+  SOTA: { bin: 'Lgh 2. SOTA + STARKVIN', capacity: 24 },
+  ITALIA: { bin: 'Lgh 3. ITALIA', capacity: 24 },
+  FRANKRIKE: { bin: 'Lgh 4. FRANKRIKE', capacity: 24 },
+  VITA: { bin: 'Lgh 5. VITA', capacity: 36 },
   SPANIEN_USA: { bin: 'Lgh 6. SPANIEN, USA + OVRIGT', capacity: 24 },
   BUBBEL: { bin: 'Lgh 7. BUBBEL', capacity: 18 },
 }

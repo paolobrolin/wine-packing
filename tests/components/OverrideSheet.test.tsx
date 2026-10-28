@@ -99,11 +99,11 @@ describe('OverrideSheet', () => {
   it('pre-selects HOME bin when recommended_bin is a HOME bin', () => {
     const bottle = makeDbBottle({
       recommended_location: 'HOME',
-      recommended_bin: 'Lgh 1. SOTA + STARKVIN',
+      recommended_bin: 'Lgh 2. SOTA + STARKVIN',
     })
     render(<OverrideSheet bottle={bottle} onConfirm={() => {}} onKeep={() => {}} onCancel={() => {}} />)
     const select = screen.getByTestId('override-select') as HTMLSelectElement
-    expect(select.value).toBe('Lgh 1. SOTA + STARKVIN')
+    expect(select.value).toBe('Lgh 2. SOTA + STARKVIN')
   })
 
   it('falls back to first bin when recommended_bin is null', () => {
@@ -117,10 +117,10 @@ describe('OverrideSheet', () => {
     const onConfirm = vi.fn()
     const bottle = makeDbBottle({
       recommended_location: 'HOME',
-      recommended_bin: 'Lgh 1. SOTA + STARKVIN',
+      recommended_bin: 'Lgh 2. SOTA + STARKVIN',
     })
     render(<OverrideSheet bottle={bottle} onConfirm={onConfirm} onKeep={() => {}} onCancel={() => {}} />)
     await userEvent.click(screen.getByTestId('override-confirm'))
-    expect(onConfirm).toHaveBeenCalledWith('0001', 'Lgh 1. SOTA + STARKVIN')
+    expect(onConfirm).toHaveBeenCalledWith('0001', 'Lgh 2. SOTA + STARKVIN')
   })
 })

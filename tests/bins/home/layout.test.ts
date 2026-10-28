@@ -40,14 +40,14 @@ describe('home layout — places', () => {
     expect(placesFor('500ml')).toBeCloseTo(2 / 3)
   })
 
-  it('cabinet: 15 movable rows of 12 over six shelves plus the fixed 18 at the bottom; top shelf is not 36', () => {
-    const shelves = Object.values(CABINET)
-    expect(shelves).toHaveLength(7)
-    const byBin = [...shelves].sort((x, y) => x.bin.localeCompare(y.bin))
-    expect(byBin[byBin.length - 1].capacity).toBe(18)
-    expect(byBin[0].capacity).not.toBe(36)
-    expect(byBin.slice(0, 6).reduce((a, s) => a + s.capacity, 0)).toBe(15 * 12)
-    for (const s of byBin.slice(0, 6)) expect(s.capacity).toBeLessThanOrEqual(48)
+  it('cabinet as set up: 3, 2, 2, 2, 3, 2 rows of 12 from the top, and 18 at the bottom', () => {
+    const byBin = Object.values(CABINET).sort((x, y) => x.bin.localeCompare(y.bin))
+    expect(byBin.map((s) => s.capacity)).toEqual([36, 24, 24, 24, 36, 24, 18])
+  })
+
+  it('all SQN fit on one shelf with margin, and so do all sweet/fortified', () => {
+    expect(CABINET.SQN.capacity - HOME_MARGIN).toBeGreaterThanOrEqual(26)
+    expect(CABINET.SOTA.capacity - HOME_MARGIN).toBeGreaterThanOrEqual(21)
   })
 
   it('Källaren: five shelves of 36 and 20 at the bottom', () => {

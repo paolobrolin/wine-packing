@@ -26,12 +26,11 @@ one old shelf (box) at a time.
 
 ## Home layout (same rollout)
 
-- `src/bins/home/layout.ts`: cabinet top→bottom Lgh 1 SÖTA (24), 2 SQN (36),
-  3 ITALIA (36), 4 VITA (36), 5 FRANKRIKE (24), 6 SPANIEN, USA + ÖVRIGT (24),
+- `src/bins/home/layout.ts`: cabinet top→bottom (rows set up by Paolo
+  2026-10-28: 3, 2, 2, 2, 3, 2 + 18): Lgh 1 SQN (36), 2 SÖTA (24),
+  3 ITALIA (24), 4 FRANKRIKE (24), 5 VITA (36), 6 SPANIEN, USA + ÖVRIGT (24),
   7 BUBBEL (18); Källaren Kall 1–6 (5×36 + 20). 2 places margin per shelf,
   magnum = 2 places, ≤500 ml = 2/3. Overflow → REMOTE, latest window first.
-- Physical: move the movable rows so the shelves match those capacities
-  (15 rows of 12 over shelves 1–6), sweet/fortified on top, bubbles at the bottom.
 - One-time step right after the first sync: done bottles Paolo placed by hand
   outside the cabinet (Cooler/Köket/Källaren; current bin ≠ stored
   recommendation) get their stored recommendation set to the new output so they

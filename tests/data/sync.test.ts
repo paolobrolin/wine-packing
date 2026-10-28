@@ -65,7 +65,7 @@ describe('buildSyncRows', () => {
 
   it('HOME bottle already at correct bin is synced (no action)', () => {
     const ct = makeCtBottle({
-      begin_consume: 2024, end_consume: 2028, location: 'Cellar', bin: 'Lgh 5. FRANKRIKE',
+      begin_consume: 2024, end_consume: 2028, location: 'Cellar', bin: 'Lgh 4. FRANKRIKE',
       extra: { Vintage: '2020', Wine: 'Test Bordeaux', Producer: 'Test', Country: 'France', Region: 'Burgundy', Type: null },
     })
     const { rows } = buildSyncRows([ct], new Map(), 2026)
@@ -240,7 +240,7 @@ describe('buildSyncRows', () => {
     const { rows } = buildSyncRows([ct], new Map(), 2026)
 
     expect(rows[0].recommended_location).toBe('HOME')
-    expect(rows[0].recommended_bin).toBe('Lgh 1. SOTA + STARKVIN')
+    expect(rows[0].recommended_bin).toBe('Lgh 2. SOTA + STARKVIN')
   })
 })
 
@@ -573,7 +573,7 @@ describe('buildSyncRows — done bottles get a new recommendation', () => {
   })
 
   it('never marks a packed bottle done just because its recommendation equals CT\'s (source) shelf', () => {
-    const existing = atRemoteRow({ state: 'packed', trip_id: 'trip1', packed_at: '2026-10-27T10:00:00Z', current_bin: '3.8 FR OTHER', ct_bin_at_sync: '3.8 FR OTHER', recommended_location: 'HOME', recommended_bin: 'Lgh 5. FRANKRIKE' })
+    const existing = atRemoteRow({ state: 'packed', trip_id: 'trip1', packed_at: '2026-10-27T10:00:00Z', current_bin: '3.8 FR OTHER', ct_bin_at_sync: '3.8 FR OTHER', recommended_location: 'HOME', recommended_bin: 'Lgh 4. FRANKRIKE' })
     const ctRemote = makeCtBottle({ location: 'REMOTE', bin: '3.8 FR OTHER', begin_consume: 2030, end_consume: 2045 })
     const { rows } = buildSyncRows([ctRemote], new Map([['0001', existing]]), 2026)
     expect(rows[0].recommended_bin).toBe('3.8 FR OTHER')
