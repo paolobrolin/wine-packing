@@ -6,6 +6,8 @@ export interface Bottle {
   producer: string
   country: string
   region: string
+  // CT SubRegion, e.g. 'Médoc', 'Libournais'. Optional: only some rules use it.
+  subRegion?: string | null
   size: string
   cost: number | null
   beginConsume: number | null

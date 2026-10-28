@@ -19,7 +19,7 @@ function makeCtBottle(overrides: Partial<CtBottle> = {}): CtBottle {
 describe('buildSyncRows with bin resolution', () => {
   it('assigns REMOTE bin for Bordeaux LB wine', () => {
     const ct = makeCtBottle({
-      extra: { Vintage: '2020', Wine: 'Château Ducru-Beaucaillou', Producer: 'Château Ducru-Beaucaillou', Country: 'France', Region: 'Bordeaux' },
+      extra: { Vintage: '2020', Wine: 'Château Ducru-Beaucaillou', Producer: 'Château Ducru-Beaucaillou', Country: 'France', Region: 'Bordeaux', SubRegion: 'Médoc' },
     })
     const { rows } = buildSyncRows([ct], new Map(), 2026)
     expect(rows[0].recommended_location).toBe('REMOTE')

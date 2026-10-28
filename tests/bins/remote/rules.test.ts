@@ -132,18 +132,44 @@ describe('REMOTE bin rules — Napa + California (p90/p15)', () => {
 
 describe('REMOTE bin rules — sub-region (p50-60)', () => {
   it('Bordeaux LB (Ducru) → 2.1 BDX LB', () => {
-    const r = resolve(makeBottle({ producer: 'Château Ducru-Beaucaillou', wine: 'Ducru-Beaucaillou', country: 'France', region: 'Bordeaux' }))
+    const r = resolve(makeBottle({ producer: 'Château Ducru-Beaucaillou', wine: 'Ducru-Beaucaillou', country: 'France', region: 'Bordeaux', subRegion: 'Médoc' }))
     expect(r!.binId).toBe('2.1 BDX LB')
   })
 
   it('Bordeaux RB (Cheval Blanc) → 2.2 BDX RB', () => {
-    const r = resolve(makeBottle({ producer: 'Château Cheval Blanc', wine: 'Cheval Blanc', country: 'France', region: 'Bordeaux' }))
+    const r = resolve(makeBottle({ producer: 'Château Cheval Blanc', wine: 'Cheval Blanc', country: 'France', region: 'Bordeaux', subRegion: 'Libournais' }))
     expect(r!.binId).toBe('2.2 BDX RB')
   })
 
   it('Bordeaux RB (Lafleur) → 2.2', () => {
-    const r = resolve(makeBottle({ producer: 'Château Lafleur', wine: 'Château Lafleur', country: 'France', region: 'Bordeaux' }))
+    const r = resolve(makeBottle({ producer: 'Château Lafleur', wine: 'Château Lafleur', country: 'France', region: 'Bordeaux', subRegion: 'Libournais' }))
     expect(r!.binId).toBe('2.2 BDX RB')
+  })
+
+  it('Bordeaux LB by sub-region, not producer list (Giscours, Médoc) → 2.1', () => {
+    const r = resolve(makeBottle({ producer: 'Château Giscours', wine: 'Château Giscours', region: 'Bordeaux', subRegion: 'Médoc', wineType: 'Red' }))
+    expect(r!.binId).toBe('2.1 BDX LB')
+  })
+
+  it('Graves (Pessac-Léognan) → 2.1 BDX LB', () => {
+    const r = resolve(makeBottle({ producer: 'Château Smith Haut Lafitte', wine: 'Château Smith Haut Lafitte', region: 'Bordeaux', subRegion: 'Graves', wineType: 'Red' }))
+    expect(r!.binId).toBe('2.1 BDX LB')
+  })
+
+  it('Libournais, unlisted producer → 2.2 BDX RB', () => {
+    const r = resolve(makeBottle({ producer: 'Château Beauséjour', wine: 'Château Beauséjour', region: 'Bordeaux', subRegion: 'Libournais', wineType: 'Red' }))
+    expect(r!.binId).toBe('2.2 BDX RB')
+  })
+
+  it('sweet Sauternes is not shelved with Bordeaux reds', () => {
+    const r = resolve(makeBottle({ producer: 'Château Suduiraut', wine: 'Château Suduiraut', region: 'Bordeaux', subRegion: 'Sauternais', wineType: 'White - Sweet/Dessert' }))
+    expect(r!.binId).not.toBe('2.1 BDX LB')
+    expect(r!.binId).not.toBe('2.2 BDX RB')
+  })
+
+  it('sweet wine from a Médoc sub-region is still kept off 2.1', () => {
+    const r = resolve(makeBottle({ producer: 'Château Margaux', wine: 'Château Margaux', region: 'Bordeaux', subRegion: 'Médoc', wineType: 'White - Sweet/Dessert' }))
+    expect(r!.binId).not.toBe('2.1 BDX LB')
   })
 
   it('Guigal → 2.3 RHONE N', () => {

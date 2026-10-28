@@ -27,6 +27,7 @@ export interface CtBottle {
     Producer: string
     Country: string
     Region: string
+    SubRegion?: string | null
     Type: string | null
   }
 }
@@ -302,6 +303,7 @@ function toRuleBottle(ct: CtBottle): Bottle {
     producer: ct.extra.Producer ?? '',
     country: ct.extra.Country ?? '',
     region: ct.extra.Region ?? '',
+    subRegion: ct.extra.SubRegion ?? null,
     size: ct.size ?? '750ml',
     cost: ct.bottle_cost,
     beginConsume: sanitizeDrinkWindow(ct.begin_consume),
