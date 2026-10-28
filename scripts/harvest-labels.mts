@@ -22,6 +22,7 @@
 import { parseLabelRef, looksBlocked } from '../src/data/labels.js'
 import { createClient } from '@supabase/supabase-js'
 import { readFileSync } from 'fs'
+import { execFileSync } from 'child_process'
 import { homedir } from 'os'
 import { join } from 'path'
 
@@ -33,6 +34,22 @@ const LIMIT = (() => {
   return i >= 0 ? Number(args[i + 1]) : Infinity
 })()
 const PACE_MS = 1500
+
+// Every CT request asks the cellartracker-mcp traffic guard first, so this run
+// counts against the same shared ceiling (180/h, 800/day) and honours CT_STOP.
+// A refusal is final for the run: waiting it out is the same load spread thinner.
+const GUARD_PYTHON = join(homedir(), '.claude-private', 'mcp-runtime', 'cellartracker', 'current', 'bin', 'python')
+function guardAcquire(endpoint: string): string | null {
+  try {
+    execFileSync(GUARD_PYTHON, ['-c',
+      'import sys\nfrom cellartracker_mcp.ct.traffic_guard import acquire\nacquire(sys.argv[1])', endpoint],
+      { env: { ...process.env, CT_CLIENT: 'vinflytt-labels' }, stdio: ['ignore', 'ignore', 'pipe'] })
+    return null
+  } catch (e) {
+    const err = (e as { stderr?: Buffer }).stderr?.toString().trim().split('\n').pop()
+    return err || String(e)
+  }
+}
 const ABORT_AFTER = 3
 
 const credDir = join(homedir(), '.claude-private', 'supabase')
@@ -83,6 +100,11 @@ let consecutiveBlocked = 0
 
 for (const [i, iwine] of todo.entries()) {
   if (i > 0) await new Promise((r) => setTimeout(r, PACE_MS))
+  const refused = guardAcquire('/editwine.asp')
+  if (refused) {
+    console.error(`\nTrafikvakten nekade anropet, avbryter: ${refused}`)
+    break
+  }
   const res = await fetch(`https://www.cellartracker.com/editwine.asp?iWine=${iwine}`, {
     headers: {
       Cookie: cookieHeader,
