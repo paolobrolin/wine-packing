@@ -1,3 +1,5 @@
+import { HOME_LAYOUT_BINS } from './home/layout'
+
 export const REMOTE_BINS = [
   '1.1 OWC', '1.2 OWC SINGLES', '1.3 SQN GRENACHE + NOK', '1.4 SQN SYRAH',
   '2.1 BAROLO A–E', '2.2 BAROLO F–K', '2.3 BAROLO L–O', '2.4 BAROLO P–Q',
@@ -26,16 +28,8 @@ export function isRemoteBin(bin: string): boolean {
   return (REMOTE_BINS as readonly string[]).includes(bin) || (LEGACY_REMOTE_BINS as readonly string[]).includes(bin)
 }
 
-export const HOME_BINS = [
-  'Lgh 1. ITALIA', 'Lgh 2. FRANKRIKE', 'Lgh 3. SPANIEN + OVRIGT',
-  'Lgh 4. USA', 'Lgh 5. BUBBEL', 'Lgh 6. VITA',
-  'Lgh 7. SOTA + STARKVIN',
-  'Kall 1. ITALIA', 'Kall 2. FRANKRIKE', 'Kall 3. SPANIEN + OVRIGT',
-  'Kall 4. USA', 'Kall 5. BUBBEL + VITA', 'Kall 6. OVRIGT',
-  'Kall 7. SOTA + STARKVIN',
-  'Cooler',
-  'Köket',
-] as const
+// Cabinet (Lgh) and Källaren (Kall) shelves come from the home layout.
+export const HOME_BINS = [...HOME_LAYOUT_BINS, 'Cooler', 'Köket']
 
 export function allBinsGrouped(): { label: string; bins: string[] }[] {
   return [

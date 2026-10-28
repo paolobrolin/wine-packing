@@ -24,6 +24,20 @@ one old shelf (box) at a time.
      `0218856334`, `0218856378` (magnum box). Not the twin box at Lotten i CA.
 2. Paolo has finished packing at home; no app edits during the rollout.
 
+## Home layout (same rollout)
+
+- `src/bins/home/layout.ts`: cabinet top→bottom Lgh 1 SÖTA (24), 2 SQN (36),
+  3 ITALIA (36), 4 VITA (36), 5 FRANKRIKE (24), 6 SPANIEN, USA + ÖVRIGT (24),
+  7 BUBBEL (18); Källaren Kall 1–6 (5×36 + 20). 2 places margin per shelf,
+  magnum = 2 places, ≤500 ml = 2/3. Overflow → REMOTE, latest window first.
+- Physical: move the movable rows so the shelves match those capacities
+  (15 rows of 12 over shelves 1–6), sweet/fortified on top, bubbles at the bottom.
+- One-time step right after the first sync: done bottles Paolo placed by hand
+  outside the cabinet (Cooler/Köket/Källaren; current bin ≠ stored
+  recommendation) get their stored recommendation set to the new output so they
+  stay done (dry run 2026-10-28: Grange des Pères 2021, Musar 1999, Gaure Limoux
+  2023 in the Cooler). Cabinet bottles get tasks to their new shelf number.
+
 ## Rollout
 
 1. Merge `new-shelf-layout` into `master` and push (deploys the app).

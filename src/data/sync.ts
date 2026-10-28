@@ -6,8 +6,8 @@ import { evaluatePlacement } from '../rules/evaluate'
 import { resolveAllBins } from '../bins/resolve'
 import { createCapacityTracker } from '../bins/capacity'
 import { remoteBinRules } from '../bins/remote'
-import { homeBinRules } from '../bins/home'
-import { determineHomeSubLocation, buildHomeBinId } from '../bins/home-sub-location'
+import { CABINET, CELLAR_SHELVES, HOME_MARGIN, homeCategory, isOnCabinetShelf, placesFor, type HomeCategory } from '../bins/home/layout'
+import { determineHomeSubLocation } from '../bins/home-sub-location'
 import { isRemoteBin } from '../bins/all-bins'
 
 export interface CtBottle {
@@ -177,10 +177,10 @@ export function buildSyncRows(
     return null
   })
 
-  // Pass 1.5: HOME placement — resolve bin for HOME bottles (skip REMOTE-at-dest)
-  // Fill each Lgh category to 0.9 capacity (31 bottles), overflow to Kall
-  const lghPerCategory = new Map<string, number>()
-
+  // Pass 1.5: HOME placement (see src/bins/home/layout.ts). Per category:
+  // bottles already on the cabinet shelf keep their place, the rest fill it
+  // by earliest drinking window up to capacity minus the margin, then the
+  // category's Källaren shelves; what is left goes to REMOTE, latest first.
   const homeIndices = bottles
     .map((_, i) => i)
     .filter((i) => {
@@ -190,45 +190,59 @@ export function buildSyncRows(
       const p = placements[i]!
       return p.recommendedLocation === 'HOME' && p.recommendedBin == null
     })
-    .sort((a, b) => {
-      const endA = bottles[a].endConsume ?? 9999
-      const endB = bottles[b].endConsume ?? 9999
-      return endA - endB
-    })
 
   const homePlacements: ({ recommendedLocation: string; recommendedBin: string; reason: string; ruleId: string | null } | null)[] = new Array(bottles.length).fill(null)
+  const homeOverflow = new Set<number>()
+  // An unknown window is not a late one: rank it as a few years out.
+  const windowKey = (i: number) => bottles[i].endConsume ?? currentYear + 5
+  const byCategory = new Map<HomeCategory, number[]>()
 
   for (const i of homeIndices) {
     const bottle = bottles[i]
-    const sortedRules = [...homeBinRules].sort((a, b) => b.priority - a.priority)
-    let categoryBinId: string | null = null
-    let matchedRuleId: string | null = null
-    for (const rule of sortedRules) {
-      if (rule.match(bottle)) {
-        categoryBinId = rule.binId
-        matchedRuleId = rule.id
-        break
+    if (determineHomeSubLocation(bottle, currentYear) === 'Cooler') {
+      homePlacements[i] = { recommendedLocation: 'HOME', recommendedBin: 'Cooler', reason: 'home: Cooler', ruleId: 'home/cooler' }
+      continue
+    }
+    const c = homeCategory(bottle)
+    byCategory.set(c, [...(byCategory.get(c) ?? []), i])
+  }
+
+  const cellarUsed = new Map<string, number>()
+  const cellarQueue: { i: number; c: HomeCategory }[] = []
+  for (const [c, idx] of byCategory) {
+    const shelf = CABINET[c]
+    const placed = idx.filter((i) => isOnCabinetShelf(bottles[i].currentBin, c))
+    const rest = idx.filter((i) => !isOnCabinetShelf(bottles[i].currentBin, c)).sort((x, y) => windowKey(x) - windowKey(y))
+    let used = 0
+    for (const i of [...placed, ...rest]) {
+      const p = placesFor(bottles[i].size)
+      if (placed.includes(i) || used + p <= shelf.capacity - HOME_MARGIN) {
+        used += p
+        homePlacements[i] = { recommendedLocation: 'HOME', recommendedBin: shelf.bin, reason: 'home: Lagringsskåp', ruleId: `home/${c.toLowerCase()}` }
+      } else {
+        cellarQueue.push({ i, c })
       }
     }
-    if (categoryBinId == null) { homeCount++; continue }
+  }
+  // Källaren: bottles already on one of their category's shelves keep it,
+  // then the rest by earliest window. Leftovers go to REMOTE.
+  const shelvesFor = (c: HomeCategory) => CELLAR_SHELVES.filter((s) => s.categories.includes(c))
+  const onOwnShelf = ({ i, c }: { i: number; c: HomeCategory }) => shelvesFor(c).some((s) => s.bin === bottles[i].currentBin)
+  const ordered = [...cellarQueue.filter(onOwnShelf), ...cellarQueue.filter((q) => !onOwnShelf(q)).sort((x, y) => windowKey(x.i) - windowKey(y.i))]
+  for (const { i, c } of ordered) {
+    const p = placesFor(bottles[i].size)
+    const own = shelvesFor(c).find((s) => s.bin === bottles[i].currentBin)
+    const target = own ?? shelvesFor(c).find((s) => (cellarUsed.get(s.bin) ?? 0) + p <= s.capacity - HOME_MARGIN)
+    if (target == null) { homeOverflow.add(i); continue }
+    cellarUsed.set(target.bin, (cellarUsed.get(target.bin) ?? 0) + p)
+    homePlacements[i] = { recommendedLocation: 'HOME', recommendedBin: target.bin, reason: 'home: Källaren', ruleId: `home/${c.toLowerCase()}` }
+  }
 
-    const catCount = lghPerCategory.get(categoryBinId) ?? 0
-    const subLocation = determineHomeSubLocation(bottle, currentYear, catCount)
-    const binId = buildHomeBinId(categoryBinId, subLocation)
-
-    if (subLocation === 'Lagringsskåp') {
-      lghPerCategory.set(categoryBinId, catCount + 1)
-    }
-
-    const currentNorm = bottle.currentLocation === 'REMOTE' ? 'REMOTE' : 'HOME'
-
-    if (currentNorm === 'HOME' && bottle.currentBin === binId) {
-      alreadyAtDestination++
-    } else {
-      homeCount++
-    }
-
-    homePlacements[i] = { recommendedLocation: 'HOME', recommendedBin: binId, reason: `home: ${subLocation}`, ruleId: matchedRuleId }
+  for (let i = 0; i < bottles.length; i++) {
+    const hp = homePlacements[i]
+    if (hp == null) continue
+    if (bottles[i].currentLocation !== 'REMOTE' && bottles[i].currentBin === hp.recommendedBin) alreadyAtDestination++
+    else homeCount++
   }
 
   // Pass 2: resolve bins for bottles that need to move
@@ -237,12 +251,12 @@ export function buildSyncRows(
       const placement = placements[i]
       // Bottles already at REMOTE still get a shelf: the REMOTE layout can
       // change, and a bottle on the wrong shelf is a move within REMOTE.
-      if (placement == null) return remoteAtDest.has(i) ? { bottle, location: 'REMOTE' as ResolvedLocation } : null
+      if (placement == null || homeOverflow.has(i)) return remoteAtDest.has(i) || homeOverflow.has(i) ? { bottle, location: 'REMOTE' as ResolvedLocation } : null
       return { bottle, location: placement.recommendedLocation as ResolvedLocation }
     })
     .filter((x): x is { bottle: Bottle; location: ResolvedLocation } => x != null)
 
-  const binRules = [...remoteBinRules, ...homeBinRules]
+  const binRules = remoteBinRules
   const binContext = {
     currentYear,
     capacity: createCapacityTracker(new Map()),
@@ -284,6 +298,14 @@ export function buildSyncRows(
       ruleId = binRes?.binRuleId ?? null
       // On another shelf than its rule's: a move within REMOTE, not "in place".
       if (recBin != null && bottle.currentBin !== recBin) { alreadyAtDestination--; needsMoveCount++ }
+    }
+
+    if (homeOverflow.has(i)) {
+      const binRes = binResolutions.get(bottle.barcode)
+      recLoc = 'REMOTE'
+      recBin = binRes?.binId ?? null
+      reason = 'home full: REMOTE'
+      ruleId = binRes?.binRuleId ?? null
     }
 
     const homePlacement = homePlacements[i]

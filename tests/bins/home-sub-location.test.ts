@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { determineHomeSubLocation, buildHomeBinId } from '../../src/bins/home-sub-location'
+import { determineHomeSubLocation } from '../../src/bins/home-sub-location'
 import type { Bottle } from '../../src/rules/types'
 
 function makeBottle(overrides: Partial<Bottle> = {}): Bottle {
@@ -30,25 +30,13 @@ describe('determineHomeSubLocation', () => {
     expect(determineHomeSubLocation(b, YEAR)).toBe('Lagringsskåp')
   })
 
-  it('Lgh category under 31 → Lagringsskåp', () => {
-    const b = makeBottle({ endConsume: 2040 })
-    expect(determineHomeSubLocation(b, YEAR, 20)).toBe('Lagringsskåp')
-  })
 
-  it('Lgh category at 31 → Källaren (0.9 full)', () => {
-    const b = makeBottle({ endConsume: 2040 })
-    expect(determineHomeSubLocation(b, YEAR, 31)).toBe('Källaren')
-  })
 
-  it('no count provided → Lagringsskåp (default)', () => {
-    const b = makeBottle({ endConsume: 2040 })
-    expect(determineHomeSubLocation(b, YEAR)).toBe('Lagringsskåp')
-  })
 
-  it('no drink window data → Lagringsskåp (if under limit)', () => {
-    const b = makeBottle({ beginConsume: null, endConsume: null })
-    expect(determineHomeSubLocation(b, YEAR, 0)).toBe('Lagringsskåp')
-  })
+
+
+
+
 
   it('boundary: end = currentYear (past-peak) + expensive → Cooler', () => {
     const b = makeBottle({ endConsume: 2026, cost: 500 })
@@ -63,19 +51,5 @@ describe('determineHomeSubLocation', () => {
   it('null cost treated as 0 → not Cooler even if past-peak', () => {
     const b = makeBottle({ endConsume: 2020, cost: null })
     expect(determineHomeSubLocation(b, YEAR)).not.toBe('Cooler')
-  })
-})
-
-describe('buildHomeBinId', () => {
-  it('Lagringsskåp → "Lgh" prefix', () => {
-    expect(buildHomeBinId('1. ITALIA', 'Lagringsskåp')).toBe('Lgh 1. ITALIA')
-  })
-
-  it('Källaren → "Kall" prefix', () => {
-    expect(buildHomeBinId('2. FRANKRIKE', 'Källaren')).toBe('Kall 2. FRANKRIKE')
-  })
-
-  it('Cooler → just "Cooler" regardless of category', () => {
-    expect(buildHomeBinId('1. ITALIA', 'Cooler')).toBe('Cooler')
   })
 })

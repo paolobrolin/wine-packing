@@ -48,7 +48,7 @@ describe('OverrideSheet', () => {
   it('shows HOME bins for HOME destination', () => {
     render(<OverrideSheet bottle={makeDbBottle({ recommended_location: 'HOME', recommended_bin: 'Lgh 2. FRANKRIKE' })} onConfirm={() => {}} onKeep={() => {}} onCancel={() => {}} />)
     const select = screen.getByTestId('override-select')
-    expect(select).toContainHTML('Lgh 1. ITALIA')
+    expect(select).toContainHTML('Lgh 3. ITALIA')
     expect(select).toContainHTML('Cooler')
   })
 
@@ -78,7 +78,7 @@ describe('OverrideSheet', () => {
     render(<OverrideSheet bottle={makeDbBottle()} onConfirm={() => {}} onKeep={() => {}} onCancel={() => {}} />)
     const select = screen.getByTestId('override-select')
     expect(select).toContainHTML('5.6 NAPA')
-    expect(select).toContainHTML('Lgh 1. ITALIA')
+    expect(select).toContainHTML('Lgh 3. ITALIA')
     expect(select).toContainHTML('Cooler')
   })
 
@@ -99,11 +99,11 @@ describe('OverrideSheet', () => {
   it('pre-selects HOME bin when recommended_bin is a HOME bin', () => {
     const bottle = makeDbBottle({
       recommended_location: 'HOME',
-      recommended_bin: 'Lgh 7. SOTA + STARKVIN',
+      recommended_bin: 'Lgh 1. SOTA + STARKVIN',
     })
     render(<OverrideSheet bottle={bottle} onConfirm={() => {}} onKeep={() => {}} onCancel={() => {}} />)
     const select = screen.getByTestId('override-select') as HTMLSelectElement
-    expect(select.value).toBe('Lgh 7. SOTA + STARKVIN')
+    expect(select.value).toBe('Lgh 1. SOTA + STARKVIN')
   })
 
   it('falls back to first bin when recommended_bin is null', () => {
@@ -117,10 +117,10 @@ describe('OverrideSheet', () => {
     const onConfirm = vi.fn()
     const bottle = makeDbBottle({
       recommended_location: 'HOME',
-      recommended_bin: 'Lgh 7. SOTA + STARKVIN',
+      recommended_bin: 'Lgh 1. SOTA + STARKVIN',
     })
     render(<OverrideSheet bottle={bottle} onConfirm={onConfirm} onKeep={() => {}} onCancel={() => {}} />)
     await userEvent.click(screen.getByTestId('override-confirm'))
-    expect(onConfirm).toHaveBeenCalledWith('0001', 'Lgh 7. SOTA + STARKVIN')
+    expect(onConfirm).toHaveBeenCalledWith('0001', 'Lgh 1. SOTA + STARKVIN')
   })
 })

@@ -65,7 +65,7 @@ describe('buildSyncRows', () => {
 
   it('HOME bottle already at correct bin is synced (no action)', () => {
     const ct = makeCtBottle({
-      begin_consume: 2024, end_consume: 2028, location: 'Cellar', bin: 'Lgh 2. FRANKRIKE',
+      begin_consume: 2024, end_consume: 2028, location: 'Cellar', bin: 'Lgh 5. FRANKRIKE',
       extra: { Vintage: '2020', Wine: 'Test Bordeaux', Producer: 'Test', Country: 'France', Region: 'Burgundy', Type: null },
     })
     const { rows } = buildSyncRows([ct], new Map(), 2026)
@@ -240,7 +240,7 @@ describe('buildSyncRows', () => {
     const { rows } = buildSyncRows([ct], new Map(), 2026)
 
     expect(rows[0].recommended_location).toBe('HOME')
-    expect(rows[0].recommended_bin).toMatch(/^(Lgh|Kall) 7\. SOTA \+ STARKVIN$/)
+    expect(rows[0].recommended_bin).toBe('Lgh 1. SOTA + STARKVIN')
   })
 })
 

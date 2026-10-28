@@ -2,29 +2,14 @@ import type { Bottle } from '../rules/types'
 
 export type HomeSubLocation = 'Lagringsskåp' | 'Källaren' | 'Cooler'
 
-const LGH_PER_CATEGORY = 31
-
-export function determineHomeSubLocation(
-  bottle: Bottle,
-  currentYear: number,
-  lghCategoryCount?: number,
-): HomeSubLocation {
+/**
+ * Past its drinking window and worth 500 kr or more → the Cooler, to be drunk
+ * soon. Everything else is placed by the home layout (src/bins/home/layout.ts),
+ * which decides between the cabinet and Källaren by shelf capacity.
+ */
+export function determineHomeSubLocation(bottle: Bottle, currentYear: number): HomeSubLocation {
   const end = bottle.endConsume
   const cost = bottle.cost ?? 0
-
-  if (end != null && end < currentYear && cost >= 500) {
-    return 'Cooler'
-  }
-
-  const lghFull = (lghCategoryCount ?? 0) >= LGH_PER_CATEGORY
-  return lghFull ? 'Källaren' : 'Lagringsskåp'
-}
-
-export function buildHomeBinId(
-  category: string,
-  subLocation: HomeSubLocation,
-): string {
-  if (subLocation === 'Cooler') return 'Cooler'
-  const prefix = subLocation === 'Lagringsskåp' ? 'Lgh' : 'Kall'
-  return `${prefix} ${category}`
+  if (end != null && end < currentYear && cost >= 500) return 'Cooler'
+  return 'Lagringsskåp'
 }
