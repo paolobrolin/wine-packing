@@ -1,6 +1,6 @@
 # Rollout: new five-cabinet shelf layout
 
-Status: prepared on branch `new-shelf-layout`, **not rolled out**. Paolo finishes
+Status: **rolled out 2026-10-28 21:53** (merged to master, deployed, synced; Cooler baseline applied; repeat sync changes nothing). Paolo finishes
 packing at home in the old shelf order first, then unpacks into the new shelves
 one old shelf (box) at a time.
 
