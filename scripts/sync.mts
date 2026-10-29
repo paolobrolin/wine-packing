@@ -2,8 +2,8 @@
  * CT → Supabase sync runner.
  *
  * Usage:
- *   1. Export in-stock bottles from CT MCP (list_bottles bottle_state=1),
- *      filter store="E2E Test", save as JSON array to /tmp/ct_bottles.json
+ *   1. refresh_all in the CT MCP, then `python3 -I scripts/export-ct.py`
+ *      (in-stock bottles plus market values → /tmp/ct_bottles.json)
  *   2. npx tsx scripts/sync.mts
  *
  * Reads Supabase credentials from ~/.claude-private/supabase/.

@@ -16,6 +16,10 @@ export interface Bottle {
   cost: number | null
   // Currency of cost (CT's BottleCostCurrency); missing means SEK.
   costCurrency?: string | null
+  // CT's market value (Valuation) in SEK per 750 ml; missing when CT has none.
+  marketValue?: number | null
+  // The highest value750 among all bottles of this wine (any vintage, any size).
+  wineValue?: number | null
   beginConsume: number | null
   endConsume: number | null
   currentLocation: string | null

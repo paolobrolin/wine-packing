@@ -1,5 +1,6 @@
 import type { BinRule } from '../types'
 import type { Bottle } from '../../rules/types'
+import { costSek } from '../../rules/money'
 
 // The 2026-11 layout (five cabinets). Skåp 1 holds OWC cases, bulky single
 // boxes and SQN/NoK; Skåp 2–5 hold loose bottles, one region group per shelf,
@@ -41,13 +42,10 @@ const isPdB = (b: Bottle) => b.producer === 'Produttori del Barbaresco'
 /** A bulky single box kept in the OWC cabinet: bottle note "OWC 1x1" (or "singel"). */
 const isSingleBox = (b: Bottle) => /\b1\s*x\s*1\b|singel|single/i.test(b.bottleNote ?? '')
 
-/** Bottle cost in SEK from which Tuscany and Barolo go on their prestige rows. */
+/** Bottle cost in SEK from which Tuscany goes on its prestige row. */
 const TUSCANY_PRESTIGE_COST = 2000
-const BAROLO_PRESTIGE_COST = 1999
-
-// Rough rates, enough to place a bottle on the right side of a shelf threshold.
-const SEK_PER: Record<string, number> = { SEK: 1, EUR: 11, USD: 10 }
-const costSek = (b: Bottle) => (b.cost ?? 0) * (SEK_PER[b.costCurrency ?? 'SEK'] ?? 1)
+/** Value of the wine (market value per 750 ml, any vintage) from which Barolo goes on its prestige row. */
+const BAROLO_PRESTIGE_VALUE = 1800
 
 const SPAIN_DUERO = ['Ribera del Duero', 'Toro', 'Cebreros', 'Vinos de Madrid', 'Rueda', 'Cigales']
 const NEW_WORLD = ['Australia', 'New Zealand', 'South Africa', 'Argentina', 'Chile', 'Uruguay', 'Canada']
@@ -71,8 +69,9 @@ const SPECS: Spec[] = [
   { id: 'piemonte-white', binId: '2.7 PIEMONTE WHITE', priority: 70, match: (b) => isPiedmont(b) && isWhite(b) && !isSweet(b) },
   { id: 'barbaresco-pdb', binId: '3.2 BARBARESCO PDB', priority: 69, match: (b) => isPiedmont(b) && isBarbaresco(b) && isPdB(b) && (b.wine.includes('Riserva') || b.size !== '750ml') },
   { id: 'barbaresco', binId: '3.1 BARBARESCO', priority: 68, match: (b) => isPiedmont(b) && isBarbaresco(b) },
-  // One row for the dearest Barolo; the threshold goes up as the row fills.
-  { id: 'barolo-prestige', binId: '2.5 BAROLO PRESTIGE', priority: 67, match: (b) => isBaroloShelf(b) && costSek(b) >= BAROLO_PRESTIGE_COST },
+  // One row for the most valuable Barolo wines, all vintages of a wine together;
+  // the threshold goes up as the row fills.
+  { id: 'barolo-prestige', binId: '2.5 BAROLO PRESTIGE', priority: 67, match: (b) => isBaroloShelf(b) && (b.wineValue ?? 0) >= BAROLO_PRESTIGE_VALUE },
   // Four shelves by producer; P is too big for one shelf with R–Z, so it splits at Pio.
   { id: 'barolo-a-f', binId: '2.1 BAROLO A–F', priority: 66, match: (b) => isBaroloShelf(b) && sortKey(b.producer) < 'g' },
   { id: 'barolo-g-l', binId: '2.2 BAROLO G–L', priority: 65, match: (b) => isBaroloShelf(b) && sortKey(b.producer) < 'm' },

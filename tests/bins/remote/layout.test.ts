@@ -56,9 +56,9 @@ describe('layout 2026-11 — Piedmont', () => {
     expect(bin(it_({ producer, wine: `${producer} Barolo`, appellation: 'Barolo', cost: 900 }))).toBe(expected)
   })
 
-  it('Barolo from 1 999 kr a bottle goes to 2.5 BAROLO PRESTIGE', () => {
-    expect(bin(it_({ producer: 'Roagna', wine: 'Roagna Barolo Pira', appellation: 'Barolo', cost: 1999 }))).toBe('2.5 BAROLO PRESTIGE')
-    expect(bin(it_({ producer: 'Vietti', wine: 'Vietti Barolo Rocche di Castiglione', appellation: 'Barolo', cost: 1799 }))).toBe('2.4 BAROLO PIO–Z')
+  it('a Barolo whose wine is worth 1 800 kr or more goes to 2.5 BAROLO PRESTIGE', () => {
+    expect(bin(it_({ producer: 'Roagna', wine: 'Roagna Barolo Pira', appellation: 'Barolo', cost: 1250, wineValue: 1888 }))).toBe('2.5 BAROLO PRESTIGE')
+    expect(bin(it_({ producer: 'Roagna', wine: 'Roagna Barolo Rocche di Castiglione', appellation: 'Barolo', cost: 1999, wineValue: 1774 }))).toBe('2.4 BAROLO PIO–Z')
   })
 
   it('Langhe Nebbiolo, Barbera and other Piedmont reds go to 2.6 PIEMONTE OTHER', () => {

@@ -107,4 +107,31 @@ describe('buildSyncRows with bin resolution', () => {
     const { rows } = buildSyncRows([vdf], new Map(), 2026)
     expect(rows[0].recommended_bin).toBe('3.6 FR OTHER')
   })
+
+  describe('Barolo prestige is decided per wine, on market value', () => {
+    const pira = (barcode: string, vintage: string, o: Partial<CtBottle> & { valuation?: string } = {}) => makeCtBottle({
+      barcode, bottle_cost: o.bottle_cost ?? 1250, size: o.size ?? '750ml',
+      extra: { Vintage: vintage, Wine: o.extra?.Wine ?? 'Roagna Barolo Pira', Producer: o.extra?.Producer ?? 'Roagna', Country: 'Italy', Region: 'Piedmont', Appellation: 'Barolo', Type: 'Red', Valuation: o.valuation ?? null },
+    })
+    const binOf = (rows: { barcode: string; recommended_bin: string | null }[], bc: string) => rows.find((r) => r.barcode === bc)!.recommended_bin
+
+    it('every vintage of a wine follows the one valued from 1 800 kr', () => {
+      const { rows } = buildSyncRows([pira('a', '2019', { valuation: '1887,9516' }), pira('b', '2020', { valuation: '1500' })], new Map(), 2026)
+      expect(binOf(rows, 'a')).toBe('2.5 BAROLO PRESTIGE')
+      expect(binOf(rows, 'b')).toBe('2.5 BAROLO PRESTIGE')
+    })
+
+    it('without a market value the purchase price per 750 ml counts', () => {
+      const plain = makeCtBottle({ barcode: 'c', bottle_cost: 1900, extra: { Vintage: '2020', Wine: 'X Barolo', Producer: 'X', Country: 'Italy', Region: 'Piedmont', Appellation: 'Barolo', Type: 'Red' } })
+      const magnum = makeCtBottle({ barcode: 'd', size: '1.5L', bottle_cost: 3229, extra: { Vintage: '2021', Wine: 'Y Barolo', Producer: 'Y', Country: 'Italy', Region: 'Piedmont', Appellation: 'Barolo', Type: 'Red' } })
+      const { rows } = buildSyncRows([plain, magnum], new Map(), 2026)
+      expect(binOf(rows, 'c')).toBe('2.5 BAROLO PRESTIGE')
+      expect(binOf(rows, 'd')).not.toBe('2.5 BAROLO PRESTIGE')
+    })
+
+    it('a market value below 1 800 keeps the wine off the row even if it was bought dearer', () => {
+      const { rows } = buildSyncRows([pira('e', '2020', { bottle_cost: 2749, valuation: '1684' })], new Map(), 2026)
+      expect(binOf(rows, 'e')).not.toBe('2.5 BAROLO PRESTIGE')
+    })
+  })
 })

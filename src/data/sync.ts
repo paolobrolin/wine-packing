@@ -9,6 +9,7 @@ import { remoteBinRules } from '../bins/remote'
 import { CABINET, CELLAR_SHELVES, HOME_LAYOUT_BINS, HOME_MARGIN, homeCategory, isOnCabinetShelf, placesFor, type HomeCategory } from '../bins/home/layout'
 import { determineHomeSubLocation } from '../bins/home-sub-location'
 import { isRemoteBin, REMOTE_BINS } from '../bins/all-bins'
+import { value750 } from '../rules/money'
 
 export interface CtBottle {
   barcode: string
@@ -31,6 +32,8 @@ export interface CtBottle {
     SubRegion?: string | null
     Appellation?: string | null
     Type: string | null
+    // CT's market value per 750 ml in SEK, as CT writes it ('1887,9516').
+    Valuation?: string | null
   }
 }
 
@@ -133,14 +136,14 @@ export function buildSyncRows(
 
   // The rules see the effective position, so a bottle placed in the app is
   // judged where it actually is, not where CT still thinks it is.
-  const bottles: Bottle[] = withProducerRegion(ctBottles.map((ct, i) => {
+  const bottles: Bottle[] = withWineValue(withProducerRegion(ctBottles.map((ct, i) => {
     const valuation = valuations.get(ct.barcode)
     const effectiveCost = (ct.bottle_cost ?? 0) !== 0 ? ct.bottle_cost : valuation?.value ?? null
     const pos = appPositions[i]
     // A valuation stands in for a missing cost, and valuations are in SEK.
     const currency = (ct.bottle_cost ?? 0) !== 0 ? ct.bottle_cost_currency : 'SEK'
     return toRuleBottle({ ...ct, bottle_cost: effectiveCost, bottle_cost_currency: currency, ...(pos ?? {}) })
-  }))
+  })))
 
   const verticals = buildVerticals(bottles)
   const owcGroups = buildOwcGroups(ctBottles, bottles)
@@ -438,6 +441,7 @@ function toRuleBottle(ct: CtBottle): Bottle {
     size: ct.size ?? '750ml',
     cost: ct.bottle_cost,
     costCurrency: ct.bottle_cost_currency,
+    marketValue: parseCtNumber(ct.extra.Valuation),
     beginConsume: sanitizeDrinkWindow(ct.begin_consume),
     endConsume: sanitizeDrinkWindow(ct.end_consume),
     currentLocation: ct.location,
@@ -465,6 +469,21 @@ function withProducerRegion(bottles: Bottle[]): Bottle[] {
     const set = regions.get(b.producer)
     return set?.size === 1 ? { ...b, region: [...set][0] } : b
   })
+}
+
+/** CT writes numbers with a decimal comma ('1887,9516'); 0 or blank means none. */
+function parseCtNumber(v: string | null | undefined): number | null {
+  if (v == null || v === '') return null
+  const n = Number(v.replace(',', '.'))
+  return Number.isFinite(n) && n > 0 ? n : null
+}
+
+/** Each bottle gets the value of its wine: the highest value750 over all its vintages and sizes. */
+function withWineValue(bottles: Bottle[]): Bottle[] {
+  const best = new Map<string, number>()
+  const key = (b: Bottle) => `${b.producer}|${b.wine}`
+  for (const b of bottles) best.set(key(b), Math.max(best.get(key(b)) ?? 0, value750(b)))
+  return bottles.map((b) => ({ ...b, wineValue: best.get(key(b)) ?? null }))
 }
 
 function buildVerticals(bottles: Bottle[]): Map<string, Bottle[]> {
