@@ -35,7 +35,7 @@ const isNoK = (b: Bottle) => b.producer.includes('Next of Kyn') || b.producer.in
 const isPiedmont = (b: Bottle) => b.country === 'Italy' && b.region === 'Piedmont'
 const isBarolo = (b: Bottle) => appellation(b) === 'Barolo' || (appellation(b) === '' && b.wine.includes('Barolo'))
 const isBarbaresco = (b: Bottle) => appellation(b) === 'Barbaresco' || (appellation(b) === '' && b.wine.includes('Barbaresco'))
-const isBaroloShelf = (b: Bottle) => isPiedmont(b) && (isBarolo(b) || isBarbaresco(b))
+const isBaroloShelf = (b: Bottle) => isPiedmont(b) && isBarolo(b)
 const isPdB = (b: Bottle) => b.producer === 'Produttori del Barbaresco'
 
 /** A bulky single box kept in the OWC cabinet: bottle note "OWC 1x1" (or "singel"). */
@@ -70,8 +70,7 @@ const SPECS: Spec[] = [
   // Piedmont
   { id: 'piemonte-white', binId: '2.7 PIEMONTE WHITE', priority: 70, match: (b) => isPiedmont(b) && isWhite(b) && !isSweet(b) },
   { id: 'barbaresco-pdb', binId: '3.2 BARBARESCO PDB', priority: 69, match: (b) => isPiedmont(b) && isBarbaresco(b) && isPdB(b) && (b.wine.includes('Riserva') || b.size !== '750ml') },
-  // Gaja's Barbaresco sits with Gaja's Barolo (falls through to the Barolo rules)
-  { id: 'barbaresco', binId: '3.1 BARBARESCO', priority: 68, match: (b) => isPiedmont(b) && isBarbaresco(b) && !b.producer.startsWith('Gaja') },
+  { id: 'barbaresco', binId: '3.1 BARBARESCO', priority: 68, match: (b) => isPiedmont(b) && isBarbaresco(b) },
   // One row for the dearest Barolo; the threshold goes up as the row fills.
   { id: 'barolo-prestige', binId: '2.5 BAROLO PRESTIGE', priority: 67, match: (b) => isBaroloShelf(b) && costSek(b) >= BAROLO_PRESTIGE_COST },
   // Four shelves by producer; P is too big for one shelf with R–Z, so it splits at Pio.

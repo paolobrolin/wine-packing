@@ -58,7 +58,6 @@ describe('layout 2026-11 — Piedmont', () => {
 
   it('Barolo from 1 999 kr a bottle goes to 2.5 BAROLO PRESTIGE', () => {
     expect(bin(it_({ producer: 'Roagna', wine: 'Roagna Barolo Pira', appellation: 'Barolo', cost: 1999 }))).toBe('2.5 BAROLO PRESTIGE')
-    expect(bin(it_({ producer: 'Gaja', wine: 'Gaja Barbaresco', appellation: 'Barbaresco', size: '1.5L', cost: 5495 }))).toBe('2.5 BAROLO PRESTIGE')
     expect(bin(it_({ producer: 'Vietti', wine: 'Vietti Barolo Rocche di Castiglione', appellation: 'Barolo', cost: 1799 }))).toBe('2.4 BAROLO PIO–Z')
   })
 
@@ -68,8 +67,8 @@ describe('layout 2026-11 — Piedmont', () => {
     expect(bin(it_({ producer: 'Gaja', wine: 'Gaja Langhe Sito Moresco', appellation: 'Langhe DOC', cost: 2500 }))).toBe('2.6 PIEMONTE OTHER')
   })
 
-  it('Gaja\'s Barbaresco sits with Gaja\'s Barolo', () => {
-    expect(bin(it_({ producer: 'Gaja', wine: 'Gaja Barbaresco', appellation: 'Barbaresco', cost: 900 }))).toBe('2.2 BAROLO G–L')
+  it('Gaja\'s Barbaresco goes to 3.1 BARBARESCO like any other, however dear', () => {
+    expect(bin(it_({ producer: 'Gaja', wine: 'Gaja Barbaresco', appellation: 'Barbaresco', size: '1.5L', cost: 5495 }))).toBe('3.1 BARBARESCO')
   })
 
   it('Piedmont whites (Timorasso, Langhe Chardonnay) go to 2.7', () => {
