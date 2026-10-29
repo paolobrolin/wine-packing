@@ -180,5 +180,13 @@ describe('SearchResultCard — moving a done bottle', () => {
     await userEvent.click(screen.getByText('Move'))
     expect(onDone).toHaveBeenCalledWith('0001')
   })
+
+  it('a shelved bottle without a bin has a Place button that opens the dialog (onDone)', async () => {
+    const onDone = vi.fn()
+    const bottle = makeDbBottle({ state: 'shelved', current_location: 'Cellar', current_bin: null, recommended_location: 'REMOTE', recommended_bin: '4.1 SICILIA A–P' })
+    render(<SearchResultCard result={scored(bottle, 'no-move')} onDone={onDone} />)
+    await userEvent.click(screen.getByText('Place'))
+    expect(onDone).toHaveBeenCalledWith('0001')
+  })
 })
 

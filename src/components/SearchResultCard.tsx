@@ -112,6 +112,12 @@ export const SearchResultCard = memo(function SearchResultCard({ result, onDone,
             Move
           </button>
         )}
+        {/* Shelved with no bin says nothing about where it is: let it be placed. */}
+        {!canAct && bottle.state === 'shelved' && !bottle.current_bin && (
+          <button className="search-card__action" onClick={handleDone}>
+            Place
+          </button>
+        )}
         {!canAct && (bottle.state === 'packed' || bottle.state === 'in_transit') && onUndo && (
           <button className="search-card__action search-card__action--undo" onClick={handleUndo}>
             Undo
