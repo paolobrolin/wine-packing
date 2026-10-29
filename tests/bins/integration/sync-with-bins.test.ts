@@ -41,7 +41,7 @@ describe('buildSyncRows with bin resolution', () => {
       begin_consume: 2020, end_consume: 2045,
     })
     const { rows } = buildSyncRows([ct], new Map(), 2026)
-    expect(rows[0].recommended_bin).toBe('3.7 SPARKLING L–Z')
+    expect(rows[0].recommended_bin).toBe('3.8 SPARKLING L–Z')
   })
 
   it('assigns HOME placement with bin for HOME bottles', () => {
@@ -83,7 +83,7 @@ describe('buildSyncRows with bin resolution', () => {
       extra: { Vintage: '2020', Wine: 'Ferrari Perlé', Producer: 'Ferrari', Country: 'Italy', Region: 'Trentino-Alto Adige', Type: 'White - Sparkling' },
     })
     const { rows } = buildSyncRows([ct], new Map(), 2026)
-    expect(rows[0].recommended_bin).toBe('3.6 SPARKLING A–K')
+    expect(rows[0].recommended_bin).toBe('3.7 SPARKLING A–K')
   })
 
   it('assigns the Mediterranean shelf (with Greece) for Lebanon', () => {
@@ -105,6 +105,6 @@ describe('buildSyncRows with bin resolution', () => {
   it('a Vin de France without other bottles from the producer stays in FR OTHER', () => {
     const vdf = makeCtBottle({ extra: { Vintage: '2024', Wine: 'Domaine X Vin de France', Producer: 'Domaine X', Country: 'France', Region: 'France', Type: 'Red' } })
     const { rows } = buildSyncRows([vdf], new Map(), 2026)
-    expect(rows[0].recommended_bin).toBe('3.8 FR OTHER')
+    expect(rows[0].recommended_bin).toBe('3.6 FR OTHER')
   })
 })

@@ -57,8 +57,8 @@ const SPECS: Spec[] = [
   { id: 'sqn-regular', binId: '1.3 SQN REGULAR', priority: 89, match: (b) => isSqn(b) },
 
   // Sparkling from anywhere (Champagne, Cava, Alta Langa, …)
-  { id: 'sparkling-a-k', binId: '3.6 SPARKLING A–K', priority: 80, match: (b) => isSparkling(b) && inRange(b.producer, 'a', 'k') },
-  { id: 'sparkling-l-z', binId: '3.7 SPARKLING L–Z', priority: 79, match: (b) => isSparkling(b) || b.region === 'Champagne' },
+  { id: 'sparkling-a-k', binId: '3.7 SPARKLING A–K', priority: 80, match: (b) => isSparkling(b) && inRange(b.producer, 'a', 'k') },
+  { id: 'sparkling-l-z', binId: '3.8 SPARKLING L–Z', priority: 79, match: (b) => isSparkling(b) || b.region === 'Champagne' },
 
   // Piedmont
   { id: 'piemonte-white', binId: '2.6 PIEMONTE WHITE', priority: 70, match: (b) => isPiedmont(b) && isWhite(b) && !isSweet(b) },
@@ -92,7 +92,7 @@ const SPECS: Spec[] = [
   { id: 'bourgogne', binId: '4.6 BOURGOGNE', priority: 38, match: (b) => b.country === 'France' && b.region === 'Burgundy' },
   { id: 'rhone', binId: '4.7 RHONE', priority: 37, match: (b) => b.country === 'France' && b.region === 'Rhône' },
   { id: 'jura', binId: '4.8 JURA', priority: 36, match: (b) => b.country === 'France' && b.region === 'Jura' },
-  { id: 'fr-other', binId: '3.8 FR OTHER', priority: 35, match: (b) => b.country === 'France' },
+  { id: 'fr-other', binId: '3.6 FR OTHER', priority: 35, match: (b) => b.country === 'France' },
 
   // Germany + Austria
   { id: 'de-mosel-a-e', binId: '5.1 DE MOSEL + NAHE A–E', priority: 30, match: (b) => b.country === 'Germany' && ['Mosel Saar Ruwer', 'Nahe'].includes(b.region) && inRange(b.producer, 'a', 'e') },

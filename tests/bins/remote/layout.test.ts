@@ -80,7 +80,7 @@ describe('layout 2026-11 — Piedmont', () => {
   })
 
   it('Piedmont sparkling goes to the sparkling shelves, not Piedmont', () => {
-    expect(bin(it_({ producer: 'Ettore Germano', wine: 'Ettore Germano Alta Langa', wineType: 'White - Sparkling' }))).toBe('3.6 SPARKLING A–K')
+    expect(bin(it_({ producer: 'Ettore Germano', wine: 'Ettore Germano Alta Langa', wineType: 'White - Sparkling' }))).toBe('3.7 SPARKLING A–K')
   })
 })
 
@@ -113,26 +113,26 @@ describe('layout 2026-11 — rest of Italy, Spain, Greece', () => {
     expect(bin(b({ country: 'Spain', region: 'La Rioja', appellation: 'Rioja', producer: 'R. López de Heredia' }))).toBe('4.5 SP RIOJA')
   })
   it('Cava goes to the sparkling shelves', () => {
-    expect(bin(b({ country: 'Spain', region: 'Catalunya', appellation: 'Cava', producer: 'Raventós i Blanc', wineType: 'White - Sparkling' }))).toBe('3.7 SPARKLING L–Z')
+    expect(bin(b({ country: 'Spain', region: 'Catalunya', appellation: 'Cava', producer: 'Raventós i Blanc', wineType: 'White - Sparkling' }))).toBe('3.8 SPARKLING L–Z')
   })
 })
 
 describe('layout 2026-11 — France', () => {
   it('sparkling split by producer A–K / L–Z', () => {
-    expect(bin(b({ region: 'Champagne', producer: 'Bollinger', wineType: 'White - Sparkling' }))).toBe('3.6 SPARKLING A–K')
-    expect(bin(b({ region: 'Champagne', producer: 'Louis Roederer', wineType: 'White - Sparkling' }))).toBe('3.7 SPARKLING L–Z')
+    expect(bin(b({ region: 'Champagne', producer: 'Bollinger', wineType: 'White - Sparkling' }))).toBe('3.7 SPARKLING A–K')
+    expect(bin(b({ region: 'Champagne', producer: 'Louis Roederer', wineType: 'White - Sparkling' }))).toBe('3.8 SPARKLING L–Z')
   })
   it('Bordeaux by bank; sweet Bordeaux is not on the bank shelves', () => {
     expect(bin(b({ producer: 'Château Giscours', subRegion: 'Médoc' }))).toBe('2.7 BDX LB')
     expect(bin(b({ producer: 'Château Haut-Bailly', subRegion: 'Graves' }))).toBe('2.7 BDX LB')
     expect(bin(b({ producer: 'Château Figeac', subRegion: 'Libournais' }))).toBe('2.8 BDX RB')
-    expect(bin(b({ producer: 'Château Suduiraut', subRegion: 'Sauternais', wineType: 'White - Sweet/Dessert' }))).toBe('3.8 FR OTHER')
+    expect(bin(b({ producer: 'Château Suduiraut', subRegion: 'Sauternais', wineType: 'White - Sweet/Dessert' }))).toBe('3.6 FR OTHER')
   })
   it('Bourgogne, Rhône, Jura each have a shelf; the rest of France goes to 3.8', () => {
     expect(bin(b({ region: 'Burgundy', producer: 'Domaine Leroy' }))).toBe('4.6 BOURGOGNE')
     expect(bin(b({ region: 'Rhône', producer: 'E. Guigal' }))).toBe('4.7 RHONE')
     expect(bin(b({ region: 'Jura', producer: 'Domaine Tissot', wineType: 'White' }))).toBe('4.8 JURA')
-    expect(bin(b({ region: 'Loire Valley', producer: 'Nicolas Joly', wineType: 'White' }))).toBe('3.8 FR OTHER')
+    expect(bin(b({ region: 'Loire Valley', producer: 'Nicolas Joly', wineType: 'White' }))).toBe('3.6 FR OTHER')
   })
 })
 

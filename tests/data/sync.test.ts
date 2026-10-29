@@ -39,14 +39,14 @@ describe('buildSyncRows', () => {
   it('a bottle at REMOTE on its shelf gets that shelf as recommendation and is done', () => {
     const ct = makeCtBottle({
       location: 'REMOTE',
-      bin: '3.8 FR OTHER',
+      bin: '3.6 FR OTHER',
       begin_consume: 2025,
       end_consume: 2045,
     })
     const { rows, stats } = buildSyncRows([ct], new Map(), 2026)
 
     expect(rows[0].recommended_location).toBe('REMOTE')
-    expect(rows[0].recommended_bin).toBe('3.8 FR OTHER')
+    expect(rows[0].recommended_bin).toBe('3.6 FR OTHER')
     expect(rows[0].state).toBe('synced')
     expect(stats.alreadyAtDestination).toBe(1)
     expect(stats.needsMove).toBe(0)
@@ -110,7 +110,7 @@ describe('buildSyncRows', () => {
 
     expect(rows[0].state).toBe('pending')
     expect(rows[0].recommended_location).toBe('REMOTE')
-    expect(rows[0].recommended_bin).toBe('3.8 FR OTHER')
+    expect(rows[0].recommended_bin).toBe('3.6 FR OTHER')
   })
 
   it('returns orphaned barcodes for deletion', () => {
@@ -396,10 +396,10 @@ describe('buildSyncRows — app placements not yet in CT', () => {
     const ct = makeCtBottle({ location: 'Cellar', bin: null, begin_consume: 2030, end_consume: 2045 })
     const withoutApp = buildSyncRows([ct], new Map(), 2026).rows[0]
     expect(withoutApp.recommended_location).toBe('REMOTE')
-    const existing = existingRow({ state: 'shelved', current_location: 'Cellar', current_bin: '3.8 FR OTHER', ct_bin_at_sync: null })
+    const existing = existingRow({ state: 'shelved', current_location: 'Cellar', current_bin: '3.6 FR OTHER', ct_bin_at_sync: null })
     const { rows } = buildSyncRows([ct], new Map([['0001', existing]]), 2026)
     expect(rows[0].current_location).toBe('REMOTE')
-    expect(rows[0].recommended_bin).toBe('3.8 FR OTHER')
+    expect(rows[0].recommended_bin).toBe('3.6 FR OTHER')
     expect(rows[0].state).toBe('synced')
   })
 
@@ -543,12 +543,12 @@ describe('buildSyncRows — done bottles get a new recommendation', () => {
     const existing = atRemoteRow({ current_bin: '2.6 FR OTHER', ct_bin_at_sync: '2.6 FR OTHER' })
     const ctRemote = makeCtBottle({ location: 'REMOTE', bin: '2.6 FR OTHER', begin_consume: 2030, end_consume: 2045 })
     const { rows } = buildSyncRows([ctRemote], new Map([['0001', existing]]), 2026)
-    expect(rows[0].recommended_bin).toBe('3.8 FR OTHER')
+    expect(rows[0].recommended_bin).toBe('3.6 FR OTHER')
     expect(rows[0].state).toBe('pending')
   })
 
   it('a done bottle moved to another REMOTE shelf in CT stays done (a deliberate move)', () => {
-    const existing = atRemoteRow({ current_bin: '3.8 FR OTHER', ct_bin_at_sync: '3.8 FR OTHER', recommended_location: 'REMOTE', recommended_bin: '3.8 FR OTHER' })
+    const existing = atRemoteRow({ current_bin: '3.6 FR OTHER', ct_bin_at_sync: '3.6 FR OTHER', recommended_location: 'REMOTE', recommended_bin: '3.6 FR OTHER' })
     const ctMoved = makeCtBottle({ location: 'REMOTE', bin: '2.7 BDX LB', begin_consume: 2030, end_consume: 2045 })
     const { rows } = buildSyncRows([ctMoved], new Map([['0001', existing]]), 2026)
     expect(rows[0].current_bin).toBe('2.7 BDX LB')
@@ -557,7 +557,7 @@ describe('buildSyncRows — done bottles get a new recommendation', () => {
 
   it('a bottle shelved at REMOTE on a neighbouring shelf becomes done once CT has that shelf', () => {
     // Shelved by hand on 2.7 while the rules say 3.8; CT was then written back to 2.7.
-    const existing = atRemoteRow({ state: 'shelved', current_bin: '2.7 BDX LB', ct_bin_at_sync: '2.6 FR OTHER', recommended_location: 'REMOTE', recommended_bin: '3.8 FR OTHER' })
+    const existing = atRemoteRow({ state: 'shelved', current_bin: '2.7 BDX LB', ct_bin_at_sync: '2.6 FR OTHER', recommended_location: 'REMOTE', recommended_bin: '3.6 FR OTHER' })
     const ctWritten = makeCtBottle({ location: 'REMOTE', bin: '2.7 BDX LB', begin_consume: 2030, end_consume: 2045 })
     const { rows } = buildSyncRows([ctWritten], new Map([['0001', existing]]), 2026)
     expect(rows[0].state).toBe('synced')
@@ -573,10 +573,10 @@ describe('buildSyncRows — done bottles get a new recommendation', () => {
   })
 
   it('never marks a packed bottle done just because its recommendation equals CT\'s (source) shelf', () => {
-    const existing = atRemoteRow({ state: 'packed', trip_id: 'trip1', packed_at: '2026-10-27T10:00:00Z', current_bin: '3.8 FR OTHER', ct_bin_at_sync: '3.8 FR OTHER', recommended_location: 'HOME', recommended_bin: 'Lgh 4. FRANKRIKE' })
-    const ctRemote = makeCtBottle({ location: 'REMOTE', bin: '3.8 FR OTHER', begin_consume: 2030, end_consume: 2045 })
+    const existing = atRemoteRow({ state: 'packed', trip_id: 'trip1', packed_at: '2026-10-27T10:00:00Z', current_bin: '3.6 FR OTHER', ct_bin_at_sync: '3.6 FR OTHER', recommended_location: 'HOME', recommended_bin: 'Lgh 4. FRANKRIKE' })
+    const ctRemote = makeCtBottle({ location: 'REMOTE', bin: '3.6 FR OTHER', begin_consume: 2030, end_consume: 2045 })
     const { rows } = buildSyncRows([ctRemote], new Map([['0001', existing]]), 2026)
-    expect(rows[0].recommended_bin).toBe('3.8 FR OTHER')
+    expect(rows[0].recommended_bin).toBe('3.6 FR OTHER')
     expect(rows[0].state).toBe('packed')
     expect(rows[0].trip_id).toBe('trip1')
   })
@@ -586,7 +586,7 @@ describe('buildSyncRows — done bottles get a new recommendation', () => {
     const kitchenDone = makeCtBottle({ barcode: 'kd', location: 'Cellar', bin: 'Köket', bottle_cost: 200, begin_consume: 2020, end_consume: 2027 })
     const sweet = makeCtBottle({ barcode: 's', location: 'Cellar', bin: null, extra: { Vintage: '2015', Wine: 'Sauternes', Producer: 'X', Country: 'France', Region: 'Bordeaux', Type: 'White - Sweet/Dessert' } })
     const toRemote = makeCtBottle({ barcode: 'r', location: 'Cellar', bin: null, begin_consume: 2030, end_consume: 2045 })
-    const atRemote = makeCtBottle({ barcode: 'a', location: 'REMOTE', bin: '3.8 FR OTHER', begin_consume: 2030, end_consume: 2045 })
+    const atRemote = makeCtBottle({ barcode: 'a', location: 'REMOTE', bin: '3.6 FR OTHER', begin_consume: 2030, end_consume: 2045 })
     const { stats } = buildSyncRows([kitchen, kitchenDone, sweet, toRemote, atRemote], new Map(), 2026)
     expect(stats.alreadyAtDestination).toBe(2)
     expect(stats.needsMove).toBe(1)
@@ -611,7 +611,7 @@ describe('buildSyncRows — done bottles get a new recommendation', () => {
 
   it('a done bottle on a current shelf, the Cooler or Köket stays done when placed there by hand', () => {
     for (const bin of ['Cooler', 'Köket', 'Lgh 5. VITA']) {
-      const existing = doneRow({ current_bin: bin, ct_bin_at_sync: bin, recommended_location: 'REMOTE', recommended_bin: '3.8 FR OTHER' })
+      const existing = doneRow({ current_bin: bin, ct_bin_at_sync: bin, recommended_location: 'REMOTE', recommended_bin: '3.6 FR OTHER' })
       const c = makeCtBottle({ location: 'Cellar', bin, begin_consume: 2030, end_consume: 2045 })
       const { rows } = buildSyncRows([c], new Map([['0001', existing]]), 2026)
       expect(rows[0].state).toBe('synced')
