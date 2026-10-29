@@ -48,27 +48,33 @@ describe('layout 2026-11 — Skåp 1 (OWC cabinet)', () => {
 
 describe('layout 2026-11 — Piedmont', () => {
   it.each([
-    ['Boroli', '2.1 BAROLO A–E'], ['E. Pira & Figli (Chiara Boschis)', '2.1 BAROLO A–E'], ['Elvio Cogno', '2.1 BAROLO A–E'],
-    ['Fratelli Alessandria', '2.2 BAROLO F–K'], ['G.D. Vajra', '2.2 BAROLO F–K'], ['Josetta Saffirio', '2.2 BAROLO F–K'],
-    ['LaLù', '2.3 BAROLO L–O'], ['Oddero', '2.3 BAROLO L–O'],
-    ['Paolo Scavino', '2.4 BAROLO P–Q'], ['Poderi Luigi Einaudi', '2.4 BAROLO P–Q'],
-    ['Renato Ratti', '2.5 BAROLO R–Z + LANGHE'], ['Vietti', '2.5 BAROLO R–Z + LANGHE'],
+    ['Boroli', '2.1 BAROLO A–F'], ['E. Pira & Figli (Chiara Boschis)', '2.1 BAROLO A–F'], ['Fratelli Brovia', '2.1 BAROLO A–F'],
+    ['Gaja', '2.2 BAROLO G–L'], ['G.D. Vajra', '2.2 BAROLO G–L'], ['Luigi Pira', '2.2 BAROLO G–L'],
+    ['Massolino', '2.3 BAROLO M–PIE'], ['Oddero', '2.3 BAROLO M–PIE'], ['Paolo Scavino', '2.3 BAROLO M–PIE'], ['Piero Benevelli', '2.3 BAROLO M–PIE'],
+    ['Pio Cesare', '2.4 BAROLO PIO–Z'], ['Poderi Luigi Einaudi', '2.4 BAROLO PIO–Z'], ['Renato Ratti', '2.4 BAROLO PIO–Z'], ['Vietti', '2.4 BAROLO PIO–Z'],
   ])('Barolo by %s → %s', (producer, expected) => {
-    expect(bin(it_({ producer, wine: `${producer} Barolo`, appellation: 'Barolo' }))).toBe(expected)
+    expect(bin(it_({ producer, wine: `${producer} Barolo`, appellation: 'Barolo', cost: 900 }))).toBe(expected)
   })
 
-  it('Langhe Nebbiolo and Barbera go with the last Barolo shelf', () => {
-    expect(bin(it_({ producer: 'Olek Bondonio', wine: 'Olek Bondonio Langhe Nebbiolo', appellation: 'Langhe DOC' }))).toBe('2.5 BAROLO R–Z + LANGHE')
-    expect(bin(it_({ producer: 'Giuseppe E Figlio Mascarello', wine: 'Mascarello Barbera d\'Alba Superiore Scudetto', appellation: "Barbera d'Alba Superiore" }))).toBe('2.5 BAROLO R–Z + LANGHE')
+  it('Barolo from 1 999 kr a bottle goes to 2.5 BAROLO PRESTIGE', () => {
+    expect(bin(it_({ producer: 'Roagna', wine: 'Roagna Barolo Pira', appellation: 'Barolo', cost: 1999 }))).toBe('2.5 BAROLO PRESTIGE')
+    expect(bin(it_({ producer: 'Gaja', wine: 'Gaja Barbaresco', appellation: 'Barbaresco', size: '1.5L', cost: 5495 }))).toBe('2.5 BAROLO PRESTIGE')
+    expect(bin(it_({ producer: 'Vietti', wine: 'Vietti Barolo Rocche di Castiglione', appellation: 'Barolo', cost: 1799 }))).toBe('2.4 BAROLO PIO–Z')
+  })
+
+  it('Langhe Nebbiolo, Barbera and other Piedmont reds go to 2.6 PIEMONTE OTHER', () => {
+    expect(bin(it_({ producer: 'Olek Bondonio', wine: 'Olek Bondonio Langhe Nebbiolo', appellation: 'Langhe DOC' }))).toBe('2.6 PIEMONTE OTHER')
+    expect(bin(it_({ producer: 'Giuseppe E Figlio Mascarello', wine: 'Mascarello Barbera d\'Alba Superiore Scudetto', appellation: "Barbera d'Alba Superiore" }))).toBe('2.6 PIEMONTE OTHER')
+    expect(bin(it_({ producer: 'Gaja', wine: 'Gaja Langhe Sito Moresco', appellation: 'Langhe DOC', cost: 2500 }))).toBe('2.6 PIEMONTE OTHER')
   })
 
   it('Gaja\'s Barbaresco sits with Gaja\'s Barolo', () => {
-    expect(bin(it_({ producer: 'Gaja', wine: 'Gaja Barbaresco', appellation: 'Barbaresco', size: '1.5L' }))).toBe('2.2 BAROLO F–K')
+    expect(bin(it_({ producer: 'Gaja', wine: 'Gaja Barbaresco', appellation: 'Barbaresco', cost: 900 }))).toBe('2.2 BAROLO G–L')
   })
 
-  it('Piedmont whites (Timorasso, Langhe Chardonnay) go to 2.6', () => {
-    expect(bin(it_({ producer: 'Vietti', wine: 'Vietti Timorasso Colli Tortonesi Derthona Boscogrosso', appellation: 'Colli Tortonesi', wineType: 'White' }))).toBe('2.6 PIEMONTE WHITE')
-    expect(bin(it_({ producer: 'Pio Cesare', wine: 'Pio Cesare Langhe Chardonnay Piodilei', appellation: 'Langhe DOC', wineType: 'White' }))).toBe('2.6 PIEMONTE WHITE')
+  it('Piedmont whites (Timorasso, Langhe Chardonnay) go to 2.7', () => {
+    expect(bin(it_({ producer: 'Vietti', wine: 'Vietti Timorasso Colli Tortonesi Derthona Boscogrosso', appellation: 'Colli Tortonesi', wineType: 'White' }))).toBe('2.7 PIEMONTE WHITE')
+    expect(bin(it_({ producer: 'Pio Cesare', wine: 'Pio Cesare Langhe Chardonnay Piodilei', appellation: 'Langhe DOC', wineType: 'White' }))).toBe('2.7 PIEMONTE WHITE')
   })
 
   it('Barbaresco: Produttori Riserva and Produttori magnums on 3.2, the rest on 3.1', () => {
@@ -123,9 +129,9 @@ describe('layout 2026-11 — France', () => {
     expect(bin(b({ region: 'Champagne', producer: 'Louis Roederer', wineType: 'White - Sparkling' }))).toBe('3.8 SPARKLING L–Z')
   })
   it('Bordeaux by bank; sweet Bordeaux is not on the bank shelves', () => {
-    expect(bin(b({ producer: 'Château Giscours', subRegion: 'Médoc' }))).toBe('2.7 BDX LB')
-    expect(bin(b({ producer: 'Château Haut-Bailly', subRegion: 'Graves' }))).toBe('2.7 BDX LB')
-    expect(bin(b({ producer: 'Château Figeac', subRegion: 'Libournais' }))).toBe('2.8 BDX RB')
+    expect(bin(b({ producer: 'Château Giscours', subRegion: 'Médoc' }))).toBe('2.8 BDX LB')
+    expect(bin(b({ producer: 'Château Haut-Bailly', subRegion: 'Graves' }))).toBe('2.8 BDX LB')
+    expect(bin(b({ producer: 'Château Figeac', subRegion: 'Libournais' }))).toBe('2.9 BDX RB')
     expect(bin(b({ producer: 'Château Suduiraut', subRegion: 'Sauternais', wineType: 'White - Sweet/Dessert' }))).toBe('3.6 FR OTHER')
   })
   it('Bourgogne, Rhône, Jura each have a shelf; the rest of France goes to 3.8', () => {

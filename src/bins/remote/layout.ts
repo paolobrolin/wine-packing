@@ -16,6 +16,11 @@ function initial(producer: string): string {
   return producer.replace(/^Weingut\s+/i, '').normalize('NFKD').replace(/[^\p{L}]/gu, '').charAt(0).toLowerCase()
 }
 
+/** The producer's letters, folded like initial(): for splitting a letter between shelves. */
+function sortKey(producer: string): string {
+  return producer.replace(/^Weingut\s+/i, '').normalize('NFKD').replace(/[^\p{L}]/gu, '').toLowerCase()
+}
+
 const inRange = (p: string, from: string, to: string) => {
   const c = initial(p)
   return c >= from && c <= to
@@ -30,13 +35,15 @@ const isNoK = (b: Bottle) => b.producer.includes('Next of Kyn') || b.producer.in
 const isPiedmont = (b: Bottle) => b.country === 'Italy' && b.region === 'Piedmont'
 const isBarolo = (b: Bottle) => appellation(b) === 'Barolo' || (appellation(b) === '' && b.wine.includes('Barolo'))
 const isBarbaresco = (b: Bottle) => appellation(b) === 'Barbaresco' || (appellation(b) === '' && b.wine.includes('Barbaresco'))
+const isBaroloShelf = (b: Bottle) => isPiedmont(b) && (isBarolo(b) || isBarbaresco(b))
 const isPdB = (b: Bottle) => b.producer === 'Produttori del Barbaresco'
 
 /** A bulky single box kept in the OWC cabinet: bottle note "OWC 1x1" (or "singel"). */
 const isSingleBox = (b: Bottle) => /\b1\s*x\s*1\b|singel|single/i.test(b.bottleNote ?? '')
 
-/** Bottle cost in SEK from which Tuscany goes on the prestige row. */
+/** Bottle cost in SEK from which Tuscany and Barolo go on their prestige rows. */
 const TUSCANY_PRESTIGE_COST = 2000
+const BAROLO_PRESTIGE_COST = 1999
 
 // Rough rates, enough to place a bottle on the right side of a shelf threshold.
 const SEK_PER: Record<string, number> = { SEK: 1, EUR: 11, USD: 10 }
@@ -61,16 +68,19 @@ const SPECS: Spec[] = [
   { id: 'sparkling-l-z', binId: '3.8 SPARKLING L–Z', priority: 79, match: (b) => isSparkling(b) || b.region === 'Champagne' },
 
   // Piedmont
-  { id: 'piemonte-white', binId: '2.6 PIEMONTE WHITE', priority: 70, match: (b) => isPiedmont(b) && isWhite(b) && !isSweet(b) },
+  { id: 'piemonte-white', binId: '2.7 PIEMONTE WHITE', priority: 70, match: (b) => isPiedmont(b) && isWhite(b) && !isSweet(b) },
   { id: 'barbaresco-pdb', binId: '3.2 BARBARESCO PDB', priority: 69, match: (b) => isPiedmont(b) && isBarbaresco(b) && isPdB(b) && (b.wine.includes('Riserva') || b.size !== '750ml') },
-  // Gaja's Barbaresco sits with Gaja's Barolo (falls through to the Barolo letter rules)
+  // Gaja's Barbaresco sits with Gaja's Barolo (falls through to the Barolo rules)
   { id: 'barbaresco', binId: '3.1 BARBARESCO', priority: 68, match: (b) => isPiedmont(b) && isBarbaresco(b) && !b.producer.startsWith('Gaja') },
-  { id: 'barolo-a-e', binId: '2.1 BAROLO A–E', priority: 66, match: (b) => isPiedmont(b) && (isBarolo(b) || isBarbaresco(b)) && inRange(b.producer, 'a', 'e') },
-  { id: 'barolo-f-k', binId: '2.2 BAROLO F–K', priority: 65, match: (b) => isPiedmont(b) && (isBarolo(b) || isBarbaresco(b)) && inRange(b.producer, 'f', 'k') },
-  { id: 'barolo-l-o', binId: '2.3 BAROLO L–O', priority: 64, match: (b) => isPiedmont(b) && (isBarolo(b) || isBarbaresco(b)) && inRange(b.producer, 'l', 'o') },
-  { id: 'barolo-p-q', binId: '2.4 BAROLO P–Q', priority: 63, match: (b) => isPiedmont(b) && (isBarolo(b) || isBarbaresco(b)) && inRange(b.producer, 'p', 'q') },
-  // R–Z Barolo plus every other Piedmont red (Langhe Nebbiolo, Barbera, Dolcetto, …)
-  { id: 'barolo-r-z-langhe', binId: '2.5 BAROLO R–Z + LANGHE', priority: 62, match: (b) => isPiedmont(b) },
+  // One row for the dearest Barolo; the threshold goes up as the row fills.
+  { id: 'barolo-prestige', binId: '2.5 BAROLO PRESTIGE', priority: 67, match: (b) => isBaroloShelf(b) && costSek(b) >= BAROLO_PRESTIGE_COST },
+  // Four shelves by producer; P is too big for one shelf with R–Z, so it splits at Pio.
+  { id: 'barolo-a-f', binId: '2.1 BAROLO A–F', priority: 66, match: (b) => isBaroloShelf(b) && sortKey(b.producer) < 'g' },
+  { id: 'barolo-g-l', binId: '2.2 BAROLO G–L', priority: 65, match: (b) => isBaroloShelf(b) && sortKey(b.producer) < 'm' },
+  { id: 'barolo-m-pie', binId: '2.3 BAROLO M–PIE', priority: 64, match: (b) => isBaroloShelf(b) && sortKey(b.producer) < 'pio' },
+  { id: 'barolo-pio-z', binId: '2.4 BAROLO PIO–Z', priority: 63, match: (b) => isBaroloShelf(b) },
+  // Every other Piedmont red (Langhe Nebbiolo, Barbera, Dolcetto, …)
+  { id: 'piemonte-other', binId: '2.6 PIEMONTE OTHER', priority: 62, match: (b) => isPiedmont(b) },
 
   // Rest of Italy
   // One row for the dearest Tuscany; cheaper bottles move down as new ones arrive.
@@ -87,8 +97,8 @@ const SPECS: Spec[] = [
   { id: 'sp-nw-priorat', binId: '4.4 SP NW + PRIORAT', priority: 43, match: (b) => b.country === 'Spain' },
 
   // France (Champagne already handled by the sparkling rules)
-  { id: 'bdx-lb', binId: '2.7 BDX LB', priority: 40, match: (b) => b.country === 'France' && b.region.includes('Bordeaux') && !isSweet(b) && ['Médoc', 'Graves'].includes(b.subRegion ?? '') },
-  { id: 'bdx-rb', binId: '2.8 BDX RB', priority: 39, match: (b) => b.country === 'France' && b.region.includes('Bordeaux') && !isSweet(b) && b.subRegion === 'Libournais' },
+  { id: 'bdx-lb', binId: '2.8 BDX LB', priority: 40, match: (b) => b.country === 'France' && b.region.includes('Bordeaux') && !isSweet(b) && ['Médoc', 'Graves'].includes(b.subRegion ?? '') },
+  { id: 'bdx-rb', binId: '2.9 BDX RB', priority: 39, match: (b) => b.country === 'France' && b.region.includes('Bordeaux') && !isSweet(b) && b.subRegion === 'Libournais' },
   { id: 'bourgogne', binId: '4.6 BOURGOGNE', priority: 38, match: (b) => b.country === 'France' && b.region === 'Burgundy' },
   { id: 'rhone', binId: '4.7 RHONE', priority: 37, match: (b) => b.country === 'France' && b.region === 'Rhône' },
   { id: 'jura', binId: '4.8 JURA', priority: 36, match: (b) => b.country === 'France' && b.region === 'Jura' },

@@ -23,7 +23,7 @@ describe('buildSyncRows with bin resolution', () => {
     })
     const { rows } = buildSyncRows([ct], new Map(), 2026)
     expect(rows[0].recommended_location).toBe('REMOTE')
-    expect(rows[0].recommended_bin).toBe('2.7 BDX LB')
+    expect(rows[0].recommended_bin).toBe('2.8 BDX LB')
   })
 
   it('assigns REMOTE bin for SQN Syrah', () => {

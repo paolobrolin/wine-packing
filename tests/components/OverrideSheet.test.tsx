@@ -11,7 +11,7 @@ function makeDbBottle(overrides: Partial<DbBottle> = {}): DbBottle {
     cost: 500, cost_currency: 'SEK', wine_type: null,
     begin_consume: 2025, end_consume: 2035,
     current_location: 'Cellar', current_bin: 'Källaren',
-    recommended_location: 'REMOTE', recommended_bin: '2.7 BDX LB',
+    recommended_location: 'REMOTE', recommended_bin: '2.8 BDX LB',
     move_reason: 'midpoint', rule_id: 'midpoint',
     state: 'pending', packed_at: null, in_transit_at: null, shelved_at: null, synced_at: null,
     trip_id: null, owc_group: null,
@@ -35,7 +35,7 @@ describe('OverrideSheet', () => {
   it('pre-selects recommended bin in dropdown', () => {
     render(<OverrideSheet bottle={makeDbBottle()} onConfirm={() => {}} onKeep={() => {}} onCancel={() => {}} />)
     const select = screen.getByTestId('override-select') as HTMLSelectElement
-    expect(select.value).toBe('2.7 BDX LB')
+    expect(select.value).toBe('2.8 BDX LB')
   })
 
   it('shows REMOTE bins for REMOTE destination', () => {
@@ -56,7 +56,7 @@ describe('OverrideSheet', () => {
     const onConfirm = vi.fn()
     render(<OverrideSheet bottle={makeDbBottle()} onConfirm={onConfirm} onKeep={() => {}} onCancel={() => {}} />)
     await userEvent.click(screen.getByTestId('override-confirm'))
-    expect(onConfirm).toHaveBeenCalledWith('0001', '2.7 BDX LB')
+    expect(onConfirm).toHaveBeenCalledWith('0001', '2.8 BDX LB')
   })
 
   it('calls onConfirm with new bin when overriding', async () => {

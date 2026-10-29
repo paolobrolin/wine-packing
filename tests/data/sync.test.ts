@@ -549,9 +549,9 @@ describe('buildSyncRows — done bottles get a new recommendation', () => {
 
   it('a done bottle moved to another REMOTE shelf in CT stays done (a deliberate move)', () => {
     const existing = atRemoteRow({ current_bin: '3.6 FR OTHER', ct_bin_at_sync: '3.6 FR OTHER', recommended_location: 'REMOTE', recommended_bin: '3.6 FR OTHER' })
-    const ctMoved = makeCtBottle({ location: 'REMOTE', bin: '2.7 BDX LB', begin_consume: 2030, end_consume: 2045 })
+    const ctMoved = makeCtBottle({ location: 'REMOTE', bin: '2.8 BDX LB', begin_consume: 2030, end_consume: 2045 })
     const { rows } = buildSyncRows([ctMoved], new Map([['0001', existing]]), 2026)
-    expect(rows[0].current_bin).toBe('2.7 BDX LB')
+    expect(rows[0].current_bin).toBe('2.8 BDX LB')
     expect(rows[0].state).toBe('synced')
   })
 
