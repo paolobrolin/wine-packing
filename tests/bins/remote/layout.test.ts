@@ -35,12 +35,14 @@ describe('layout 2026-11 — Skåp 1 (OWC cabinet)', () => {
   it('a bulky single box (note "OWC 1x1") goes to 1.2 OWC SINGLES', () => {
     expect(bin({ owcGroup: 'x', bottleNote: 'OWC 1x1 (singellåda)', producer: 'Château Cheval Blanc', subRegion: 'Libournais' })).toBe('1.2 OWC SINGLES')
   })
-  it('SQN Grenache and Next of Kyn share 1.3', () => {
-    expect(bin({ producer: 'Sine Qua Non', wine: 'Sine Qua Non Grenache Distenta III', country: 'USA', region: 'California' })).toBe('1.3 SQN GRENACHE + NOK')
-    expect(bin({ producer: 'Next of Kyn', wine: 'Next of Kyn No~16 Cumulus Vineyard', country: 'USA', region: 'California' })).toBe('1.3 SQN GRENACHE + NOK')
+  it('regular SQN, red and white, goes to 1.3 SQN REGULAR', () => {
+    expect(bin({ producer: 'Sine Qua Non', wine: 'Sine Qua Non Grenache Distenta III', country: 'USA', region: 'California' })).toBe('1.3 SQN REGULAR')
+    expect(bin({ producer: 'Sine Qua Non', wine: 'Sine Qua Non Syrah Distenta IV', country: 'USA', region: 'California' })).toBe('1.3 SQN REGULAR')
   })
-  it('other SQN (Syrah, whites) goes to 1.4', () => {
-    expect(bin({ producer: 'Sine Qua Non', wine: 'Sine Qua Non Syrah Distenta IV', country: 'USA', region: 'California' })).toBe('1.4 SQN SYRAH')
+  it('SQN from Eleven Confessions and Next of Kyn share 1.4 SQN EC + NoK', () => {
+    expect(bin({ producer: 'Sine Qua Non', wine: 'Sine Qua Non Syrah Estate Eleven Confessions Vineyard', country: 'USA', region: 'California' })).toBe('1.4 SQN EC + NoK')
+    expect(bin({ producer: 'Sine Qua Non', wine: 'Sine Qua Non Grenache Pajarito Del Amor Eleven Confessions Vineyard', country: 'USA', region: 'California' })).toBe('1.4 SQN EC + NoK')
+    expect(bin({ producer: 'Next of Kyn', wine: 'Next of Kyn No~16 Cumulus Vineyard', country: 'USA', region: 'California' })).toBe('1.4 SQN EC + NoK')
   })
 })
 

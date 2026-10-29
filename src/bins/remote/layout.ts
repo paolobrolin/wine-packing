@@ -41,8 +41,9 @@ const SPECS: Spec[] = [
   // Skåp 1 — OWC cabinet
   { id: 'owc-single', binId: '1.2 OWC SINGLES', priority: 100, match: (b) => b.owcGroup != null && isSingleBox(b) },
   { id: 'owc', binId: '1.1 OWC', priority: 99, match: (b) => b.owcGroup != null },
-  { id: 'sqn-grenache-nok', binId: '1.3 SQN GRENACHE + NOK', priority: 90, match: (b) => (isSqn(b) && b.wine.includes('Grenache')) || isNoK(b) },
-  { id: 'sqn-other', binId: '1.4 SQN SYRAH', priority: 89, match: (b) => isSqn(b) },
+  // Same names as the old layout: the SQN bottles are already there in CT.
+  { id: 'sqn-ec-nok', binId: '1.4 SQN EC + NoK', priority: 90, match: (b) => (isSqn(b) && b.wine.includes('Eleven Confessions')) || isNoK(b) },
+  { id: 'sqn-regular', binId: '1.3 SQN REGULAR', priority: 89, match: (b) => isSqn(b) },
 
   // Sparkling from anywhere (Champagne, Cava, Alta Langa, …)
   { id: 'sparkling-a-k', binId: '3.6 SPARKLING A–K', priority: 80, match: (b) => isSparkling(b) && inRange(b.producer, 'a', 'k') },
