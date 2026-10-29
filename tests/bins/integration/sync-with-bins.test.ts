@@ -94,4 +94,17 @@ describe('buildSyncRows with bin resolution', () => {
     expect(rows[0].recommended_location).toBe('REMOTE')
     expect(rows[0].recommended_bin).toBe('4.3 SP DUERO + GREECE')
   })
+
+  it('a Vin de France follows the producer\'s home region (Rousset-Martin\'s Pinot Noir with his Jura)', () => {
+    const jura = makeCtBottle({ barcode: '0001', extra: { Vintage: '2022', Wine: 'François Rousset-Martin Savagnin', Producer: 'François Rousset-Martin', Country: 'France', Region: 'Jura', Type: 'White' } })
+    const vdf = makeCtBottle({ barcode: '0002', extra: { Vintage: '2023', Wine: 'François Rousset-Martin Pinot Noir Voyage au bout de Nuits', Producer: 'François Rousset-Martin', Country: 'France', Region: 'France', Type: 'Red' } })
+    const { rows } = buildSyncRows([jura, vdf], new Map(), 2026)
+    expect(rows.find((r) => r.barcode === '0002')!.recommended_bin).toBe('4.8 JURA')
+  })
+
+  it('a Vin de France without other bottles from the producer stays in FR OTHER', () => {
+    const vdf = makeCtBottle({ extra: { Vintage: '2024', Wine: 'Domaine X Vin de France', Producer: 'Domaine X', Country: 'France', Region: 'France', Type: 'Red' } })
+    const { rows } = buildSyncRows([vdf], new Map(), 2026)
+    expect(rows[0].recommended_bin).toBe('3.8 FR OTHER')
+  })
 })

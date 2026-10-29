@@ -133,12 +133,12 @@ export function buildSyncRows(
 
   // The rules see the effective position, so a bottle placed in the app is
   // judged where it actually is, not where CT still thinks it is.
-  const bottles: Bottle[] = ctBottles.map((ct, i) => {
+  const bottles: Bottle[] = withProducerRegion(ctBottles.map((ct, i) => {
     const valuation = valuations.get(ct.barcode)
     const effectiveCost = (ct.bottle_cost ?? 0) !== 0 ? ct.bottle_cost : valuation?.value ?? null
     const pos = appPositions[i]
     return toRuleBottle({ ...ct, bottle_cost: effectiveCost, ...(pos ?? {}) })
-  })
+  }))
 
   const verticals = buildVerticals(bottles)
   const owcGroups = buildOwcGroups(ctBottles, bottles)
@@ -442,6 +442,26 @@ function toRuleBottle(ct: CtBottle): Bottle {
     owcGroup: detectOwcGroup(ct),
     wineType: ct.extra.Type ?? null,
   }
+}
+
+/**
+ * A Vin de France (CT region "France") belongs with the producer's other
+ * wines: Rousset-Martin's declassified Pinot Noir sits with his Jura. Only
+ * when every other French bottle of that producer shares one region.
+ */
+function withProducerRegion(bottles: Bottle[]): Bottle[] {
+  const regions = new Map<string, Set<string>>()
+  for (const b of bottles) {
+    if (b.country !== 'France' || b.region === 'France' || b.region === '') continue
+    const set = regions.get(b.producer) ?? new Set<string>()
+    set.add(b.region)
+    regions.set(b.producer, set)
+  }
+  return bottles.map((b) => {
+    if (b.country !== 'France' || b.region !== 'France') return b
+    const set = regions.get(b.producer)
+    return set?.size === 1 ? { ...b, region: [...set][0] } : b
+  })
 }
 
 function buildVerticals(bottles: Bottle[]): Map<string, Bottle[]> {
