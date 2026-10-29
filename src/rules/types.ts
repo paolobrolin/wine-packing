@@ -14,6 +14,8 @@ export interface Bottle {
   bottleNote?: string | null
   size: string
   cost: number | null
+  // Currency of cost (CT's BottleCostCurrency); missing means SEK.
+  costCurrency?: string | null
   beginConsume: number | null
   endConsume: number | null
   currentLocation: string | null

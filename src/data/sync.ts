@@ -137,7 +137,9 @@ export function buildSyncRows(
     const valuation = valuations.get(ct.barcode)
     const effectiveCost = (ct.bottle_cost ?? 0) !== 0 ? ct.bottle_cost : valuation?.value ?? null
     const pos = appPositions[i]
-    return toRuleBottle({ ...ct, bottle_cost: effectiveCost, ...(pos ?? {}) })
+    // A valuation stands in for a missing cost, and valuations are in SEK.
+    const currency = (ct.bottle_cost ?? 0) !== 0 ? ct.bottle_cost_currency : 'SEK'
+    return toRuleBottle({ ...ct, bottle_cost: effectiveCost, bottle_cost_currency: currency, ...(pos ?? {}) })
   }))
 
   const verticals = buildVerticals(bottles)
@@ -435,6 +437,7 @@ function toRuleBottle(ct: CtBottle): Bottle {
     bottleNote: ct.bottle_note,
     size: ct.size ?? '750ml',
     cost: ct.bottle_cost,
+    costCurrency: ct.bottle_cost_currency,
     beginConsume: sanitizeDrinkWindow(ct.begin_consume),
     endConsume: sanitizeDrinkWindow(ct.end_consume),
     currentLocation: ct.location,

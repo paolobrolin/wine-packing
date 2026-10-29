@@ -86,10 +86,19 @@ describe('layout 2026-11 — Piedmont', () => {
 
 describe('layout 2026-11 — rest of Italy, Spain, Greece', () => {
   const tos = (o: Partial<Bottle>) => b({ country: 'Italy', region: 'Tuscany', ...o })
-  it('Montalcino on 3.3; other Tuscany split A–H / I–Z', () => {
-    expect(bin(tos({ producer: 'Tenuta Greppo (Biondi-Santi)', subRegion: 'Montalcino' }))).toBe('3.3 TOSCANA MONTALCINO')
+  it('Montalcino on 3.3B; other Tuscany split A–H / I–Z', () => {
+    expect(bin(tos({ producer: 'Le Ragnaie', subRegion: 'Montalcino', cost: 1139 }))).toBe('3.3B TOSCANA MONTALCINO')
     expect(bin(tos({ producer: 'Fontodi', subRegion: 'Chianti' }))).toBe('3.4 TOSCANA A–H')
     expect(bin(tos({ producer: 'Tua Rita', subRegion: 'Unknown' }))).toBe('3.5 TOSCANA I–Z')
+  })
+  it('Tuscany from 2 000 kr a bottle, from anywhere in Tuscany, on 3.3A TOSCANA PRESTIGE', () => {
+    expect(bin(tos({ producer: 'Soldera (Az. Agr. Case Basse)', subRegion: 'Montalcino', cost: 6299 }))).toBe('3.3A TOSCANA PRESTIGE')
+    expect(bin(tos({ producer: 'Fontodi', subRegion: 'Chianti', size: '1.5L', cost: 2399 }))).toBe('3.3A TOSCANA PRESTIGE')
+    expect(bin(tos({ producer: 'Tenuta Greppo (Biondi-Santi)', subRegion: 'Montalcino', cost: 2000 }))).toBe('3.3A TOSCANA PRESTIGE')
+    expect(bin(tos({ producer: 'Pian dell\'Orino', subRegion: 'Montalcino', cost: 1435 }))).toBe('3.3B TOSCANA MONTALCINO')
+    // CT's cost is in the bottle's own currency: 200 EUR is about 2 200 kr.
+    expect(bin(tos({ producer: 'Tenuta Greppo (Biondi-Santi)', subRegion: 'Montalcino', cost: 200, costCurrency: 'EUR' }))).toBe('3.3A TOSCANA PRESTIGE')
+    expect(bin(tos({ producer: 'Fattoi', subRegion: 'Montalcino', cost: 75, costCurrency: 'EUR' }))).toBe('3.3B TOSCANA MONTALCINO')
   })
   it('Sicily A–P on 4.1; Sicily Q–Z and other Italy on 4.2', () => {
     expect(bin(b({ country: 'Italy', region: 'Sicily', producer: 'Passopisciaro' }))).toBe('4.1 SICILIA A–P')
@@ -161,7 +170,7 @@ describe('layout 2026-11 — bin registry', () => {
   it('old external bin names are still recognised as REMOTE during the move', () => {
     expect(isRemoteBin('3.3 BAROLO CLASSIC')).toBe(true)
     expect(isRemoteBin('2.6 FR OTHER')).toBe(true)
-    expect(isRemoteBin('3.3 TOSCANA MONTALCINO')).toBe(true)
+    expect(isRemoteBin('3.3B TOSCANA MONTALCINO')).toBe(true)
     expect(isRemoteBin('Lgh 2. FRANKRIKE')).toBe(false)
   })
 })

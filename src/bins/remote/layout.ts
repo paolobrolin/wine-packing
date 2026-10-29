@@ -35,6 +35,13 @@ const isPdB = (b: Bottle) => b.producer === 'Produttori del Barbaresco'
 /** A bulky single box kept in the OWC cabinet: bottle note "OWC 1x1" (or "singel"). */
 const isSingleBox = (b: Bottle) => /\b1\s*x\s*1\b|singel|single/i.test(b.bottleNote ?? '')
 
+/** Bottle cost in SEK from which Tuscany goes on the prestige row. */
+const TUSCANY_PRESTIGE_COST = 2000
+
+// Rough rates, enough to place a bottle on the right side of a shelf threshold.
+const SEK_PER: Record<string, number> = { SEK: 1, EUR: 11, USD: 10 }
+const costSek = (b: Bottle) => (b.cost ?? 0) * (SEK_PER[b.costCurrency ?? 'SEK'] ?? 1)
+
 const SPAIN_DUERO = ['Ribera del Duero', 'Toro', 'Cebreros', 'Vinos de Madrid', 'Rueda', 'Cigales']
 const NEW_WORLD = ['Australia', 'New Zealand', 'South Africa', 'Argentina', 'Chile', 'Uruguay', 'Canada']
 const MEDITERRANEAN = ['Greece', 'Lebanon', 'Portugal', 'Hungary', 'Croatia', 'Slovenia', 'Georgia', 'Israel']
@@ -66,7 +73,9 @@ const SPECS: Spec[] = [
   { id: 'barolo-r-z-langhe', binId: '2.5 BAROLO R–Z + LANGHE', priority: 62, match: (b) => isPiedmont(b) },
 
   // Rest of Italy
-  { id: 'toscana-montalcino', binId: '3.3 TOSCANA MONTALCINO', priority: 50, match: (b) => b.country === 'Italy' && b.region === 'Tuscany' && b.subRegion === 'Montalcino' },
+  // One row for the dearest Tuscany; cheaper bottles move down as new ones arrive.
+  { id: 'toscana-prestige', binId: '3.3A TOSCANA PRESTIGE', priority: 51, match: (b) => b.country === 'Italy' && b.region === 'Tuscany' && costSek(b) >= TUSCANY_PRESTIGE_COST },
+  { id: 'toscana-montalcino', binId: '3.3B TOSCANA MONTALCINO', priority: 50, match: (b) => b.country === 'Italy' && b.region === 'Tuscany' && b.subRegion === 'Montalcino' },
   { id: 'toscana-a-h', binId: '3.4 TOSCANA A–H', priority: 49, match: (b) => b.country === 'Italy' && b.region === 'Tuscany' && inRange(b.producer, 'a', 'h') },
   { id: 'toscana-i-z', binId: '3.5 TOSCANA I–Z', priority: 48, match: (b) => b.country === 'Italy' && b.region === 'Tuscany' },
   { id: 'sicilia-a-p', binId: '4.1 SICILIA A–P', priority: 47, match: (b) => b.country === 'Italy' && b.region === 'Sicily' && inRange(b.producer, 'a', 'p') },
