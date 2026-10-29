@@ -86,6 +86,8 @@ export default function App() {
 
   const { bottles: moveBottles, loading: moveLoading, error: moveError, updateBottleLocally } = useBottles({ type: 'needs-move' })
   const { bottles: homeBottles, loading: homeLoading, error: homeError } = useBottles({ type: 'home' })
+  // Search covers every bottle, also ones already done at external storage.
+  const { bottles: allBottles } = useBottles({ type: 'all' })
   const { pack, shelve, sync } = useMoveActions()
 
   const { toast, show: showToast, dismiss: dismissToast } = useToast()
@@ -95,14 +97,14 @@ export default function App() {
   const error = moveError || homeError
 
   const handleDone = (barcode: string) => {
-    const bottle = [...moveBottles, ...homeBottles].find((b) => b.barcode === barcode)
+    const bottle = [...moveBottles, ...homeBottles, ...allBottles].find((b) => b.barcode === barcode)
     if (!bottle) return
 
     setOverrideBottle(bottle)
   }
 
   const handleConfirmDone = (barcode: string, destBin: string | null) => {
-    const bottle = [...moveBottles, ...homeBottles].find((b) => b.barcode === barcode)
+    const bottle = [...moveBottles, ...homeBottles, ...allBottles].find((b) => b.barcode === barcode)
     if (!bottle) { setOverrideBottle(null); return }
 
     const effectiveBin = destBin ?? bottle.recommended_bin
@@ -146,7 +148,7 @@ export default function App() {
   }
 
   const handleUndo = (barcode: string) => {
-    const bottle = [...moveBottles, ...homeBottles].find((b) => b.barcode === barcode)
+    const bottle = [...moveBottles, ...homeBottles, ...allBottles].find((b) => b.barcode === barcode)
     if (!bottle) return
     const fields = stepBackFields(bottle)
     updateBottleLocally(barcode, fields as Partial<typeof bottle>)
@@ -154,7 +156,7 @@ export default function App() {
   }
 
   const handleReset = (barcode: string) => {
-    const bottle = [...moveBottles, ...homeBottles].find((b) => b.barcode === barcode)
+    const bottle = [...moveBottles, ...homeBottles, ...allBottles].find((b) => b.barcode === barcode)
     if (!bottle) return
     const fields = resetFields(bottle)
     updateBottleLocally(barcode, fields as Partial<typeof bottle>)
@@ -236,7 +238,7 @@ export default function App() {
       </header>
 
       <SearchPanel
-        bottles={dedupeBottles(moveBottles, homeBottles)}
+        bottles={dedupeBottles(dedupeBottles(moveBottles, homeBottles), allBottles)}
         onDone={handleDone}
         onUndo={handleUndo}
         onReset={handleReset}

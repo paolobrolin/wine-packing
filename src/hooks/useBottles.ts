@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { getSupabase } from '../data/supabase'
 import type { DbBottle } from '../data/models'
-import { fetchBottlesNeedingMove, fetchBottlesByState, fetchBottlesByTrip, fetchHomeBottles } from '../data/queries'
+import { fetchBottlesNeedingMove, fetchBottlesByState, fetchBottlesByTrip, fetchHomeBottles, fetchAllBottles } from '../data/queries'
 import type { BottleState } from '../rules/state-machine'
 
 type BottleFilter =
@@ -9,6 +9,7 @@ type BottleFilter =
   | { type: 'by-state'; state: BottleState }
   | { type: 'by-trip'; tripId: string }
   | { type: 'home' }
+  | { type: 'all' }
 
 export function useBottles(filter: BottleFilter) {
   const [bottles, setBottles] = useState<DbBottle[]>([])
@@ -37,6 +38,9 @@ export function useBottles(filter: BottleFilter) {
           break
         case 'home':
           data = await fetchHomeBottles()
+          break
+        case 'all':
+          data = await fetchAllBottles()
           break
       }
       setBottles(data)

@@ -141,15 +141,21 @@ export async function completeTrip(tripId: string): Promise<void> {
   if (error) throw error
 }
 
+/** Every bottle, done ones included (for search). PostgREST caps a response at 1 000 rows. */
 export async function fetchAllBottles(): Promise<DbBottle[]> {
-  const { data, error } = await getSupabase()
-    .from('bottles')
-    .select('*')
-    .order('producer')
-    .order('vintage')
-
-  if (error) throw error
-  return data ?? []
+  const PAGE = 1000
+  const all: DbBottle[] = []
+  for (let from = 0; ; from += PAGE) {
+    const { data, error } = await getSupabase()
+      .from('bottles')
+      .select('*')
+      .order('barcode')
+      .range(from, from + PAGE - 1)
+    if (error) throw error
+    all.push(...(data ?? []))
+    if (!data || data.length < PAGE) break
+  }
+  return all
 }
 
 export async function fetchHomeBottles(): Promise<DbBottle[]> {
