@@ -7,9 +7,13 @@ import type { Bottle } from '../../rules/types'
 // big for one shelf are split by the first letter of the producer, so a new
 // producer always has an obvious place.
 
-/** First letter of the producer, accents and case folded ('Château X' → 'c'). */
+/**
+ * First letter of the producer, accents and case folded ('Château X' → 'c').
+ * A leading "Weingut" is skipped: CT names some German estates that way
+ * ('Weingut Keller' → 'k').
+ */
 function initial(producer: string): string {
-  return producer.normalize('NFKD').replace(/[^\p{L}]/gu, '').charAt(0).toLowerCase()
+  return producer.replace(/^Weingut\s+/i, '').normalize('NFKD').replace(/[^\p{L}]/gu, '').charAt(0).toLowerCase()
 }
 
 const inRange = (p: string, from: string, to: string) => {

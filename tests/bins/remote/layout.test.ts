@@ -137,6 +137,10 @@ describe('layout 2026-11 — Germany, USA, New World', () => {
     expect(bin(b({ country: 'Austria', region: 'Niederösterreich', producer: 'Weingut Josef Jamek', wineType: 'White' }))).toBe('5.3 DE OTHER A–Q + AT')
     expect(bin(b({ country: 'Germany', region: 'Pfalz', producer: 'von Winning', wineType: 'White' }))).toBe('5.4 DE OTHER R–Z')
   })
+  it('a leading "Weingut" is not the producer\'s initial (Weingut Keller is a K)', () => {
+    expect(bin(b({ country: 'Germany', region: 'Rheinhessen', producer: 'Weingut Keller', wineType: 'White' }))).toBe('5.3 DE OTHER A–Q + AT')
+    expect(bin(b({ country: 'Germany', region: 'Rheingau', producer: 'Weingut Robert Weil', wineType: 'White' }))).toBe('5.4 DE OTHER R–Z')
+  })
   it('Saxum, Napa, other USA, New World', () => {
     expect(bin(b({ country: 'USA', region: 'California', producer: 'Saxum', subRegion: 'Central Coast' }))).toBe('5.5 SAXUM')
     expect(bin(b({ country: 'USA', region: 'California', producer: 'Spottswoode', subRegion: 'Napa Valley' }))).toBe('5.6 NAPA')
