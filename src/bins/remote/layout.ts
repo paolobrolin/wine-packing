@@ -1,6 +1,6 @@
 import type { BinRule } from '../types'
 import type { Bottle } from '../../rules/types'
-import { costSek } from '../../rules/money'
+import { cost750 } from '../../rules/money'
 
 // The 2026-11 layout (five cabinets). Skåp 1 holds OWC cases, bulky single
 // boxes and SQN/NoK; Skåp 2–5 hold loose bottles, one region group per shelf,
@@ -42,7 +42,7 @@ const isPdB = (b: Bottle) => b.producer === 'Produttori del Barbaresco'
 /** A bulky single box kept in the OWC cabinet: bottle note "OWC 1x1" (or "singel"). */
 const isSingleBox = (b: Bottle) => /\b1\s*x\s*1\b|singel|single/i.test(b.bottleNote ?? '')
 
-/** Bottle cost in SEK from which Tuscany goes on its prestige row. */
+/** Bottle cost in SEK per 750 ml from which Tuscany goes on its prestige row. */
 const TUSCANY_PRESTIGE_COST = 2000
 /** Value of the wine (market value per 750 ml, any vintage) from which Barolo goes on its prestige row. */
 const BAROLO_PRESTIGE_VALUE = 1800
@@ -82,7 +82,7 @@ const SPECS: Spec[] = [
 
   // Rest of Italy
   // One row for the dearest Tuscany; cheaper bottles move down as new ones arrive.
-  { id: 'toscana-prestige', binId: '3.3A TOSCANA PRESTIGE', priority: 51, match: (b) => b.country === 'Italy' && b.region === 'Tuscany' && costSek(b) >= TUSCANY_PRESTIGE_COST },
+  { id: 'toscana-prestige', binId: '3.3A TOSCANA PRESTIGE', priority: 51, match: (b) => b.country === 'Italy' && b.region === 'Tuscany' && cost750(b) >= TUSCANY_PRESTIGE_COST },
   { id: 'toscana-montalcino', binId: '3.3B TOSCANA MONTALCINO', priority: 50, match: (b) => b.country === 'Italy' && b.region === 'Tuscany' && b.subRegion === 'Montalcino' },
   { id: 'toscana-a-h', binId: '3.4 TOSCANA A–H', priority: 49, match: (b) => b.country === 'Italy' && b.region === 'Tuscany' && inRange(b.producer, 'a', 'h') },
   { id: 'toscana-i-z', binId: '3.5 TOSCANA I–Z', priority: 48, match: (b) => b.country === 'Italy' && b.region === 'Tuscany' },

@@ -96,9 +96,11 @@ describe('layout 2026-11 — rest of Italy, Spain, Greece', () => {
     expect(bin(tos({ producer: 'Fontodi', subRegion: 'Chianti' }))).toBe('3.4 TOSCANA A–H')
     expect(bin(tos({ producer: 'Tua Rita', subRegion: 'Unknown' }))).toBe('3.5 TOSCANA I–Z')
   })
-  it('Tuscany from 2 000 kr a bottle, from anywhere in Tuscany, on 3.3A TOSCANA PRESTIGE', () => {
+  it('Tuscany from 2 000 kr per 750 ml, from anywhere in Tuscany, on 3.3A TOSCANA PRESTIGE', () => {
     expect(bin(tos({ producer: 'Soldera (Az. Agr. Case Basse)', subRegion: 'Montalcino', cost: 6299 }))).toBe('3.3A TOSCANA PRESTIGE')
-    expect(bin(tos({ producer: 'Fontodi', subRegion: 'Chianti', size: '1.5L', cost: 2399 }))).toBe('3.3A TOSCANA PRESTIGE')
+    // A magnum counts per 750 ml: 2 399 kr is about 1 200 kr, so it stays with its 750s.
+    expect(bin(tos({ producer: 'Fontodi', subRegion: 'Chianti', size: '1.5L', cost: 2399 }))).toBe('3.4 TOSCANA A–H')
+    expect(bin(tos({ producer: 'Fontodi', subRegion: 'Chianti', size: '1.5L', cost: 4000 }))).toBe('3.3A TOSCANA PRESTIGE')
     expect(bin(tos({ producer: 'Tenuta Greppo (Biondi-Santi)', subRegion: 'Montalcino', cost: 2000 }))).toBe('3.3A TOSCANA PRESTIGE')
     expect(bin(tos({ producer: 'Pian dell\'Orino', subRegion: 'Montalcino', cost: 1435 }))).toBe('3.3B TOSCANA MONTALCINO')
     // CT's cost is in the bottle's own currency: 200 EUR is about 2 200 kr.

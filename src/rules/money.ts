@@ -10,11 +10,16 @@ export function costSek(b: Pick<Bottle, 'cost' | 'costCurrency'>): number {
 
 const ML: Record<string, number> = { '187ml': 187, '375ml': 375, '500ml': 500, '620ml': 620, '750ml': 750, '1.5L': 1500, '3.0L': 3000 }
 
+/** The purchase price in SEK scaled to 750 ml (a magnum at 2 400 kr is 1 200 kr). */
+export function cost750(b: Pick<Bottle, 'cost' | 'costCurrency' | 'size'>): number {
+  return costSek(b) * 750 / (ML[b.size] ?? 750)
+}
+
 /**
  * What one 750 ml of this bottle is worth in SEK: CT's market value
  * (already per 750 ml), else the purchase price scaled to 750 ml.
  */
 export function value750(b: Pick<Bottle, 'cost' | 'costCurrency' | 'size' | 'marketValue'>): number {
   if ((b.marketValue ?? 0) > 0) return b.marketValue as number
-  return costSek(b) * 750 / (ML[b.size] ?? 750)
+  return cost750(b)
 }
