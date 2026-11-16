@@ -5,6 +5,7 @@ import { createCapacityTracker } from '../../../src/bins/capacity'
 import { REMOTE_BINS, isRemoteBin } from '../../../src/bins/all-bins'
 import type { BinResolverContext } from '../../../src/bins/types'
 import type { Bottle } from '../../../src/rules/types'
+import { markPrestige, PRESTIGE_ROW } from '../../../src/bins/remote/layout'
 
 // The 2026-11 layout: Skåp 1 holds OWC cases, bulky single boxes and SQN/NoK;
 // Skåp 2–5 hold loose bottles, each shelf one region group (see layout.ts).
@@ -56,9 +57,9 @@ describe('layout 2026-11 — Piedmont', () => {
     expect(bin(it_({ producer, wine: `${producer} Barolo`, appellation: 'Barolo', cost: 900 }))).toBe(expected)
   })
 
-  it('a Barolo whose wine is worth 1 800 kr or more goes to 2.5 BAROLO PRESTIGE', () => {
-    expect(bin(it_({ producer: 'Roagna', wine: 'Roagna Barolo Pira', appellation: 'Barolo', cost: 1250, wineValue: 1888 }))).toBe('2.5 BAROLO PRESTIGE')
-    expect(bin(it_({ producer: 'Roagna', wine: 'Roagna Barolo Rocche di Castiglione', appellation: 'Barolo', cost: 1999, wineValue: 1774 }))).toBe('2.4 BAROLO PIO–Z')
+  it('a Barolo marked prestige goes to 2.5 BAROLO PRESTIGE, the rest by producer', () => {
+    expect(bin(it_({ producer: 'Roagna', wine: 'Roagna Barolo Pira', appellation: 'Barolo', cost: 1250, prestige: true }))).toBe('2.5 BAROLO PRESTIGE')
+    expect(bin(it_({ producer: 'Roagna', wine: 'Roagna Barolo Rocche di Castiglione', appellation: 'Barolo', cost: 1999 }))).toBe('2.4 BAROLO PIO–Z')
   })
 
   it('Langhe Nebbiolo, Barbera and other Piedmont reds go to 2.6 PIEMONTE OTHER', () => {
@@ -96,16 +97,10 @@ describe('layout 2026-11 — rest of Italy, Spain, Greece', () => {
     expect(bin(tos({ producer: 'Fontodi', subRegion: 'Chianti' }))).toBe('3.4 TOSCANA A–H')
     expect(bin(tos({ producer: 'Tua Rita', subRegion: 'Unknown' }))).toBe('3.5 TOSCANA I–Z')
   })
-  it('Tuscany from 2 000 kr per 750 ml, from anywhere in Tuscany, on 3.3A TOSCANA PRESTIGE', () => {
-    expect(bin(tos({ producer: 'Soldera (Az. Agr. Case Basse)', subRegion: 'Montalcino', cost: 6299 }))).toBe('3.3A TOSCANA PRESTIGE')
-    // A magnum counts per 750 ml: 2 399 kr is about 1 200 kr, so it stays with its 750s.
-    expect(bin(tos({ producer: 'Fontodi', subRegion: 'Chianti', size: '1.5L', cost: 2399 }))).toBe('3.4 TOSCANA A–H')
-    expect(bin(tos({ producer: 'Fontodi', subRegion: 'Chianti', size: '1.5L', cost: 4000 }))).toBe('3.3A TOSCANA PRESTIGE')
-    expect(bin(tos({ producer: 'Tenuta Greppo (Biondi-Santi)', subRegion: 'Montalcino', cost: 2000 }))).toBe('3.3A TOSCANA PRESTIGE')
-    expect(bin(tos({ producer: 'Pian dell\'Orino', subRegion: 'Montalcino', cost: 1435 }))).toBe('3.3B TOSCANA MONTALCINO')
-    // CT's cost is in the bottle's own currency: 200 EUR is about 2 200 kr.
-    expect(bin(tos({ producer: 'Tenuta Greppo (Biondi-Santi)', subRegion: 'Montalcino', cost: 200, costCurrency: 'EUR' }))).toBe('3.3A TOSCANA PRESTIGE')
-    expect(bin(tos({ producer: 'Fattoi', subRegion: 'Montalcino', cost: 75, costCurrency: 'EUR' }))).toBe('3.3B TOSCANA MONTALCINO')
+  it('Tuscany marked prestige, from anywhere in Tuscany, on 3.3A TOSCANA PRESTIGE', () => {
+    expect(bin(tos({ producer: 'Soldera (Az. Agr. Case Basse)', subRegion: 'Montalcino', cost: 6299, prestige: true }))).toBe('3.3A TOSCANA PRESTIGE')
+    expect(bin(tos({ producer: 'Fontodi', subRegion: 'Chianti', cost: 6299, prestige: true }))).toBe('3.3A TOSCANA PRESTIGE')
+    expect(bin(tos({ producer: 'Soldera (Az. Agr. Case Basse)', subRegion: 'Montalcino', cost: 6299 }))).toBe('3.3B TOSCANA MONTALCINO')
   })
   it('Sicily A–P on 4.1; Sicily Q–Z and other Italy on 4.2', () => {
     expect(bin(b({ country: 'Italy', region: 'Sicily', producer: 'Passopisciaro' }))).toBe('4.1 SICILIA A–P')
@@ -179,5 +174,43 @@ describe('layout 2026-11 — bin registry', () => {
     expect(isRemoteBin('2.6 FR OTHER')).toBe(true)
     expect(isRemoteBin('3.3B TOSCANA MONTALCINO')).toBe(true)
     expect(isRemoteBin('Lgh 2. FRANKRIKE')).toBe(false)
+  })
+})
+
+describe('layout 2026-11 — prestige rows hold the 11 dearest bottles per 750 ml', () => {
+  const barolo = (n: number, cost: number, o: Partial<Bottle> = {}) =>
+    b({ barcode: `B${n}`, country: 'Italy', region: 'Piedmont', appellation: 'Barolo', producer: `P${n}`, wine: `P${n} Barolo`, cost, ...o })
+  const marked = (bs: Bottle[]) => markPrestige(bs).filter((x) => x.prestige).map((x) => x.barcode).sort()
+
+  it('the row holds 11 bottles', () => {
+    expect(PRESTIGE_ROW).toBe(11)
+  })
+
+  it('marks the 11 dearest Barolo bottles and no more', () => {
+    const bs = Array.from({ length: 14 }, (_, n) => barolo(n, 1000 + n * 100))
+    expect(marked(bs)).toEqual(['B10', 'B11', 'B12', 'B13', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8', 'B9'])
+  })
+
+  it('ranks a magnum by its price per 750 ml', () => {
+    const bs = [...Array.from({ length: 11 }, (_, n) => barolo(n, 1500)), barolo(99, 2800, { size: '1.5L' })]
+    expect(marked(bs)).not.toContain('B99')
+  })
+
+  it('counts Barolo and Tuscany separately', () => {
+    const bs = [
+      ...Array.from({ length: 11 }, (_, n) => barolo(n, 1500)),
+      b({ barcode: 'T1', country: 'Italy', region: 'Tuscany', producer: 'Fontodi', cost: 900 }),
+    ]
+    expect(marked(bs)).toContain('T1')
+    expect(marked(bs).filter((x) => x.startsWith('B'))).toHaveLength(11)
+  })
+
+  it('leaves out OWC bottles, Barbaresco and other Piedmont', () => {
+    const bs = [
+      barolo(1, 5000, { owcGroup: 'case-1' }),
+      b({ barcode: 'X1', country: 'Italy', region: 'Piedmont', appellation: 'Barbaresco', producer: 'Gaja', cost: 5000 }),
+      b({ barcode: 'X2', country: 'Italy', region: 'Piedmont', appellation: 'Langhe DOC', producer: 'Gaja', cost: 5000 }),
+    ]
+    expect(marked(bs)).toEqual([])
   })
 })

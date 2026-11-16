@@ -42,10 +42,27 @@ const isPdB = (b: Bottle) => b.producer === 'Produttori del Barbaresco'
 /** A bulky single box kept in the OWC cabinet: bottle note "OWC 1x1" (or "singel"). */
 const isSingleBox = (b: Bottle) => /\b1\s*x\s*1\b|singel|single/i.test(b.bottleNote ?? '')
 
-/** Bottle cost in SEK per 750 ml from which Tuscany goes on its prestige row. */
-const TUSCANY_PRESTIGE_COST = 2000
-/** Value of the wine (market value per 750 ml, any vintage) from which Barolo goes on its prestige row. */
-const BAROLO_PRESTIGE_VALUE = 1800
+/** Bottles on each prestige row. */
+export const PRESTIGE_ROW = 11
+
+const isTuscany = (b: Bottle) => b.country === 'Italy' && b.region === 'Tuscany'
+
+/**
+ * Marks the PRESTIGE_ROW dearest bottles (price per 750 ml) among the Barolo
+ * and, separately, among the Tuscany bottles. OWC bottles keep their case and
+ * take no place on the row. A dearer newcomer moves the cheapest one down.
+ */
+export function markPrestige(bottles: Bottle[]): Bottle[] {
+  const top = new Set<string>()
+  for (const inGroup of [isBaroloShelf, isTuscany]) {
+    bottles
+      .filter((b) => inGroup(b) && b.owcGroup == null)
+      .sort((x, y) => cost750(y) - cost750(x) || x.barcode.localeCompare(y.barcode))
+      .slice(0, PRESTIGE_ROW)
+      .forEach((b) => top.add(b.barcode))
+  }
+  return bottles.map((b) => ({ ...b, prestige: top.has(b.barcode) }))
+}
 
 const SPAIN_DUERO = ['Ribera del Duero', 'Toro', 'Cebreros', 'Vinos de Madrid', 'Rueda', 'Cigales']
 const NEW_WORLD = ['Australia', 'New Zealand', 'South Africa', 'Argentina', 'Chile', 'Uruguay', 'Canada']
@@ -69,9 +86,8 @@ const SPECS: Spec[] = [
   { id: 'piemonte-white', binId: '2.7 PIEMONTE WHITE', priority: 70, match: (b) => isPiedmont(b) && isWhite(b) && !isSweet(b) },
   { id: 'barbaresco-pdb', binId: '3.2 BARBARESCO PDB', priority: 69, match: (b) => isPiedmont(b) && isBarbaresco(b) && isPdB(b) && (b.wine.includes('Riserva') || b.size !== '750ml') },
   { id: 'barbaresco', binId: '3.1 BARBARESCO', priority: 68, match: (b) => isPiedmont(b) && isBarbaresco(b) },
-  // One row for the most valuable Barolo wines, all vintages of a wine together;
-  // the threshold goes up as the row fills.
-  { id: 'barolo-prestige', binId: '2.5 BAROLO PRESTIGE', priority: 67, match: (b) => isBaroloShelf(b) && (b.wineValue ?? 0) >= BAROLO_PRESTIGE_VALUE },
+  // One row for the dearest Barolo bottles (see markPrestige).
+  { id: 'barolo-prestige', binId: '2.5 BAROLO PRESTIGE', priority: 67, match: (b) => isBaroloShelf(b) && !!b.prestige },
   // Four shelves by producer; P is too big for one shelf with R–Z, so it splits at Pio.
   { id: 'barolo-a-f', binId: '2.1 BAROLO A–F', priority: 66, match: (b) => isBaroloShelf(b) && sortKey(b.producer) < 'g' },
   { id: 'barolo-g-l', binId: '2.2 BAROLO G–L', priority: 65, match: (b) => isBaroloShelf(b) && sortKey(b.producer) < 'm' },
@@ -81,8 +97,8 @@ const SPECS: Spec[] = [
   { id: 'piemonte-other', binId: '2.6 PIEMONTE OTHER', priority: 62, match: (b) => isPiedmont(b) },
 
   // Rest of Italy
-  // One row for the dearest Tuscany; cheaper bottles move down as new ones arrive.
-  { id: 'toscana-prestige', binId: '3.3A TOSCANA PRESTIGE', priority: 51, match: (b) => b.country === 'Italy' && b.region === 'Tuscany' && cost750(b) >= TUSCANY_PRESTIGE_COST },
+  // One row for the dearest Tuscany bottles (see markPrestige).
+  { id: 'toscana-prestige', binId: '3.3A TOSCANA PRESTIGE', priority: 51, match: (b) => isTuscany(b) && !!b.prestige },
   { id: 'toscana-montalcino', binId: '3.3B TOSCANA MONTALCINO', priority: 50, match: (b) => b.country === 'Italy' && b.region === 'Tuscany' && b.subRegion === 'Montalcino' },
   { id: 'toscana-a-h', binId: '3.4 TOSCANA A–H', priority: 49, match: (b) => b.country === 'Italy' && b.region === 'Tuscany' && inRange(b.producer, 'a', 'h') },
   { id: 'toscana-i-z', binId: '3.5 TOSCANA I–Z', priority: 48, match: (b) => b.country === 'Italy' && b.region === 'Tuscany' },

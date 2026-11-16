@@ -6,10 +6,10 @@ import { evaluatePlacement } from '../rules/evaluate'
 import { resolveAllBins } from '../bins/resolve'
 import { createCapacityTracker } from '../bins/capacity'
 import { remoteBinRules } from '../bins/remote'
+import { markPrestige } from '../bins/remote/layout'
 import { CABINET, CELLAR_SHELVES, HOME_LAYOUT_BINS, HOME_MARGIN, homeCategory, isOnCabinetShelf, placesFor, type HomeCategory } from '../bins/home/layout'
 import { determineHomeSubLocation } from '../bins/home-sub-location'
 import { isRemoteBin, REMOTE_BINS } from '../bins/all-bins'
-import { value750 } from '../rules/money'
 
 export interface CtBottle {
   barcode: string
@@ -136,14 +136,14 @@ export function buildSyncRows(
 
   // The rules see the effective position, so a bottle placed in the app is
   // judged where it actually is, not where CT still thinks it is.
-  const bottles: Bottle[] = withWineValue(withProducerRegion(ctBottles.map((ct, i) => {
+  const bottles: Bottle[] = withProducerRegion(ctBottles.map((ct, i) => {
     const valuation = valuations.get(ct.barcode)
     const effectiveCost = (ct.bottle_cost ?? 0) !== 0 ? ct.bottle_cost : valuation?.value ?? null
     const pos = appPositions[i]
     // A valuation stands in for a missing cost, and valuations are in SEK.
     const currency = (ct.bottle_cost ?? 0) !== 0 ? ct.bottle_cost_currency : 'SEK'
     return toRuleBottle({ ...ct, bottle_cost: effectiveCost, bottle_cost_currency: currency, ...(pos ?? {}) })
-  })))
+  }))
 
   const verticals = buildVerticals(bottles)
   const owcGroups = buildOwcGroups(ctBottles, bottles)
@@ -214,35 +214,54 @@ export function buildSyncRows(
     byCategory.set(c, [...(byCategory.get(c) ?? []), i])
   }
 
+  // An OWC case is one physical unit: its bottles go to one shelf together.
+  const units = (idx: number[]): number[][] => {
+    const byGroup = new Map<string, number[]>()
+    const out: number[][] = []
+    for (const i of idx) {
+      const g = bottles[i].owcGroup
+      if (g == null) { out.push([i]); continue }
+      if (!byGroup.has(g)) { byGroup.set(g, []); out.push(byGroup.get(g)!) }
+      byGroup.get(g)!.push(i)
+    }
+    return out
+  }
+  const placesOf = (u: number[]) => u.reduce((n, i) => n + placesFor(bottles[i].size), 0)
+  const unitKey = (u: number[]) => Math.min(...u.map(windowKey))
+
   const cellarUsed = new Map<string, number>()
-  const cellarQueue: { i: number; c: HomeCategory }[] = []
+  const cellarQueue: { u: number[]; c: HomeCategory }[] = []
   for (const [c, idx] of byCategory) {
     const shelf = CABINET[c]
-    const placed = idx.filter((i) => isOnCabinetShelf(bottles[i].currentBin, c))
-    const rest = idx.filter((i) => !isOnCabinetShelf(bottles[i].currentBin, c)).sort((x, y) => windowKey(x) - windowKey(y))
+    const all = units(idx)
+    const isPlaced = (u: number[]) => u.every((i) => isOnCabinetShelf(bottles[i].currentBin, c))
+    const placed = all.filter(isPlaced)
+    const rest = all.filter((u) => !isPlaced(u)).sort((x, y) => unitKey(x) - unitKey(y))
     let used = 0
-    for (const i of [...placed, ...rest]) {
-      const p = placesFor(bottles[i].size)
-      if (placed.includes(i) || used + p <= shelf.capacity - HOME_MARGIN) {
+    for (const u of [...placed, ...rest]) {
+      const p = placesOf(u)
+      if (placed.includes(u) || used + p <= shelf.capacity - HOME_MARGIN) {
         used += p
-        homePlacements[i] = { recommendedLocation: 'HOME', recommendedBin: shelf.bin, reason: 'home: Lagringsskåp', ruleId: `home/${c.toLowerCase()}` }
+        for (const i of u) homePlacements[i] = { recommendedLocation: 'HOME', recommendedBin: shelf.bin, reason: 'home: Lagringsskåp', ruleId: `home/${c.toLowerCase()}` }
       } else {
-        cellarQueue.push({ i, c })
+        cellarQueue.push({ u, c })
       }
     }
   }
   // Källaren: bottles already on one of their category's shelves keep it,
   // then the rest by earliest window. Leftovers go to REMOTE.
   const shelvesFor = (c: HomeCategory) => CELLAR_SHELVES.filter((s) => s.categories.includes(c))
-  const onOwnShelf = ({ i, c }: { i: number; c: HomeCategory }) => shelvesFor(c).some((s) => s.bin === bottles[i].currentBin)
-  const ordered = [...cellarQueue.filter(onOwnShelf), ...cellarQueue.filter((q) => !onOwnShelf(q)).sort((x, y) => windowKey(x.i) - windowKey(y.i))]
-  for (const { i, c } of ordered) {
-    const p = placesFor(bottles[i].size)
-    const own = shelvesFor(c).find((s) => s.bin === bottles[i].currentBin)
-    const target = own ?? shelvesFor(c).find((s) => (cellarUsed.get(s.bin) ?? 0) + p <= s.capacity - HOME_MARGIN)
-    if (target == null) { homeOverflow.add(i); continue }
+  const ownShelf = ({ u, c }: { u: number[]; c: HomeCategory }) => {
+    const bins = new Set(u.map((i) => bottles[i].currentBin))
+    return bins.size === 1 ? shelvesFor(c).find((s) => bins.has(s.bin)) : undefined
+  }
+  const ordered = [...cellarQueue.filter((q) => ownShelf(q)), ...cellarQueue.filter((q) => !ownShelf(q)).sort((x, y) => unitKey(x.u) - unitKey(y.u))]
+  for (const q of ordered) {
+    const p = placesOf(q.u)
+    const target = ownShelf(q) ?? shelvesFor(q.c).find((s) => (cellarUsed.get(s.bin) ?? 0) + p <= s.capacity - HOME_MARGIN)
+    if (target == null) { for (const i of q.u) homeOverflow.add(i); continue }
     cellarUsed.set(target.bin, (cellarUsed.get(target.bin) ?? 0) + p)
-    homePlacements[i] = { recommendedLocation: 'HOME', recommendedBin: target.bin, reason: 'home: Källaren', ruleId: `home/${c.toLowerCase()}` }
+    for (const i of q.u) homePlacements[i] = { recommendedLocation: 'HOME', recommendedBin: target.bin, reason: 'home: Källaren', ruleId: `home/${q.c.toLowerCase()}` }
   }
 
   // Pass 2: resolve bins for bottles that need to move
@@ -264,7 +283,9 @@ export function buildSyncRows(
     owcGroups,
     owcAssignments: new Map<string, string>(),
   }
-  const binResolutions = resolveAllBins(binInput, binRules, binContext)
+  // The prestige rows hold the dearest bottles among those headed for REMOTE.
+  const marked = new Map(markPrestige(binInput.filter((x) => x.location === 'REMOTE').map((x) => x.bottle)).map((b) => [b.barcode, b]))
+  const binResolutions = resolveAllBins(binInput.map((x) => ({ ...x, bottle: marked.get(x.bottle.barcode) ?? x.bottle })), binRules, binContext)
 
   // Pass 3: build rows
   const rows = ctBottles.map((ct, i) => {
@@ -441,7 +462,6 @@ function toRuleBottle(ct: CtBottle): Bottle {
     size: ct.size ?? '750ml',
     cost: ct.bottle_cost,
     costCurrency: ct.bottle_cost_currency,
-    marketValue: parseCtNumber(ct.extra.Valuation),
     beginConsume: sanitizeDrinkWindow(ct.begin_consume),
     endConsume: sanitizeDrinkWindow(ct.end_consume),
     currentLocation: ct.location,
@@ -469,21 +489,6 @@ function withProducerRegion(bottles: Bottle[]): Bottle[] {
     const set = regions.get(b.producer)
     return set?.size === 1 ? { ...b, region: [...set][0] } : b
   })
-}
-
-/** CT writes numbers with a decimal comma ('1887,9516'); 0 or blank means none. */
-function parseCtNumber(v: string | null | undefined): number | null {
-  if (v == null || v === '') return null
-  const n = Number(v.replace(',', '.'))
-  return Number.isFinite(n) && n > 0 ? n : null
-}
-
-/** Each bottle gets the value of its wine: the highest value750 over all its vintages and sizes. */
-function withWineValue(bottles: Bottle[]): Bottle[] {
-  const best = new Map<string, number>()
-  const key = (b: Bottle) => `${b.producer}|${b.wine}`
-  for (const b of bottles) best.set(key(b), Math.max(best.get(key(b)) ?? 0, value750(b)))
-  return bottles.map((b) => ({ ...b, wineValue: best.get(key(b)) ?? null }))
 }
 
 function buildVerticals(bottles: Bottle[]): Map<string, Bottle[]> {

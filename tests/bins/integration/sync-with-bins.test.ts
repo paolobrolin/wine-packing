@@ -108,30 +108,41 @@ describe('buildSyncRows with bin resolution', () => {
     expect(rows[0].recommended_bin).toBe('3.6 FR OTHER')
   })
 
-  describe('Barolo prestige is decided per wine, on market value', () => {
-    const pira = (barcode: string, vintage: string, o: Partial<CtBottle> & { valuation?: string } = {}) => makeCtBottle({
-      barcode, bottle_cost: o.bottle_cost ?? 1250, size: o.size ?? '750ml',
-      extra: { Vintage: vintage, Wine: o.extra?.Wine ?? 'Roagna Barolo Pira', Producer: o.extra?.Producer ?? 'Roagna', Country: 'Italy', Region: 'Piedmont', Appellation: 'Barolo', Type: 'Red', Valuation: o.valuation ?? null },
+  describe('the prestige row holds the 11 dearest Barolo bottles per 750 ml', () => {
+    const barolo = (barcode: string, cost: number, size = '750ml') => makeCtBottle({
+      barcode, size, bottle_cost: cost, begin_consume: 2030, end_consume: 2050,
+      extra: { Vintage: '2020', Wine: `${barcode} Barolo`, Producer: `P${barcode}`, Country: 'Italy', Region: 'Piedmont', Appellation: 'Barolo', Type: 'Red' },
     })
     const binOf = (rows: { barcode: string; recommended_bin: string | null }[], bc: string) => rows.find((r) => r.barcode === bc)!.recommended_bin
 
-    it('every vintage of a wine follows the one valued from 1 800 kr', () => {
-      const { rows } = buildSyncRows([pira('a', '2019', { valuation: '1887,9516' }), pira('b', '2020', { valuation: '1500' })], new Map(), 2026)
-      expect(binOf(rows, 'a')).toBe('2.5 BAROLO PRESTIGE')
-      expect(binOf(rows, 'b')).toBe('2.5 BAROLO PRESTIGE')
+    it('the cheapest of 12 stays off the row', () => {
+      const bs = Array.from({ length: 12 }, (_, n) => barolo(`b${n}`, 1000 + n * 100))
+      const { rows } = buildSyncRows(bs, new Map(), 2026)
+      expect(rows.filter((r) => r.recommended_bin === '2.5 BAROLO PRESTIGE')).toHaveLength(11)
+      expect(binOf(rows, 'b0')).not.toBe('2.5 BAROLO PRESTIGE')
     })
 
-    it('without a market value the purchase price per 750 ml counts', () => {
-      const plain = makeCtBottle({ barcode: 'c', bottle_cost: 1900, extra: { Vintage: '2020', Wine: 'X Barolo', Producer: 'X', Country: 'Italy', Region: 'Piedmont', Appellation: 'Barolo', Type: 'Red' } })
-      const magnum = makeCtBottle({ barcode: 'd', size: '1.5L', bottle_cost: 3229, extra: { Vintage: '2021', Wine: 'Y Barolo', Producer: 'Y', Country: 'Italy', Region: 'Piedmont', Appellation: 'Barolo', Type: 'Red' } })
-      const { rows } = buildSyncRows([plain, magnum], new Map(), 2026)
-      expect(binOf(rows, 'c')).toBe('2.5 BAROLO PRESTIGE')
-      expect(binOf(rows, 'd')).not.toBe('2.5 BAROLO PRESTIGE')
+    it('a magnum is ranked by its price per 750 ml', () => {
+      const bs = [...Array.from({ length: 11 }, (_, n) => barolo(`b${n}`, 1500)), barolo('mag', 2800, '1.5L')]
+      const { rows } = buildSyncRows(bs, new Map(), 2026)
+      expect(binOf(rows, 'mag')).not.toBe('2.5 BAROLO PRESTIGE')
     })
+  })
 
-    it('a market value below 1 800 keeps the wine off the row even if it was bought dearer', () => {
-      const { rows } = buildSyncRows([pira('e', '2020', { bottle_cost: 2749, valuation: '1684' })], new Map(), 2026)
-      expect(binOf(rows, 'e')).not.toBe('2.5 BAROLO PRESTIGE')
+  it('an OWC case kept at home stays together on one shelf', () => {
+    const spanish = (barcode: string, o: Partial<CtBottle> = {}) => makeCtBottle({
+      barcode, location: 'Cellar', begin_consume: 2020, end_consume: 2026,
+      extra: { Vintage: '2015', Wine: `${barcode} Rioja`, Producer: `P${barcode}`, Country: 'Spain', Region: 'La Rioja', Appellation: 'Rioja', Type: 'Red' },
+      ...o,
     })
+    // 19 earlier bottles leave room for 3 of the case in Lgh 6 (24 places, margin 2).
+    const fillers = Array.from({ length: 19 }, (_, n) => spanish(`f${n}`))
+    const ygay = Array.from({ length: 6 }, (_, n) => spanish(`y${n}`, {
+      begin_consume: 2022, end_consume: 2027, bottle_note: 'OWC 6 fl (lot 1746531). 1987-samlingen.', purchase_note: 'Bukowskis lot 1746531',
+      extra: { Vintage: '1987', Wine: 'Marqués de Murrieta Rioja Castillo Ygay Gran Reserva Especial', Producer: 'Marqués de Murrieta', Country: 'Spain', Region: 'La Rioja', Appellation: 'Rioja', Type: 'Red' },
+    }))
+    const { rows } = buildSyncRows([...fillers, ...ygay], new Map(), 2026)
+    const bins = new Set(rows.filter((r) => r.barcode.startsWith('y')).map((r) => r.recommended_bin))
+    expect(bins.size).toBe(1)
   })
 })
