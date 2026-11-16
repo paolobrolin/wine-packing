@@ -572,13 +572,24 @@ describe('buildSyncRows — done bottles get a new recommendation', () => {
     expect(stats.alreadyAtDestination).toBe(0)
   })
 
-  it('never marks a packed bottle done just because its recommendation equals CT\'s (source) shelf', () => {
+  it('a packed bottle keeps the destination it was packed for, even when the rules now point back to its source', () => {
+    // Packed at REMOTE for home; a new drinking window now says REMOTE 3.6.
+    // It is in a box on its way: Place must still put it where it is going.
     const existing = atRemoteRow({ state: 'packed', trip_id: 'trip1', packed_at: '2026-10-27T10:00:00Z', current_bin: '3.6 FR OTHER', ct_bin_at_sync: '3.6 FR OTHER', recommended_location: 'HOME', recommended_bin: 'Lgh 4. FRANKRIKE' })
     const ctRemote = makeCtBottle({ location: 'REMOTE', bin: '3.6 FR OTHER', begin_consume: 2030, end_consume: 2045 })
     const { rows } = buildSyncRows([ctRemote], new Map([['0001', existing]]), 2026)
-    expect(rows[0].recommended_bin).toBe('3.6 FR OTHER')
+    expect(rows[0].recommended_location).toBe('HOME')
+    expect(rows[0].recommended_bin).toBe('Lgh 4. FRANKRIKE')
     expect(rows[0].state).toBe('packed')
     expect(rows[0].trip_id).toBe('trip1')
+  })
+
+  it('an in-transit bottle keeps its destination too', () => {
+    const existing = atRemoteRow({ state: 'in_transit', in_transit_at: '2026-10-27T11:00:00Z', current_bin: '3.6 FR OTHER', ct_bin_at_sync: '3.6 FR OTHER', recommended_location: 'HOME', recommended_bin: 'Lgh 4. FRANKRIKE' })
+    const ctRemote = makeCtBottle({ location: 'REMOTE', bin: '3.6 FR OTHER', begin_consume: 2030, end_consume: 2045 })
+    const { rows } = buildSyncRows([ctRemote], new Map([['0001', existing]]), 2026)
+    expect(rows[0].recommended_bin).toBe('Lgh 4. FRANKRIKE')
+    expect(rows[0].state).toBe('in_transit')
   })
 
   it('stats count every bottle exactly once: in place, moves to REMOTE, moves at home', () => {

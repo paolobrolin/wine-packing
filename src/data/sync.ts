@@ -364,8 +364,12 @@ export function buildSyncRows(
       state = 'pending'
     }
 
-    const holdRec = state === 'synced' && appPositions[i] != null
-      && existing?.recommended_location !== undefined && existing?.recommended_bin !== undefined
+    // A packed or in-transit bottle is in a box on its way: it keeps the
+    // destination it was packed for, so Place puts it there even if the rules
+    // have changed since (a new drinking window, a fuller prestige row).
+    const inBox = state === 'packed' || state === 'in_transit'
+    const holdRec = existing?.recommended_location !== undefined && existing?.recommended_bin !== undefined
+      && ((inBox && existing.recommended_location != null) || (state === 'synced' && appPositions[i] != null))
 
     return {
       barcode: ct.barcode,
